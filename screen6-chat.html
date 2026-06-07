@@ -2403,13 +2403,14 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
       const aiRow = document.createElement('div');
       aiRow.className = 'bubble-row';
       aiRow.dataset.msgid = msgId;
+      const _displayReply = cleanReply(reply);
       aiRow.innerHTML = `
         <div class="bubble-avatar">${AVATAR_SVG}</div>
-        <div class="ai-bubble"><p>${escHtml(reply)}</p></div>`;
+        <div class="ai-bubble"><p>${escHtml(_displayReply)}</p></div>`;
       list.appendChild(aiRow);
       list.appendChild(makeReactionStrip(msgId));
       bindLongPress(aiRow.querySelector('.ai-bubble'), msgId);
-      saveChatLog('zhiji', reply);
+      saveChatLog('zhiji', _displayReply);
       scrollBottom();
 
       if (sendBtn) sendBtn.disabled = false;
@@ -3760,6 +3761,19 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
                .replace(/"/g,'&quot;').replace(/\n/g,'<br>');
     }
 
+    // 过滤 AI 心理活动旁白：去掉中/英括号包裹的指令性说明
+    // 例如 （先稳稳接住情绪，用朋友语气） 或 (先站队，不急着分析)
+    function cleanReply(t) {
+      return t
+        // 去掉全角括号内容（包括嵌套）
+        .replace(/（[^（）]*）/g, '')
+        // 去掉半角括号内容
+        .replace(/\([^()]*\)/g, '')
+        // 清理多余空行（连续两个以上换行合并成一个）
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+    }
+
     /* 初始滚到底 + 绑定静态气泡 + 读取测评数据 */
     // 防御：只有明确完成测评的来源才展示测评折叠条，否则清掉旧数据
     (function guardAssessData() {
@@ -4149,13 +4163,14 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
       const aiRow = document.createElement('div');
       aiRow.className = 'bubble-row';
       aiRow.dataset.msgid = msgId;
+      const _displayReply2 = cleanReply(reply);
       aiRow.innerHTML = `
         <div class="bubble-avatar">${AVATAR_SVG}</div>
-        <div class="ai-bubble"><p>${escHtml(reply)}</p></div>`;
+        <div class="ai-bubble"><p>${escHtml(_displayReply2)}</p></div>`;
       list.appendChild(aiRow);
       list.appendChild(makeReactionStrip(msgId));
       bindLongPress(aiRow.querySelector('.ai-bubble'), msgId);
-      saveChatLog('zhiji', reply);
+      saveChatLog('zhiji', _displayReply2);
 
       // 加入对话历史
       chatHistory = [{ role: 'system', content: sysPrompt }];

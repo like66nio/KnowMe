@@ -6,6 +6,7 @@
 <title>知己 — 日记</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
 
@@ -1592,8 +1593,8 @@ function openDetail(dateStr) {
     `<span class="detail-chip">${c}</span>`
   ).join('');
 
-  // 用户昵称（从 localStorage 读取，fallback 为「你」）
-  const userName = localStorage.getItem('knowme_user_name') || '你';
+  // 用户昵称（从 localStorage 读取，与 screen6 保持同一个 key）
+  const userName = localStorage.getItem('zjUserNickname') || localStorage.getItem('knowme_user_name') || '你';
   document.getElementById('detailUserSaidLabel').textContent = userName + '说了什么';
 
   document.getElementById('detailExtract').textContent = data.extract;
@@ -1678,14 +1679,17 @@ function triggerGenerate() {
   const mask = document.getElementById('genMask');
   mask.classList.add('show');
 
+  // 读取用户昵称（供 prompt 使用）
+  const diaryUserName = localStorage.getItem('zjUserNickname') || localStorage.getItem('knowme_user_name') || '用户';
+
   // 把聊天记录拼成对话文本（最多取最近 60 条，避免 token 超限）
   const recentLog = chatLog.slice(-60);
   const dialogText = recentLog.map(m => {
-    const who = m.role === 'user' ? '用户' : '知己';
+    const who = m.role === 'user' ? diaryUserName : '知己';
     return `${who}：${m.text}`;
   }).join('\n');
 
-  const prompt = `你是一个情感日记生成助手。下面是用户今天与知己（AI情感伴侣）的对话记录：
+  const prompt = `你是一个情感日记生成助手。下面是用户（昵称：${diaryUserName}）今天与知己（AI情感伴侣）的对话记录：
 
 ---
 ${dialogText}
@@ -1694,12 +1698,12 @@ ${dialogText}
 请根据以上对话，生成一篇简短的情感日记，用 JSON 格式返回，字段如下：
 - mood：情绪类型，只能是 "positive"（积极）/"mixed"（复杂）/"low"（低落）/"intense"（激烈/焦虑）之一
 - chips：情绪标签数组，2-3个词，每个词不超过4字，如 ["焦虑","迷茫"] 或 ["感动","释然","满足"]
-- extract：知己视角的今日一句话总结，25字以内，以"今天"或具体细节开头，像一个旁观者记录这一天，不要用第一人称
-- userSaid：用户今天说过的最触动人心的一句话或一段话原文（直接从对话里摘录，保持原话），50字以内
-- insight：知己对用户的一句洞察或回应，直接从对话里摘录知己说过的最有价值的话，50字以内
+- extract：知己视角的今日一句话总结，25字以内，以"今天"或具体细节开头，像一个旁观者记录这一天，不要用第一人称，不要用"用户"这个词，直接用对方的昵称${diaryUserName}
+- userSaid：${diaryUserName}今天说过的最触动人心的一句话或一段话原文（直接从对话里摘录，保持原话），50字以内
+- insight：知己对${diaryUserName}的一句洞察或回应，直接从对话里摘录知己说过的最有价值的话，50字以内
 
 只返回 JSON，不要任何其他文字。示例格式：
-{"mood":"mixed","chips":["纠结","疲惫"],"extract":"今天在职场关系里兜兜转转，说了很多，却不确定说清楚了没有。","userSaid":"我就是不想让他觉得我软弱，但其实我已经很累了。","insight":"累了不是软弱，是你一直在用力。"}`;
+{"mood":"mixed","chips":["纠结","疲惫"],"extract":"今天${diaryUserName}在职场关系里兜兜转转，说了很多，却不确定说清楚了没有。","userSaid":"我就是不想让他觉得我软弱，但其实我已经很累了。","insight":"累了不是软弱，是你一直在用力。"}`;
 
   fetch(DIARY_LLM.endpoint, {
     method: 'POST',
@@ -2130,10 +2134,58 @@ function _bindPosterBrush() {
 // ══════════════════════════════════════════
 
 function savePoster() {
-  // 原型中无法真正保存图片，模拟一个提示
-  const toast = document.getElementById('saveToast');
-  toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), 2000);
+  const container = document.getElementById('posterContainer');
+  if (!container) return;
+
+  // 按钮 loading 状态
+  const saveBtn = document.querySelector('.poster-save-btn');
+  if (saveBtn) { saveBtn.textContent = '生成中…'; saveBtn.disabled = true; }
+
+  html2canvas(container, {
+    backgroundColor: null,
+    scale: window.devicePixelRatio || 2,
+    useCORS: true,
+    allowTaint: true,
+    logging: false,
+  }).then(function(canvas) {
+    if (saveBtn) { saveBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> 保存图片'; saveBtn.disabled = false; }
+
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if (isMobile) {
+      // 移动端：全屏图片层，长按保存到相册
+      const overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;';
+      const img = document.createElement('img');
+      img.src = canvas.toDataURL('image/png');
+      img.style.cssText = 'max-width:90vw;max-height:75vh;border-radius:12px;box-shadow:0 4px 32px rgba(0,0,0,0.6);';
+      const hint = document.createElement('div');
+      hint.textContent = '长按图片 → 保存到相册';
+      hint.style.cssText = 'color:rgba(255,255,255,0.70);font-size:13px;letter-spacing:0.5px;';
+      const closeBtn = document.createElement('button');
+      closeBtn.textContent = '关闭';
+      closeBtn.style.cssText = 'margin-top:4px;background:rgba(255,255,255,0.14);border:1px solid rgba(255,255,255,0.22);color:rgba(255,255,255,0.80);border-radius:20px;padding:8px 24px;font-size:14px;cursor:pointer;';
+      closeBtn.onclick = function() { document.body.removeChild(overlay); };
+      overlay.appendChild(img);
+      overlay.appendChild(hint);
+      overlay.appendChild(closeBtn);
+      document.body.appendChild(overlay);
+
+      // 显示 toast
+      const toast = document.getElementById('saveToast');
+      if (toast) { toast.classList.add('show'); setTimeout(() => toast.classList.remove('show'), 2000); }
+    } else {
+      // 桌面端：直接下载
+      const a = document.createElement('a');
+      a.download = '知己日记.png';
+      a.href = canvas.toDataURL('image/png');
+      a.click();
+      const toast = document.getElementById('saveToast');
+      if (toast) { toast.classList.add('show'); setTimeout(() => toast.classList.remove('show'), 2000); }
+    }
+  }).catch(function() {
+    if (saveBtn) { saveBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> 保存图片'; saveBtn.disabled = false; }
+    showDiaryToast('生成失败，请重试');
+  });
 }
 
 function showTabTip(name) {
