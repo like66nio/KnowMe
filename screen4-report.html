@@ -2667,19 +2667,27 @@
       if (stateDesc) stateSummary = `用户当前状态：${stateDesc}。`;
     }
 
+    const assessSection = data
+      ? `# 【测评报告】——每次对话开始前必须读取，这是你感知这个用户的基础
+
+关于这位用户：
+${traitSummary}
+${stateSummary}
+
+测评数据是你了解这个人的起点，不是唯一依据。对话中灵活调用，不强行套用。`
+      : `# 【测评报告】
+
+这位用户还没有完成测评，目前没有任何测评数据。
+绝对不要假装知道或猜测用户的性格特质。
+如果用户问"你了解我吗"/"你记得我的测评吗"，直接告诉他/她：「你还没做测评，做完之后我就更了解你了。」`;
+
     return `【知己对话能力与对话风格调教Prompt】
 
 核心是为知己输入上下文，而不是定义规则。测评报告是结构化上下文，对话历史是动态上下文，提示词框架是理解上下文的方式。
 
 ---
 
-# 【测评报告】——每次对话开始前必须读取，这是你感知这个用户的基础
-
-关于这位用户：
-${traitSummary}
-${stateSummary}
-
-测评数据是你了解这个人的起点，不是唯一依据。对话中灵活调用，不强行套用。
+${assessSection}
 
 ---
 
@@ -3068,6 +3076,17 @@ ${stateSummary}
     return (t || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
+  // 清理 AI 回复：去掉括号内心理活动 + markdown 加粗符号
+  function cleanReply(t) {
+    return (t || '')
+      .replace(/（[^（）]*）/g, '')   // 全角括号内容（内心活动）
+      .replace(/\([^()]*\)/g, '')     // 半角括号内容
+      .replace(/\*\*([^*]+)\*\*/g, '$1') // **加粗** → 去掉星号保留文字
+      .replace(/\*([^*]+)\*/g, '$1')     // *斜体* → 去掉星号
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+  }
+
   /* ── 发送按钮与+号互斥切换 ── */
   function updateSendBtn4() {
     const input = document.getElementById('chatInput');
@@ -3117,13 +3136,14 @@ ${stateSummary}
 
     // 调用 LLM
     const reply = await callLLM(chatHistory);
-    chatHistory.push({ role: 'assistant', content: reply });
+    const _displayReply = cleanReply(reply);
+    chatHistory.push({ role: 'assistant', content: _displayReply });
 
     // 展示回复
     typing.remove();
     turn++;
-    list.appendChild(makeMsgZhiji(reply));
-    saveChatLog('zhiji', reply);
+    list.appendChild(makeMsgZhiji(_displayReply));
+    saveChatLog('zhiji', _displayReply);
 
     // 触发逻辑（mode=chat：测评邀请；正常模式：注册 banner）
     const hasContent = text.length > 8;
