@@ -31,12 +31,13 @@
     }
 
     .phone-frame {
-      width: 390px;
-      flex-shrink: 0;
+      width: min(390px, 100vw);
+      /* position:fixed 使 frame 不被微信键盘/地址栏推走 */
+      position: fixed;
+      top: 0; left: 50%; transform: translateX(-50%);
       height: 100vh;
       height: 100dvh;
       background: transparent;
-      position: relative;
       display: flex;
       flex-direction: column;
       overflow: hidden;
@@ -3704,40 +3705,39 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
       // 'chat' tab 就留在当前页
     }
 
-    /* ──── 键盘弹起：同步 phone-frame 高度 + 隐藏 Tab Bar ──── */
+    /* ──── 键盘弹起：phone-frame 已是 position:fixed，只需同步高度 ──── */
     (function initViewportFix() {
       const frame  = document.querySelector('.phone-frame');
       const tabBar = document.getElementById('tabBar');
       const input  = document.getElementById('chatInput');
       if (!frame) return;
 
-      // 页面加载完成后记录基准高度（必须在 DOMContentLoaded 后）
       let baseH = 0;
       let kbOpen = false;
 
-      function recordBase() {
-        // visualViewport 优先，没有则用 window.innerHeight
-        baseH = (window.visualViewport ? window.visualViewport.height : window.innerHeight);
+      function getVH() {
+        return window.visualViewport ? window.visualViewport.height : window.innerHeight;
       }
+      function recordBase() { baseH = getVH(); }
 
       function applyHeight(vh) {
+        // frame 是 fixed，直接设高度，顶部 top-bar 始终固定在顶
         frame.style.height = vh + 'px';
         const shrunk = baseH > 0 && vh < baseH - 80;
         kbOpen = shrunk;
         if (tabBar) tabBar.classList.toggle('keyboard-up', shrunk);
         if (shrunk) {
-          // 键盘弹起：滚到最新消息，延迟两帧确保布局完成
+          // 键盘弹起：滚到最新消息
           requestAnimationFrame(() => requestAnimationFrame(() => {
             const list = document.getElementById('msgList');
             if (list) list.scrollTop = list.scrollHeight;
           }));
         } else {
-          // 键盘收起，恢复自然高度
           frame.style.height = '';
         }
       }
 
-      // ① visualViewport API（iOS Safari 13+ / Chrome 61+ / 新版微信）
+      // ① visualViewport（iOS Safari / 新版微信）
       if (window.visualViewport) {
         window.addEventListener('load', function() {
           recordBase();
@@ -3750,29 +3750,22 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
         });
       }
 
-      // ② window.resize 兜底（部分安卓/旧微信）
+      // ② window.resize 兜底（安卓/旧微信）
       window.addEventListener('resize', function() {
         const h = window.innerHeight;
         if (!baseH) { baseH = h; return; }
         applyHeight(h);
       });
 
-      // ③ input focus/blur 兜底（最后防线）
-      //    focus 时强制把输入框滚到可视区域；blur 时解锁高度
+      // ③ focus/blur 最后保险
       if (input) {
         input.addEventListener('focus', function() {
-          // 等键盘动画结束（约 300ms）再滚
           setTimeout(function() {
-            // 如果 visualViewport/resize 已经处理了就不重复
-            if (!kbOpen) {
-              // 仅滚 msgList 到底部，不改高度（避免与 visualViewport 冲突）
-              const list = document.getElementById('msgList');
-              if (list) list.scrollTop = list.scrollHeight;
-            }
+            const list = document.getElementById('msgList');
+            if (list) list.scrollTop = list.scrollHeight;
           }, 350);
         });
         input.addEventListener('blur', function() {
-          // 键盘收起：若 visualViewport 没触发，手动恢复
           setTimeout(function() {
             if (kbOpen) {
               kbOpen = false;
@@ -3783,12 +3776,8 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
         });
       }
 
-      // 初始记录基准（在 DOMContentLoaded 后此代码已执行，再用 load 二次确认）
-      if (document.readyState === 'complete') {
-        recordBase();
-      } else {
-        window.addEventListener('load', recordBase);
-      }
+      if (document.readyState === 'complete') { recordBase(); }
+      else { window.addEventListener('load', recordBase); }
     })();
 
     /* ──── Enter 发送（Shift+Enter 换行） ──── */
