@@ -371,9 +371,9 @@
     </div>
 
     <!-- 重置入口（开发调试用）-->
-    <div style="text-align:center; margin-top:12px;">
-      <span onclick="localStorage.clear(); location.reload();"
-        style="font-size:11px; color:rgba(255,255,255,0.25); cursor:pointer; letter-spacing:0.3px; user-select:none;"
+    <div style="text-align:center; margin-top:20px; padding-bottom:env(safe-area-inset-bottom,0px);">
+      <span onclick="doReset()"
+        style="display:inline-block; font-size:12px; color:rgba(255,255,255,0.38); cursor:pointer; letter-spacing:0.5px; user-select:none; padding:6px 16px; border:1px solid rgba(255,255,255,0.18); border-radius:20px; background:rgba(255,255,255,0.06); -webkit-tap-highlight-color:transparent;"
         title="清空所有数据，重新开始">
         重新开始
       </span>
@@ -495,19 +495,32 @@
       }, typingDuration);
     }
 
-    // ?reset=1 → 清除所有 zj* 数据，重新从 screen1 开始
+    // 重新开始：清空全部知己数据，回到 screen1
+    function doReset() {
+      // 清除所有已知 key（比 localStorage.clear() 更安全，不误清其他站点数据）
+      const ALL_KEYS = [
+        'zjChatLog','zjIsRegistered','zjAssessment','zjRegSource',
+        'zjMidScreen','zjUserName','zjUserNickname','zjAiName',
+        'zjRegNudgeDismissed','zhiji_reactions','zjDiaryLog',
+      ];
+      ALL_KEYS.forEach(k => localStorage.removeItem(k));
+      // 清除所有 zjDiaryClips_* 动态日期 key
+      Object.keys(localStorage).filter(k => k.startsWith('zjDiaryClips_')).forEach(k => localStorage.removeItem(k));
+      // 跳回首页（强制刷新，清掉内存中的 chatHistory 等变量）
+      window.location.replace('screen1-launch.html');
+    }
+
+    // ?reset=1 → 同上（URL 参数触发版）
     (function() {
       if (new URLSearchParams(window.location.search).get('reset') === '1') {
-        ['zjChatLog','zjIsRegistered','zjAssessment','zjRegSource','zjMidScreen','zjUserName'].forEach(k => localStorage.removeItem(k));
-        window.location.replace('screen1-launch.html');
+        doReset();
       }
     })();
 
     /* 启动 */
     window.addEventListener('DOMContentLoaded', () => {
-      // ?reset=1 时清除所有数据
+      // ?reset=1 已由上方 IIFE 处理，此处仅清理 URL 参数
       if (new URLSearchParams(location.search).get('reset') === '1') {
-        localStorage.clear();
         history.replaceState(null, '', location.pathname);
       }
 
