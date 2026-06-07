@@ -11,6 +11,9 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
+    /* 防止 iOS 键盘弹起时 body 整体上移 */
+    html { height: 100%; }
+
     body {
       background: #7878C8;
       font-family: 'ZCOOL XiaoWei', -apple-system, 'PingFang SC', 'Helvetica Neue', sans-serif;
@@ -3836,6 +3839,90 @@ ${assessSection}
       inputEl4.addEventListener('focus', function() {
         if (_open4) doClose4();
       });
+    }
+  })();
+
+  /* ──── 键盘弹起修复（screen4 专用）────
+   * chat-bar 是 position:fixed，iOS 键盘弹起时它会上移，
+   * 但 chat-area 内容区没有跟着收缩，导致消息被键盘遮住。
+   * 修法：监听可视区域高度变化，动态给 chat-area 加 padding-bottom
+   * 等于键盘高度，同时滚到最新消息。
+   */
+  (function initKeyboardFix4() {
+    const chatArea = document.getElementById('chatArea');
+    const input    = document.getElementById('chatInput');
+    if (!chatArea || !input) return;
+
+    // chat-bar 本身高度（约 60px），加上 safe-area
+    const BAR_H = 64;
+    let baseH = 0;
+    let kbOpen = false;
+
+    function getViewH() {
+      return window.visualViewport ? window.visualViewport.height : window.innerHeight;
+    }
+
+    function recordBase() {
+      baseH = getViewH();
+    }
+
+    function scrollToBottom() {
+      const list = document.getElementById('msgList');
+      if (list) {
+        const last = list.lastElementChild;
+        if (last) last.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      }
+      // 同时滚动整个页面到底部
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    }
+
+    function onViewChange() {
+      const vh = getViewH();
+      if (!baseH) { baseH = vh; return; }
+      const kbH = Math.max(0, baseH - vh - 10); // 10px 容差
+      kbOpen = kbH > 80;
+      if (kbOpen) {
+        // 键盘弹起：给内容区加 padding 等于键盘高度，让内容不被遮挡
+        chatArea.style.paddingBottom = (kbH + BAR_H) + 'px';
+        // 延迟等布局完成再滚
+        setTimeout(scrollToBottom, 150);
+        setTimeout(scrollToBottom, 350);
+      } else {
+        // 键盘收起：恢复原来的 padding
+        chatArea.style.paddingBottom = '';
+      }
+    }
+
+    // ① visualViewport（iOS Safari / 新版微信）
+    if (window.visualViewport) {
+      window.addEventListener('load', function() {
+        recordBase();
+        window.visualViewport.addEventListener('resize', onViewChange);
+        window.visualViewport.addEventListener('scroll', onViewChange);
+      });
+    }
+
+    // ② window.resize 兜底（安卓/旧微信）
+    window.addEventListener('resize', onViewChange);
+
+    // ③ focus/blur 最后保险
+    input.addEventListener('focus', function() {
+      setTimeout(scrollToBottom, 350);
+    });
+    input.addEventListener('blur', function() {
+      setTimeout(function() {
+        if (kbOpen) {
+          kbOpen = false;
+          chatArea.style.paddingBottom = '';
+        }
+      }, 100);
+    });
+
+    // 初始记录基准高度
+    if (document.readyState === 'complete') {
+      recordBase();
+    } else {
+      window.addEventListener('load', recordBase);
     }
   })();
 </script>
