@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <title>知己 · 对话</title>
   <link href="https://fonts.googleapis.com/css2?family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
@@ -360,7 +361,7 @@
       position: absolute;
       left: 50%; transform: translateX(-50%) translateY(100%);
       bottom: 0;
-      width: 390px;
+      width: min(390px, 100vw);
       background: rgba(255,255,255,0.10);
       backdrop-filter: blur(32px); -webkit-backdrop-filter: blur(32px);
       border-top: 1px solid rgba(255,255,255,0.14);
@@ -768,6 +769,13 @@
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
       transition: background 0.15s, border-color 0.15s;
+      /* 扩大移动端触摸热区 */
+      position: relative;
+    }
+    .sel-check::before {
+      content: '';
+      position: absolute;
+      inset: -12px; /* 四周各扩展 12px 触摸区域 */
     }
     .sel-check.checked {
       background: rgba(150,80,230,0.88);
@@ -800,7 +808,7 @@
     .select-bar {
       position: fixed;
       bottom: 0; left: 50%; transform: translateX(-50%);
-      width: 390px;
+      width: min(390px, 100vw);
       background: rgba(18,10,40,0.94);
       backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
       border-top: 1px solid rgba(160,100,240,0.20);
@@ -836,7 +844,7 @@
       display: none;
       position: fixed; inset: 0;
       left: 50%; transform: translateX(-50%);
-      width: 390px;
+      width: min(390px, 100vw);
       background: #0A0618;
       z-index: 600; /* 高于 select-bar(500) */
       flex-direction: column;
@@ -930,7 +938,7 @@
     }
 
     /* ── 字符级打码 span ── */
-    .cpv-char { display: inline; }
+    .cpv-char { display: inline-block; }
     .cpv-char.redacted {
       color: transparent;
       background: rgba(110,60,180,0.55);
@@ -1801,7 +1809,7 @@
           <span class="cpv-tool-icon">✦</span>
           <span>高亮</span>
         </div>
-        <button class="cpv-save-btn" onclick="saveChatPoster()">
+        <button class="cpv-save-btn" id="cpvSaveBtn" onclick="saveChatPoster()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
             <polyline points="7 10 12 15 17 10"/>
@@ -2575,6 +2583,9 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
     }
 
     function openCtxMenu(bubbleEl, msgId, e) {
+      // 多选模式下不弹长按菜单，让 click 事件正常走多选逻辑
+      if (_selectMode) return;
+
       _ctxTarget = bubbleEl;
       _ctxMsgId  = msgId;
       _ctxText   = bubbleEl.innerText || bubbleEl.textContent || '';
@@ -2804,8 +2815,15 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
         const check = document.createElement('div');
         check.className = 'sel-check';
         check.dataset.msgid = row.dataset.msgid;
-        check.addEventListener('click', () => toggleSelectMsg(row.dataset.msgid, check, row));
+        check.addEventListener('click', e => {
+          e.stopPropagation();
+          toggleSelectMsg(row.dataset.msgid, check, row);
+        });
         row.prepend(check); // 插到最左侧，行内 flex 布局自然显示
+
+        // 移动端优化：点击整个消息行也能切换选中（更大的点击区域）
+        row._selectHandler = () => toggleSelectMsg(row.dataset.msgid, check, row);
+        row.addEventListener('click', row._selectHandler);
       });
 
       // 默认选中逻辑
@@ -2842,10 +2860,15 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
       const list = document.getElementById('msgList');
       list.classList.remove('select-mode');
 
-      // 移除所有勾选框和选中高亮
+      // 移除所有勾选框和选中高亮，同时移除行点击监听器
       list.querySelectorAll('.sel-check').forEach(el => el.remove());
-      list.querySelectorAll('.bubble-row.selected, .user-row.selected')
-          .forEach(el => el.classList.remove('selected'));
+      list.querySelectorAll('.bubble-row[data-msgid], .user-row[data-msgid]').forEach(row => {
+        row.classList.remove('selected');
+        if (row._selectHandler) {
+          row.removeEventListener('click', row._selectHandler);
+          delete row._selectHandler;
+        }
+      });
 
       document.getElementById('selectBar').classList.remove('show');
 
@@ -3010,10 +3033,22 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
       }
     }
 
-    // 根据触摸点坐标找到命中的 .cpv-char span
+    // 根据触摸点坐标找到命中的 .cpv-char span（移动端增强：周围偏移搜索）
     function _charAtPoint(x, y) {
       const el = document.elementFromPoint(x, y);
       if (el && el.classList.contains('cpv-char')) return el;
+      // 移动端手指精度不足，向周围偏移搜索（步长8px，半径24px）
+      const offsets = [
+        [8,0],[-8,0],[0,8],[0,-8],
+        [16,0],[-16,0],[0,16],[0,-16],
+        [8,8],[-8,8],[8,-8],[-8,-8],
+        [16,8],[-16,8],[8,16],[-8,16],
+        [24,0],[-24,0],[0,24],[0,-24]
+      ];
+      for (const [dx, dy] of offsets) {
+        const e = document.elementFromPoint(x + dx, y + dy);
+        if (e && e.classList.contains('cpv-char')) return e;
+      }
       return null;
     }
 
@@ -3091,13 +3126,66 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
       scroll.style.webkitUserSelect = 'none';
     }
 
-    // 保存聊天海报（演示：Toast 提示）
+    // 保存聊天海报（html2canvas 真实生成图片）
     function saveChatPoster() {
-      showToast('图片已保存到相册 🪄');
-      setTimeout(() => {
-        closeChatPosterView();
-        exitSelectMode();
-      }, 1600);
+      const poster = document.getElementById('cpvPoster');
+      if (!poster) return;
+
+      // 按钮 loading 状态
+      const saveBtn = document.getElementById('cpvSaveBtn');
+      if (saveBtn) { saveBtn.textContent = '生成中…'; saveBtn.disabled = true; }
+
+      html2canvas(poster, {
+        backgroundColor: null,
+        scale: window.devicePixelRatio || 2,
+        useCORS: true,
+        allowTaint: true,
+        logging: false
+      }).then(canvas => {
+        if (saveBtn) { saveBtn.textContent = '保存图片'; saveBtn.disabled = false; }
+
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        if (isMobile) {
+          // 移动端：弹出全屏图片层，提示长按保存
+          const overlay = document.createElement('div');
+          overlay.style.cssText = `
+            position:fixed;inset:0;z-index:9999;
+            background:rgba(0,0,0,0.92);
+            display:flex;flex-direction:column;
+            align-items:center;justify-content:center;
+            gap:16px;
+          `;
+          const img = document.createElement('img');
+          img.src = canvas.toDataURL('image/png');
+          img.style.cssText = 'max-width:90vw;max-height:75vh;border-radius:12px;box-shadow:0 4px 32px rgba(0,0,0,0.6);';
+          const tip = document.createElement('div');
+          tip.textContent = '长按图片 → 存储到相册 📷';
+          tip.style.cssText = 'color:rgba(255,255,255,0.75);font-size:14px;letter-spacing:0.5px;';
+          const closeBtn = document.createElement('div');
+          closeBtn.textContent = '关闭';
+          closeBtn.style.cssText = `
+            margin-top:4px;padding:10px 36px;
+            background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);
+            border-radius:24px;color:#fff;font-size:15px;cursor:pointer;
+          `;
+          closeBtn.onclick = () => document.body.removeChild(overlay);
+          overlay.appendChild(img);
+          overlay.appendChild(tip);
+          overlay.appendChild(closeBtn);
+          document.body.appendChild(overlay);
+        } else {
+          // 桌面端：直接下载
+          const a = document.createElement('a');
+          a.download = '知己对话.png';
+          a.href = canvas.toDataURL('image/png');
+          a.click();
+          showToast('图片已保存 🪄');
+          setTimeout(() => { closeChatPosterView(); exitSelectMode(); }, 1600);
+        }
+      }).catch(() => {
+        if (saveBtn) { saveBtn.textContent = '保存图片'; saveBtn.disabled = false; }
+        showToast('生成失败，请重试');
+      });
     }
 
     /* ══════════════════════════════════════

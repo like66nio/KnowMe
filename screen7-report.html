@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <title>知己 · 你的报告</title>
   <link href="https://fonts.googleapis.com/css2?family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
@@ -299,7 +300,7 @@
     .share-panel {
       position: fixed;
       bottom: 0; left: 50%; transform: translateX(-50%) translateY(100%);
-      width: 390px;
+      width: min(390px, 100vw);
       background: rgba(18,10,38,0.96);
       backdrop-filter: blur(24px);
       border-radius: 22px 22px 0 0;
@@ -375,7 +376,7 @@
       display: none;
       position: fixed; inset: 0;
       left: 50%; transform: translateX(-50%);
-      width: 390px;
+      width: min(390px, 100vw);
       background: #0D0918;
       z-index: 100;
       flex-direction: column;
@@ -674,7 +675,7 @@
 
     /* 保存按钮 */
     /* ── 字符级打码/高亮 span ── */
-    .rp-char { display: inline; }
+    .rp-char { display: inline-block; }
     .rp-char.redacted {
       color: transparent;
       background: rgba(110,60,180,0.55);
@@ -1193,91 +1194,92 @@
     </div>
   </nav>
 
-  <!-- ═══ 分享面板 ═══ -->
-  <div class="share-panel-mask" id="sharePanelMask" onclick="closeSharePanel()"></div>
-  <div class="share-panel" id="sharePanel">
-    <div class="share-panel-handle"></div>
-    <div class="share-panel-title">选择要生成的海报</div>
-    <div class="share-card-list">
-      <div class="share-card-item" onclick="openPosterView('portrait')">
-        <div class="share-card-icon sci-portrait">🧠</div>
-        <div class="share-card-info">
-          <div class="share-card-name">性格画像</div>
-          <div class="share-card-desc">选择想展示的维度，生成你的性格频谱图</div>
-        </div>
-        <div class="share-card-arrow">›</div>
-      </div>
-      <div class="share-card-item" onclick="openPosterView('gift')">
-        <div class="share-card-icon sci-gift">✨</div>
-        <div class="share-card-info">
-          <div class="share-card-name">TOP 3 天赋</div>
-          <div class="share-card-desc">展示属于你的三个独特天赋</div>
-        </div>
-        <div class="share-card-arrow">›</div>
-      </div>
-      <div class="share-card-item" onclick="openPosterView('status')">
-        <div class="share-card-icon sci-status">🔋</div>
-        <div class="share-card-info">
-          <div class="share-card-name">当下状态</div>
-          <div class="share-card-desc">五项状态快照，记录你此刻的样子</div>
-        </div>
-        <div class="share-card-arrow">›</div>
-      </div>
-      <div class="share-card-item" onclick="openPosterView('drive')">
-        <div class="share-card-icon sci-drive">⚡</div>
-        <div class="share-card-info">
-          <div class="share-card-name">驱动力图谱</div>
-          <div class="share-card-desc">内在 × 外在，18项驱动力全景展示</div>
-        </div>
-        <div class="share-card-arrow">›</div>
-      </div>
-    </div>
-    <div class="share-panel-cancel" onclick="closeSharePanel()">取消</div>
-  </div>
-
-  <!-- ═══ 海报预览全屏层 ═══ -->
-  <div class="report-poster-view" id="reportPosterView">
-    <div class="rpv-header">
-      <div class="rpv-back" onclick="closePosterView()">‹</div>
-      <div class="rpv-title">预览 · 长按可保存</div>
-      <div class="rpv-spacer"></div>
-    </div>
-
-    <div class="rpv-scroll" id="rpvScroll">
-      <!-- 人格卡：维度选择器 -->
-      <div class="rp-dim-selector" id="rpvDimSelector" style="display:none;">
-        <div class="rp-dim-selector-title">选择要展示的维度</div>
-        <div class="rp-dim-check-list" id="rpvDimChecks"></div>
-      </div>
-
-      <!-- 海报本体 -->
-      <div class="rpv-poster-wrap" style="margin-top:14px;">
-        <div class="rpv-poster" id="rpvPoster"></div>
-      </div>
-    </div>
-
-    <!-- 标注工具底栏 -->
-    <div class="rpv-toolbar" id="rpvToolbar">
-      <span class="rpt-hint" id="rptHint">选工具后划过文字即可标注</span>
-      <div class="rpt-btns">
-        <button class="rpt-tool-btn" id="rptBtnRedact"    onclick="setReportTool('redact')">▓ 打码</button>
-        <button class="rpt-tool-btn" id="rptBtnHighlight" onclick="setReportTool('highlight')">✦ 高亮</button>
-        <button class="rpv-save-btn" onclick="saveReportPoster()" style="flex:1;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="7 10 12 15 17 10"/>
-            <line x1="12" y1="15" x2="12" y2="3"/>
-          </svg>
-          保存图片
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 保存提示 -->
-  <div class="rpv-toast" id="rpvToast">已保存到相册</div>
 
 </div><!-- /phone-frame -->
+
+<!-- ═══ 分享面板（移到 phone-frame 外，避免 overflow:hidden 截断）═══ -->
+<div class="share-panel-mask" id="sharePanelMask" onclick="closeSharePanel()"></div>
+<div class="share-panel" id="sharePanel">
+  <div class="share-panel-handle"></div>
+  <div class="share-panel-title">选择要生成的海报</div>
+  <div class="share-card-list">
+    <div class="share-card-item" onclick="openPosterView('portrait')">
+      <div class="share-card-icon sci-portrait">🧠</div>
+      <div class="share-card-info">
+        <div class="share-card-name">性格画像</div>
+        <div class="share-card-desc">选择想展示的维度，生成你的性格频谱图</div>
+      </div>
+      <div class="share-card-arrow">›</div>
+    </div>
+    <div class="share-card-item" onclick="openPosterView('gift')">
+      <div class="share-card-icon sci-gift">✨</div>
+      <div class="share-card-info">
+        <div class="share-card-name">TOP 3 天赋</div>
+        <div class="share-card-desc">展示属于你的三个独特天赋</div>
+      </div>
+      <div class="share-card-arrow">›</div>
+    </div>
+    <div class="share-card-item" onclick="openPosterView('status')">
+      <div class="share-card-icon sci-status">🔋</div>
+      <div class="share-card-info">
+        <div class="share-card-name">当下状态</div>
+        <div class="share-card-desc">五项状态快照，记录你此刻的样子</div>
+      </div>
+      <div class="share-card-arrow">›</div>
+    </div>
+    <div class="share-card-item" onclick="openPosterView('drive')">
+      <div class="share-card-icon sci-drive">⚡</div>
+      <div class="share-card-info">
+        <div class="share-card-name">驱动力图谱</div>
+        <div class="share-card-desc">内在 × 外在，18项驱动力全景展示</div>
+      </div>
+      <div class="share-card-arrow">›</div>
+    </div>
+  </div>
+  <div class="share-panel-cancel" onclick="closeSharePanel()">取消</div>
+</div>
+
+<!-- ═══ 海报预览全屏层（移到 phone-frame 外）═══ -->
+<div class="report-poster-view" id="reportPosterView">
+  <div class="rpv-header">
+    <div class="rpv-back" onclick="closePosterView()">‹</div>
+    <div class="rpv-title">预览 · 长按可保存</div>
+    <div class="rpv-spacer"></div>
+  </div>
+
+  <div class="rpv-scroll" id="rpvScroll">
+    <!-- 人格卡：维度选择器 -->
+    <div class="rp-dim-selector" id="rpvDimSelector" style="display:none;">
+      <div class="rp-dim-selector-title">选择要展示的维度</div>
+      <div class="rp-dim-check-list" id="rpvDimChecks"></div>
+    </div>
+
+    <!-- 海报本体 -->
+    <div class="rpv-poster-wrap" style="margin-top:14px;">
+      <div class="rpv-poster" id="rpvPoster"></div>
+    </div>
+  </div>
+
+  <!-- 标注工具底栏 -->
+  <div class="rpv-toolbar" id="rpvToolbar">
+    <span class="rpt-hint" id="rptHint">选工具后划过文字即可标注</span>
+    <div class="rpt-btns">
+      <button class="rpt-tool-btn" id="rptBtnRedact"    onclick="setReportTool('redact')">▓ 打码</button>
+      <button class="rpt-tool-btn" id="rptBtnHighlight" onclick="setReportTool('highlight')">✦ 高亮</button>
+      <button class="rpv-save-btn" onclick="saveReportPoster()" style="flex:1;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        保存图片
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- 保存提示 -->
+<div class="rpv-toast" id="rpvToast">已保存到相册</div>
 
 <script>
   /* ══════════════════════════════════════
@@ -2063,8 +2065,22 @@
   }
 
   function _rpCharAtPoint(x, y) {
+    // 先直接命中
     const el = document.elementFromPoint(x, y);
-    return (el && el.classList.contains('rp-char')) ? el : null;
+    if (el && el.classList.contains('rp-char')) return el;
+    // 移动端手指精度不足，向周围偏移搜索（步长8px，半径24px）
+    const offsets = [
+      [8,0],[-8,0],[0,8],[0,-8],
+      [16,0],[-16,0],[0,16],[0,-16],
+      [8,8],[-8,8],[8,-8],[-8,-8],
+      [16,8],[-16,8],[8,16],[-8,16],
+      [24,0],[-24,0],[0,24],[0,-24]
+    ];
+    for (const [dx, dy] of offsets) {
+      const e = document.elementFromPoint(x + dx, y + dy);
+      if (e && e.classList.contains('rp-char')) return e;
+    }
+    return null;
   }
 
   function _paintRpChar(span) {
@@ -2121,9 +2137,71 @@
   }
 
   function saveReportPoster() {
-    const toast = document.getElementById('rpvToast');
-    toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 2000);
+    const poster = document.getElementById('rpvPoster');
+    if (!poster) return;
+
+    // 按钮 loading 状态
+    const saveBtn = document.querySelector('.rpv-save-btn');
+    if (saveBtn) { saveBtn.textContent = '生成中…'; saveBtn.disabled = true; }
+
+    // 临时让海报的 rp-char span 变回 inline，避免 html2canvas 行间距异常
+    // （html2canvas 对 inline-block 渲染更好，保持不变即可）
+    html2canvas(poster, {
+      backgroundColor: null,
+      scale: window.devicePixelRatio || 2,
+      useCORS: true,
+      allowTaint: true,
+      logging: false
+    }).then(canvas => {
+      if (saveBtn) { saveBtn.textContent = '保存图片'; saveBtn.disabled = false; }
+
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      if (isMobile) {
+        // 移动端：弹出全屏图片层，提示长按保存
+        const overlay = document.createElement('div');
+        overlay.style.cssText = `
+          position:fixed;inset:0;z-index:9999;
+          background:rgba(0,0,0,0.92);
+          display:flex;flex-direction:column;
+          align-items:center;justify-content:center;
+          gap:16px;
+        `;
+        const img = document.createElement('img');
+        img.src = canvas.toDataURL('image/png');
+        img.style.cssText = 'max-width:90vw;max-height:75vh;border-radius:12px;box-shadow:0 4px 32px rgba(0,0,0,0.6);';
+        const tip = document.createElement('div');
+        tip.textContent = '长按图片 → 存储到相册 📷';
+        tip.style.cssText = 'color:rgba(255,255,255,0.75);font-size:14px;letter-spacing:0.5px;';
+        const closeBtn = document.createElement('div');
+        closeBtn.textContent = '关闭';
+        closeBtn.style.cssText = `
+          margin-top:4px;padding:10px 36px;
+          background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);
+          border-radius:24px;color:#fff;font-size:15px;cursor:pointer;
+        `;
+        closeBtn.onclick = () => document.body.removeChild(overlay);
+        overlay.appendChild(img);
+        overlay.appendChild(tip);
+        overlay.appendChild(closeBtn);
+        document.body.appendChild(overlay);
+      } else {
+        // 桌面端：直接下载
+        const a = document.createElement('a');
+        a.download = '知己报告.png';
+        a.href = canvas.toDataURL('image/png');
+        a.click();
+        const toast = document.getElementById('rpvToast');
+        if (toast) { toast.classList.add('show'); setTimeout(() => toast.classList.remove('show'), 2000); }
+      }
+    }).catch(() => {
+      if (saveBtn) { saveBtn.textContent = '保存图片'; saveBtn.disabled = false; }
+      const toast = document.getElementById('rpvToast');
+      if (toast) {
+        toast.textContent = '生成失败，请重试';
+        toast.classList.add('show');
+        setTimeout(() => { toast.classList.remove('show'); toast.textContent = '已保存到相册'; }, 2000);
+      }
+    });
   }
 
   function showTabTip(name) {
