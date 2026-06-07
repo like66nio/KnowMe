@@ -585,9 +585,8 @@
       padding: 8px 12px calc(env(safe-area-inset-bottom, 0px) + 8px);
       z-index: 50;
     }
-    .chat-bar.with-tabbar {
-      bottom: calc(60px + env(safe-area-inset-bottom, 0px));
-    }
+    /* with-tabbar 在 chatMode 下由 JS 控制，此处不手动偏移 */
+    /* .chat-bar.with-tabbar { bottom: calc(60px + ...); } */
 
     /* 引用预览条 */
     .quote-bar4 {
@@ -3889,89 +3888,70 @@ ${assessSection}
     }
   })();
 
-  /* ──── 键盘弹起修复（screen4 chatMode 专用，全fixed布局方案）────
-   * chat-mode-header、msg-list、chat-bar 均为 position:fixed
-   * 键盘弹起时动态调整 msg-list 的 bottom 和 chat-bar 的 bottom
-   */
   (function initKeyboardFix4() {
-    // 只在 chatMode 下运行
     if (new URLSearchParams(window.location.search).get('mode') !== 'chat') return;
 
-    const chatBar  = document.getElementById('chatBar');
-    const msgList  = document.getElementById('msgList');
-    const tabBar   = document.getElementById('tabBar');
-    const input    = document.getElementById('chatInput');
+    const chatBar = document.getElementById('chatBar');
+    const msgList = document.getElementById('msgList');
+    const tabBar  = document.getElementById('tabBar');
+    const input   = document.getElementById('chatInput');
     if (!chatBar || !msgList || !input) return;
 
-    let headerH    = 116; // chat-mode-header 高度，load后重新测量
-    let chatBarH   = 64;  // chat-bar 高度
-    let tabBarH    = 60;  // tab-bar 高度
-    let baseWinH   = 0;
+    // chatBar 永远 bottom:0，iOS position:fixed 天然贴 visualViewport 底部（即键盘顶）
+    // 只需动态设置 msgList 的 top/bottom
+    var topBarBottom = 116;
+    var chatBarH     = 64;
+    var tabBarH      = 60;
 
     function measure() {
-      const hdr = document.getElementById('chatModeHeader');
-      const bar = document.getElementById('chatBar');
-      const tab = document.getElementById('tabBar');
-      // 用 .bottom（元素底边距视口顶部距离）而不是 .height
-      // 这样能正确计算 msgList 的起始 top，不受浏览器地址栏影响
-      if (hdr && hdr.offsetParent !== null) {
-        headerH = hdr.getBoundingClientRect().bottom;
-      }
+      var hdr = document.getElementById('chatModeHeader');
+      var bar = document.getElementById('chatBar');
+      var tab = document.getElementById('tabBar');
+      if (hdr && hdr.getBoundingClientRect().bottom > 0)
+        topBarBottom = hdr.getBoundingClientRect().bottom;
       if (bar) chatBarH = bar.getBoundingClientRect().height;
       if (tab && tab.offsetParent !== null) tabBarH = tab.getBoundingClientRect().height;
-      baseWinH = window.innerHeight;
-      applyLayout(0);
+      applyLayout(false);
     }
 
-    function applyLayout(keyboardHeight) {
-      const kbOpen = keyboardHeight > 80;
-      const effectiveTabH = (tabBar && tabBar.offsetParent !== null && !tabBar.classList.contains('keyboard-up'))
-        ? tabBarH : 0;
-
+    function applyLayout(kbOpen) {
+      msgList.style.top = topBarBottom + 'px';
       if (kbOpen) {
-        chatBar.style.bottom  = keyboardHeight + 'px';
-        msgList.style.bottom  = (keyboardHeight + chatBarH) + 'px';
-        msgList.style.top     = headerH + 'px';
+        msgList.style.bottom = chatBarH + 'px';
         if (tabBar) tabBar.classList.add('keyboard-up');
       } else {
-        chatBar.style.bottom  = effectiveTabH + 'px';
-        msgList.style.bottom  = (effectiveTabH + chatBarH) + 'px';
-        msgList.style.top     = headerH + 'px';
+        msgList.style.bottom = (tabBarH + chatBarH) + 'px';
         if (tabBar) tabBar.classList.remove('keyboard-up');
       }
-
       if (kbOpen) {
-        setTimeout(() => { msgList.scrollTop = msgList.scrollHeight; }, 100);
-        setTimeout(() => { msgList.scrollTop = msgList.scrollHeight; }, 350);
+        setTimeout(function() { msgList.scrollTop = msgList.scrollHeight; }, 80);
+        setTimeout(function() { msgList.scrollTop = msgList.scrollHeight; }, 300);
       }
     }
 
-    // ① visualViewport（iOS Safari / 新版微信）
     if (window.visualViewport) {
+      var lastVph = window.visualViewport.height;
       window.visualViewport.addEventListener('resize', function() {
-        const kb = Math.max(0, baseWinH - window.visualViewport.height);
-        applyLayout(kb);
+        var vph = window.visualViewport.height;
+        var kbOpen = vph < lastVph - 80;
+        if (Math.abs(vph - lastVph) > 50) lastVph = vph;
+        applyLayout(kbOpen);
+      });
+    } else {
+      var baseH = 0;
+      window.addEventListener('resize', function() {
+        var h = window.innerHeight;
+        if (!baseH || h > baseH + 50) { baseH = h; applyLayout(false); return; }
+        applyLayout(baseH - h > 80);
       });
     }
 
-    // ② window.resize 兜底
-    window.addEventListener('resize', function() {
-      const h = window.innerHeight;
-      if (!baseWinH || h > baseWinH + 50) { baseWinH = h; applyLayout(0); return; }
-      applyLayout(Math.max(0, baseWinH - h));
-    });
-
-    // ③ blur 收起时强制复位
     input.addEventListener('blur', function() {
-      setTimeout(() => applyLayout(0), 150);
+      setTimeout(function() { applyLayout(false); }, 200);
     });
 
-    // 初始测量（必须等 DOM 完整渲染后）
-    if (document.readyState === 'complete') {
-      setTimeout(measure, 50);
-    } else {
-      window.addEventListener('load', () => setTimeout(measure, 50));
-    }
+    if (document.readyState === 'complete') { measure(); }
+    else { window.addEventListener('load', measure); }
   })();
 </script>
 

@@ -317,13 +317,12 @@
       left: 50%; transform: translateX(-50%);
       width: min(390px, 100vw);
       pointer-events: auto;
-      /* bottom 由 JS 动态设置（键盘高度 or tab-bar 高度）*/
-      bottom: 60px; /* 默认贴在 tab-bar 上方，JS 会覆盖 */
+      bottom: 0; /* 贴视口底部，iOS 键盘弹起时自动上移 */
       background: rgba(255,255,255,0.10);
       backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
       border-top: 1px solid rgba(255,255,255,0.14);
       padding: 10px 12px 10px;
-      transition: bottom 0.15s ease;
+      transition: none;
     }
 
     /* ─── 附件展开面板 ─── */
@@ -3731,83 +3730,78 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
       const input     = document.getElementById('chatInput');
       if (!bottomBar || !msgList) return;
 
-      // 页面加载后测量 top-bar 和 tab-bar 的实际高度
-      let topBarH  = 116;  // 初始估算，load 后修正
-      let tabBarH  = 60;   // 初始估算，load 后修正
-      let bottomBarH = 60; // 初始估算，load 后修正
-      let baseWinH = 0;
-      let kbH = 0;
+      /*
+       * 核心方案：
+       * - bottomBar（打字框）永远 bottom:0，不手动移它
+       *   iOS position:fixed 元素天然跟 visualViewport 走，自动贴键盘
+       * - 只动 msgList 的 top 和 bottom，让消息区填满顶栏和打字框之间
+       * - 键盘弹起时隐藏 tabBar，msgList.bottom = bottomBar高度
+       * - 键盘收起时显示 tabBar，msgList.bottom = tabBar高度 + bottomBar高度
+       */
+
+      let topBarBottom = 116;  // top-bar 底边距视口顶部，load 后修正
+      let bottomBarH   = 60;   // bottom-bar 高度
+      let tabBarH      = 60;   // tab-bar 高度
 
       function measure() {
-        const tb = document.querySelector('.top-bar');
-        const bb = document.querySelector('.bottom-bar');
+        const tb  = document.querySelector('.top-bar');
+        const bb  = document.querySelector('.bottom-bar');
         const tab = document.getElementById('tabBar');
-        // 用 .bottom（元素底边距视口顶部距离）而不是 .height
-        // 这样能正确计算 msgList 的起始 top，不受浏览器地址栏影响
-        if (tb)  topBarH    = tb.getBoundingClientRect().bottom;
-        if (bb)  bottomBarH = bb.getBoundingClientRect().height;
-        if (tab) tabBarH    = tab.getBoundingClientRect().height;
-        baseWinH = window.innerHeight;
-        applyLayout(0); // 初始状态，键盘高度=0
+        if (tb)  topBarBottom = tb.getBoundingClientRect().bottom;
+        if (bb)  bottomBarH   = bb.getBoundingClientRect().height;
+        if (tab) tabBarH      = tab.getBoundingClientRect().height;
+        applyLayout(false);
       }
 
-      function applyLayout(keyboardHeight) {
-        kbH = keyboardHeight;
-        const kbOpen = keyboardHeight > 80;
+      function applyLayout(kbOpen) {
+        // top-bar 底边以下
+        msgList.style.top = topBarBottom + 'px';
 
         if (kbOpen) {
-          // 键盘弹起：bottom-bar 贴键盘顶，tab-bar 隐藏
-          bottomBar.style.bottom = keyboardHeight + 'px';
-          bottomBar.style.transition = 'bottom 0.15s ease';
-          msgList.style.bottom = (keyboardHeight + bottomBarH) + 'px';
+          // 键盘弹起：消息区底边 = 打字框高度（打字框自己贴键盘顶）
+          msgList.style.bottom = bottomBarH + 'px';
           if (tabBar) tabBar.classList.add('keyboard-up');
         } else {
-          // 键盘收起：bottom-bar 在 tab-bar 上方
-          bottomBar.style.bottom = tabBarH + 'px';
+          // 键盘收起：消息区底边 = tab-bar + 打字框
+          const tabH = (tabBar && !tabBar.classList.contains('keyboard-up')) ? tabBarH : 0;
           msgList.style.bottom = (tabBarH + bottomBarH) + 'px';
           if (tabBar) tabBar.classList.remove('keyboard-up');
         }
 
-        // top 由 top-bar 高度决定
-        msgList.style.top = topBarH + 'px';
-
-        // 滚到底部
         if (kbOpen) {
-          setTimeout(function() { msgList.scrollTop = msgList.scrollHeight; }, 100);
-          setTimeout(function() { msgList.scrollTop = msgList.scrollHeight; }, 350);
+          setTimeout(function() { msgList.scrollTop = msgList.scrollHeight; }, 80);
+          setTimeout(function() { msgList.scrollTop = msgList.scrollHeight; }, 300);
         }
       }
 
-      // ① visualViewport（iOS Safari 13+ / 新版微信，最准确）
+      // 监听 visualViewport 高度变化判断键盘开关
       if (window.visualViewport) {
+        var lastVph = window.visualViewport.height;
         window.visualViewport.addEventListener('resize', function() {
-          const vph = window.visualViewport.height;
-          const kb  = Math.max(0, baseWinH - vph);
-          applyLayout(kb);
+          var vph = window.visualViewport.height;
+          var kbOpen = vph < lastVph - 80;
+          // 只在明显变化时更新 lastVph，避免抖动
+          if (Math.abs(vph - lastVph) > 50) lastVph = vph;
+          applyLayout(kbOpen);
         });
-        window.visualViewport.addEventListener('scroll', function() {
-          const vph = window.visualViewport.height;
-          const kb  = Math.max(0, baseWinH - vph);
-          applyLayout(kb);
+      } else {
+        // 降级：window.resize
+        var baseH = 0;
+        window.addEventListener('resize', function() {
+          var h = window.innerHeight;
+          if (!baseH || h > baseH + 50) { baseH = h; applyLayout(false); return; }
+          applyLayout(baseH - h > 80);
         });
       }
 
-      // ② window.resize 兜底（安卓/旧微信）
-      window.addEventListener('resize', function() {
-        const h = window.innerHeight;
-        if (!baseWinH || h > baseWinH + 50) { baseWinH = h; applyLayout(0); return; }
-        const kb = Math.max(0, baseWinH - h);
-        applyLayout(kb);
-      });
-
-      // ③ input blur → 键盘收起
+      // blur 时强制收起状态
       if (input) {
         input.addEventListener('blur', function() {
-          setTimeout(function() { applyLayout(0); }, 150);
+          setTimeout(function() { applyLayout(false); }, 200);
         });
       }
 
-      // 初始化（等 load 后 DOM 尺寸稳定）
+      // 初始化
       if (document.readyState === 'complete') { measure(); }
       else { window.addEventListener('load', measure); }
     })();
