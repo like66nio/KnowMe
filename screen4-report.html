@@ -1482,7 +1482,7 @@
       <div class="chat-input-wrap4" id="chatInputWrap4">
         <textarea class="chat-input" id="chatInput" placeholder="跟知己说说你的感受……" rows="1"
           oninput="autoResize(this); updateSendBtn4();"
-          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();handleSend();}"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();handleSend();}"
         ></textarea>
       </div>
       <!-- 语音录制按钮（语音模式时替代输入框） -->
@@ -3171,8 +3171,8 @@ ${assessSection}
             // 下一轮（确保不是偶发一条）再触发
             regShown = true;
             setTimeout(() => showRegBanner(), 600);
-          } else if (turn >= 8 && regReadyTurn === -1) {
-            // 兜底：8轮后无论如何触发一次，避免永远不推
+          } else if (turn >= 6 && regReadyTurn === -1) {
+            // 兜底：6轮后无论如何触发一次（约2-3分钟对话）
             regShown = true;
             setTimeout(() => showRegBanner(), 600);
           }
@@ -3210,7 +3210,8 @@ ${assessSection}
     const input = document.getElementById('chatInput');
     if (input) {
       input.addEventListener('keydown', e => {
-        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
+        // isComposing=true：中文输入法候选词确认阶段，Enter 不发送
+        if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); handleSend(); }
       });
     }
 

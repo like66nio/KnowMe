@@ -3782,9 +3782,10 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
       else { window.addEventListener('load', recordBase); }
     })();
 
-    /* ──── Enter 发送（Shift+Enter 换行） ──── */
+    /* ──── Enter 发送（Shift+Enter 换行；输入法合成中不触发） ──── */
     document.getElementById('chatInput').addEventListener('keydown', function(e) {
-      if (e.key === 'Enter' && !e.shiftKey) {
+      // isComposing=true：中文/日文输入法候选词确认阶段，Enter 不发送
+      if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
         e.preventDefault();
         sendMsg();
       }
