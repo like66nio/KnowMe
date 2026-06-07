@@ -3912,8 +3912,10 @@ ${assessSection}
       const hdr = document.getElementById('chatModeHeader');
       const bar = document.getElementById('chatBar');
       const tab = document.getElementById('tabBar');
+      // 用 .bottom（元素底边距视口顶部距离）而不是 .height
+      // 这样能正确计算 msgList 的起始 top，不受浏览器地址栏影响
       if (hdr && hdr.offsetParent !== null) {
-        headerH = hdr.getBoundingClientRect().height;
+        headerH = hdr.getBoundingClientRect().bottom;
       }
       if (bar) chatBarH = bar.getBoundingClientRect().height;
       if (tab && tab.offsetParent !== null) tabBarH = tab.getBoundingClientRect().height;

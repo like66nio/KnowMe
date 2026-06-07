@@ -3742,7 +3742,9 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
         const tb = document.querySelector('.top-bar');
         const bb = document.querySelector('.bottom-bar');
         const tab = document.getElementById('tabBar');
-        if (tb)  topBarH    = tb.getBoundingClientRect().height;
+        // 用 .bottom（元素底边距视口顶部距离）而不是 .height
+        // 这样能正确计算 msgList 的起始 top，不受浏览器地址栏影响
+        if (tb)  topBarH    = tb.getBoundingClientRect().bottom;
         if (bb)  bottomBarH = bb.getBoundingClientRect().height;
         if (tab) tabBarH    = tab.getBoundingClientRect().height;
         baseWinH = window.innerHeight;
