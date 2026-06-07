@@ -1641,55 +1641,133 @@ function changeMonth(delta) {
 }
 
 // ══════════════════════════════════════════
-// 生成日记（原型模拟）
+// 生成日记（真实 LLM 生成）
 // ══════════════════════════════════════════
 
+const DIARY_LLM = {
+  apiKey: 'sk-REDACTED',
+  model: 'deepseek-chat',
+  endpoint: 'https://api.deepseek.com/v1/chat/completions',
+};
+
 function triggerGenerate() {
-  const mask = document.getElementById('genMask');
-  mask.classList.add('show');
-  setTimeout(() => {
-    mask.classList.remove('show');
-    const today = new Date();
-    const todayStr = fmtDate(today.getFullYear(), today.getMonth()+1, today.getDate());
+  const today = new Date();
+  const todayStr = fmtDate(today.getFullYear(), today.getMonth()+1, today.getDate());
 
-    // 读取用户从聊天窗摘录的内容
-    const clips = JSON.parse(localStorage.getItem('zjDiaryClips_' + todayStr) || '[]');
-
-    // 将摘录合并到 userSaid（用户说的）或 insight（知己说的），原型用简单拼接模拟 LLM 判断
-    let userSaidExtra = '';
-    let insightExtra = '';
-    clips.forEach(c => {
-      if (c.role === 'user') {
-        userSaidExtra += (userSaidExtra ? '\n' : '') + c.text;
-      } else {
-        insightExtra += (insightExtra ? '\n' : '') + c.text;
-      }
-    });
-
-    if (!DIARY_DATA[todayStr]) {
-      DIARY_DATA[todayStr] = {
-        mood: 'intense',
-        chips: ['焦虑', '紧张', '迷茫'],
-        extract: '今天聊了很多关于选择困难的事情，感觉站在一个岔路口，不知道往哪走。',
-        userSaid: userSaidExtra || '我觉得怎么选都不对，选哪个都会后悔，就一直在转圈圈。',
-        insight: insightExtra || '你说"怎么选都不对"——这种感觉背后，可能不是选项的问题，是你对结果的恐惧在说话。',
-        userNote: ''
-      };
-    } else {
-      // 日记已存在：把摘录追加到对应模块
-      const d = DIARY_DATA[todayStr];
-      if (userSaidExtra) d.userSaid = (d.userSaid ? d.userSaid + '\n\n' : '') + userSaidExtra;
-      if (insightExtra)  d.insight  = (d.insight  ? d.insight  + '\n\n' : '') + insightExtra;
-    }
-
-    // 切到主视图
+  // 如果今天日记已经存在，直接打开
+  if (DIARY_DATA[todayStr]) {
     document.getElementById('mainView').style.display = 'flex';
     document.getElementById('emptyView').style.display = 'none';
     renderCalendar();
     renderDiaryList();
-    // 自动打开今天
     setTimeout(() => openDetail(todayStr), 200);
-  }, 1800);
+    return;
+  }
+
+  // 读取聊天记录
+  let chatLog = [];
+  try { chatLog = JSON.parse(localStorage.getItem('zjChatLog') || '[]'); } catch(e) {}
+
+  // 没有聊天记录：提示用户
+  if (chatLog.length === 0) {
+    showDiaryToast('先去跟知己聊聊，再来生成日记吧～');
+    return;
+  }
+
+  // 显示 loading
+  const mask = document.getElementById('genMask');
+  mask.classList.add('show');
+
+  // 把聊天记录拼成对话文本（最多取最近 60 条，避免 token 超限）
+  const recentLog = chatLog.slice(-60);
+  const dialogText = recentLog.map(m => {
+    const who = m.role === 'user' ? '用户' : '知己';
+    return `${who}：${m.text}`;
+  }).join('\n');
+
+  const prompt = `你是一个情感日记生成助手。下面是用户今天与知己（AI情感伴侣）的对话记录：
+
+---
+${dialogText}
+---
+
+请根据以上对话，生成一篇简短的情感日记，用 JSON 格式返回，字段如下：
+- mood：情绪类型，只能是 "positive"（积极）/"mixed"（复杂）/"low"（低落）/"intense"（激烈/焦虑）之一
+- chips：情绪标签数组，2-3个词，每个词不超过4字，如 ["焦虑","迷茫"] 或 ["感动","释然","满足"]
+- extract：知己视角的今日一句话总结，25字以内，以"今天"或具体细节开头，像一个旁观者记录这一天，不要用第一人称
+- userSaid：用户今天说过的最触动人心的一句话或一段话原文（直接从对话里摘录，保持原话），50字以内
+- insight：知己对用户的一句洞察或回应，直接从对话里摘录知己说过的最有价值的话，50字以内
+
+只返回 JSON，不要任何其他文字。示例格式：
+{"mood":"mixed","chips":["纠结","疲惫"],"extract":"今天在职场关系里兜兜转转，说了很多，却不确定说清楚了没有。","userSaid":"我就是不想让他觉得我软弱，但其实我已经很累了。","insight":"累了不是软弱，是你一直在用力。"}`;
+
+  fetch(DIARY_LLM.endpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${DIARY_LLM.apiKey}`,
+    },
+    body: JSON.stringify({
+      model: DIARY_LLM.model,
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.7,
+      max_tokens: 400,
+    }),
+  })
+  .then(r => r.json())
+  .then(data => {
+    mask.classList.remove('show');
+    let raw = data?.choices?.[0]?.message?.content || '';
+    // 剥掉 markdown 代码块
+    raw = raw.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
+    let result;
+    try { result = JSON.parse(raw); } catch(e) {
+      showDiaryToast('生成失败，请稍后再试');
+      console.error('diary parse error', raw);
+      return;
+    }
+
+    // 合法性兜底
+    const VALID_MOODS = ['positive','mixed','low','intense'];
+    DIARY_DATA[todayStr] = {
+      mood:      VALID_MOODS.includes(result.mood) ? result.mood : 'mixed',
+      chips:     Array.isArray(result.chips) ? result.chips.slice(0,3) : [],
+      extract:   result.extract  || '今天和知己聊了些心里话。',
+      userSaid:  result.userSaid || '',
+      insight:   result.insight  || '',
+      userNote:  '',
+    };
+
+    document.getElementById('mainView').style.display = 'flex';
+    document.getElementById('emptyView').style.display = 'none';
+    renderCalendar();
+    renderDiaryList();
+    setTimeout(() => openDetail(todayStr), 200);
+  })
+  .catch(err => {
+    mask.classList.remove('show');
+    showDiaryToast('网络错误，请稍后再试');
+    console.error('diary gen error', err);
+  });
+}
+
+// 日记页 Toast（复用样式）
+function showDiaryToast(msg) {
+  let t = document.getElementById('diaryToast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'diaryToast';
+    t.style.cssText = 'position:fixed;bottom:100px;left:50%;transform:translateX(-50%) scale(0.85);background:rgba(30,20,64,0.88);color:#fff;padding:9px 18px;border-radius:20px;font-size:13px;letter-spacing:0.3px;white-space:nowrap;z-index:9999;pointer-events:none;opacity:0;transition:opacity 0.2s,transform 0.2s;';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  t.style.transform = 'translateX(-50%) scale(1)';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => {
+    t.style.opacity = '0';
+    t.style.transform = 'translateX(-50%) scale(0.85)';
+  }, 2400);
 }
 
 // ══════════════════════════════════════════
