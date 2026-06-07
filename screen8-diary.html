@@ -110,15 +110,15 @@
   }
   .cal-share-btn {
     position: absolute; right: 20px;
-    width: 28px; height: 28px; border-radius: 50%;
-    background: rgba(255,255,255,0.15);
-    border: 1px solid rgba(255,255,255,0.25);
-    color: rgba(255,255,255,0.7); font-size: 13px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: rgba(255,255,255,0.18);
+    border: none;
     cursor: pointer; display: flex; align-items: center; justify-content: center;
     -webkit-tap-highlight-color: transparent;
     transition: background 0.15s;
   }
-  .cal-share-btn:active { background: rgba(255,255,255,0.28); }
+  .cal-share-btn:active { background: rgba(255,255,255,0.30); }
+  .cal-share-btn svg { width: 11px; height: 11px; }
   .month-arrow {
     width: 22px; height: 22px; border-radius: 50%;
     background: rgba(255,255,255,0.18);
@@ -397,9 +397,9 @@
     flex: 1;
   }
   .detail-regen {
-    font-size: 12px; color: rgba(160,100,255,0.75);
-    background: rgba(160,80,255,0.10);
-    border: 1px solid rgba(160,80,255,0.20);
+    font-size: 12px; color: rgba(220,180,255,0.95);
+    background: rgba(160,80,255,0.20);
+    border: 1px solid rgba(180,120,255,0.45);
     border-radius: 14px; padding: 5px 12px;
     cursor: pointer; -webkit-tap-highlight-color: transparent;
   }
@@ -1134,7 +1134,12 @@
         <button class="month-arrow" onclick="changeMonth(-1)">‹</button>
         <div class="month-label" id="monthLabel">2026年6月</div>
         <button class="month-arrow" onclick="changeMonth(1)">›</button>
-        <button class="cal-share-btn" onclick="shareCalendar()" title="分享情绪日历">↗</button>
+        <button class="cal-share-btn" onclick="shareCalendar()" title="分享情绪日历">
+          <svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.70)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+          </svg>
+        </button>
       </div>
 
       <!-- 情绪日历 -->
