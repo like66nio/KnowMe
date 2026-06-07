@@ -1631,19 +1631,104 @@ function closeDetail() {
 }
 
 function regenConfirm() {
+  if (!openDetailDate) return;
   const noteEl = document.getElementById('detailUserNote');
-  const hasUserNote = noteEl.textContent.trim().length > 0;
-  if (hasUserNote) {
+  const savedUserNote = noteEl.textContent.trim(); // 保留用户写的补充内容
+  if (savedUserNote) {
     if (!confirm('你已经写了补充内容，重新生成会覆盖知己的部分（你写的内容保留）。确认重新生成吗？')) return;
   }
-  // 原型模拟：show loading 1.5s
+
+  // 读取聊天记录
+  let chatLog = [];
+  try { chatLog = JSON.parse(localStorage.getItem('zjChatLog') || '[]'); } catch(e) {}
+  if (chatLog.length === 0) {
+    showDiaryToast('没有找到聊天记录，先去跟知己聊聊吧～');
+    return;
+  }
+
   const mask = document.getElementById('genMask');
   mask.classList.add('show');
-  setTimeout(() => {
+
+  const diaryUserName = localStorage.getItem('zjUserNickname') || localStorage.getItem('knowme_user_name') || '用户';
+  const regenDate = openDetailDate; // 记住当前日期，防止异步回来时已切换
+
+  const recentLog = chatLog.slice(-60);
+  const dialogText = recentLog.map(m => {
+    const who = m.role === 'user' ? diaryUserName : '知己';
+    return `${who}：${m.text}`;
+  }).join('\n');
+
+  const prompt = `你是一个情感日记生成助手。下面是用户（昵称：${diaryUserName}）今天与知己（AI情感伴侣）的对话记录：
+
+---
+${dialogText}
+---
+
+请根据以上对话，生成一篇简短的情感日记，用 JSON 格式返回，字段如下：
+- mood：情绪类型，只能是 "positive"（积极）/"mixed"（复杂）/"low"（低落）/"intense"（激烈/焦虑）之一
+- chips：情绪标签数组，2-3个词，每个词不超过4字，如 ["焦虑","迷茫"] 或 ["感动","释然","满足"]
+- extract：知己视角的今日一句话总结，25字以内，以"今天"或具体细节开头，像一个旁观者记录这一天，不要用第一人称，不要用"用户"这个词，直接用对方的昵称${diaryUserName}
+- userSaid：${diaryUserName}今天说过的最触动人心的一句话或一段话原文（直接从对话里摘录，保持原话），50字以内
+- insight：知己对${diaryUserName}的一句洞察或回应，直接从对话里摘录知己说过的最有价值的话，50字以内
+
+只返回 JSON，不要任何其他文字。示例格式：
+{"mood":"mixed","chips":["纠结","疲惫"],"extract":"今天${diaryUserName}在职场关系里兜兜转转，说了很多，却不确定说清楚了没有。","userSaid":"我就是不想让他觉得我软弱，但其实我已经很累了。","insight":"累了不是软弱，是你一直在用力。"}`;
+
+  fetch(DIARY_LLM.endpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${DIARY_LLM.apiKey}`,
+    },
+    body: JSON.stringify({
+      model: DIARY_LLM.model,
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.7,
+      max_tokens: 400,
+      thinking: { type: 'disabled' },
+    }),
+  })
+  .then(r => r.json())
+  .then(data => {
     mask.classList.remove('show');
-    document.getElementById('detailExtract').textContent = '（重新生成的内容会替换这里）';
-    document.getElementById('detailInsight').textContent = '（知己的新洞察会出现在这里）';
-  }, 1500);
+    const msgObj = data?.choices?.[0]?.message || {};
+    let raw = msgObj.content || msgObj.reasoning_content || '';
+    raw = raw.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
+    let result;
+    try { result = JSON.parse(raw); } catch(e) {
+      showDiaryToast('生成失败，请稍后再试');
+      return;
+    }
+    const VALID_MOODS = ['positive','mixed','low','intense'];
+    // 更新 DIARY_DATA，保留用户写的 userNote
+    DIARY_DATA[regenDate] = {
+      mood:        VALID_MOODS.includes(result.mood) ? result.mood : 'mixed',
+      chips:       Array.isArray(result.chips) ? result.chips.slice(0,3) : [],
+      extract:     result.extract  || '今天和知己聊了些心里话。',
+      userSaid:    result.userSaid || '',
+      insight:     result.insight  || '',
+      userNote:    savedUserNote,  // 保留用户原来写的补充
+      generatedAt: Date.now(),
+    };
+    try { localStorage.setItem('zjDiaryLog', JSON.stringify(DIARY_DATA)); } catch(e) {}
+
+    // 刷新详情页显示
+    if (openDetailDate === regenDate) {
+      const d = DIARY_DATA[regenDate];
+      document.getElementById('detailExtract').textContent  = d.extract;
+      document.getElementById('detailUserSaid').textContent = d.userSaid;
+      document.getElementById('detailInsight').textContent  = d.insight;
+      document.getElementById('detailUserNote').textContent = d.userNote;
+    }
+    renderCalendar();
+    renderDiaryList();
+    showDiaryToast('日记已更新 ✨');
+  })
+  .catch(err => {
+    mask.classList.remove('show');
+    showDiaryToast('网络错误，请稍后再试');
+    console.error('regen error', err);
+  });
 }
 
 // ══════════════════════════════════════════
