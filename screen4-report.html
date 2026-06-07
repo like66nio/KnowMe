@@ -3156,25 +3156,25 @@ ${assessSection}
     const chatMode = new URLSearchParams(window.location.search).get('mode') === 'chat';
     if (!regShown) {
       if (chatMode) {
-        // 随便聊路径：感知用户认同度，认同信号出现后下一轮才推测评邀请
-        // 认同信号：用户消息包含正面词，或用户话变长（>15字表示开始投入）
-        const AFFIRM_WORDS = ['对','是的','嗯','真的','没错','懂','有道理','说到点子','感觉','确实','你说得','厉害','挺准','有点像','有点对','有点准','有点懂','不错'];
+        // 随便聊路径：6-10轮内，结合用户投入度判断时机，不硬推
+        // 投入信号：正面词 / 消息变长（>15字）/ 连续回复（上一条也有内容）
+        const AFFIRM_WORDS = ['对','是的','嗯','真的','没错','懂','有道理','说到点','感觉','确实','你说得','厉害','挺准','有点像','有点对','有点准','有点懂','不错','说中','准','有意思','继续','还有呢','然后呢'];
         const hasAffirmWord = AFFIRM_WORDS.some(w => text.includes(w));
-        const isLonger = text.length >= 15;
+        const isLonger = text.length >= 15;       // 话变长 = 开始投入
         const isEngaged = hasAffirmWord || isLonger;
 
-        if (turn >= 3) {
-          if (regReadyTurn === -1 && isEngaged) {
-            // 首次出现认同信号，记下来
+        if (turn >= 6) {
+          if (isEngaged && regReadyTurn === -1) {
+            // 6轮后首次出现投入信号，记下轮次，下一轮再推（避免偶发）
             regReadyTurn = turn;
-          } else if (regReadyTurn !== -1 && turn > regReadyTurn) {
-            // 下一轮（确保不是偶发一条）再触发
+          } else if (regReadyTurn !== -1 && turn > regReadyTurn && isEngaged) {
+            // 上一轮有信号、这轮还在投入 → 时机好，推出去
             regShown = true;
-            setTimeout(() => showRegBanner(), 600);
-          } else if (turn >= 6 && regReadyTurn === -1) {
-            // 兜底：6轮后无论如何触发一次（约2-3分钟对话）
+            setTimeout(() => showRegBanner(), 800);
+          } else if (turn >= 10) {
+            // 兜底：10轮后无论如何推一次，但等知己回复完再说
             regShown = true;
-            setTimeout(() => showRegBanner(), 600);
+            setTimeout(() => showRegBanner(), 800);
           }
         }
       } else {
