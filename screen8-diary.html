@@ -1351,7 +1351,12 @@ const MOOD_META = {
 };
 
 // 日记数据（key = YYYY-MM-DD），由"生成今日日记"动态填入
-const DIARY_DATA = {};
+// 从 localStorage 恢复日记数据
+let DIARY_DATA = {};
+try {
+  const _saved = localStorage.getItem('zjDiaryLog');
+  if (_saved) DIARY_DATA = JSON.parse(_saved);
+} catch(e) {}
 
 // ══════════════════════════════════════════
 // 状态
@@ -1362,15 +1367,24 @@ let currentMonth = 6; // 1-based
 let selectedDate = null;
 let openDetailDate = null;
 
-// 判断是否有日记数据
-const hasDiaries = Object.keys(DIARY_DATA).length > 0;
-
 // ══════════════════════════════════════════
 // 初始化
 // ══════════════════════════════════════════
 
 document.addEventListener('DOMContentLoaded', () => {
-  if (hasDiaries) {
+  // 编辑字段失焦时自动保存（绑定一次，用 openDetailDate 动态判断当前日记）
+  [['detailExtract','extract'],['detailUserSaid','userSaid'],['detailInsight','insight'],['detailUserNote','userNote']]
+    .forEach(([id, key]) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener('blur', () => {
+        if (!openDetailDate || !DIARY_DATA[openDetailDate]) return;
+        DIARY_DATA[openDetailDate][key] = el.textContent.trim();
+        try { localStorage.setItem('zjDiaryLog', JSON.stringify(DIARY_DATA)); } catch(e) {}
+      });
+    });
+
+  if (Object.keys(DIARY_DATA).length > 0) {
     document.getElementById('mainView').style.display = 'flex';
     document.getElementById('emptyView').style.display = 'none';
     renderCalendar();
@@ -1608,6 +1622,7 @@ function openDetail(dateStr) {
   noteEl.textContent = data.userNote || '';
 
   document.getElementById('diaryDetail').classList.add('open');
+
 }
 
 function closeDetail() {
@@ -1745,7 +1760,11 @@ ${dialogText}
       userSaid:  result.userSaid || '',
       insight:   result.insight  || '',
       userNote:  '',
+      generatedAt: Date.now(),
     };
+
+    // 持久化到 localStorage，切换 tab 回来不会丢失
+    try { localStorage.setItem('zjDiaryLog', JSON.stringify(DIARY_DATA)); } catch(e) {}
 
     document.getElementById('mainView').style.display = 'flex';
     document.getElementById('emptyView').style.display = 'none';
