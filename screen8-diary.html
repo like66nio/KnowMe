@@ -1719,12 +1719,14 @@ ${dialogText}
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.7,
       max_tokens: 400,
+      thinking: { type: 'disabled' },
     }),
   })
   .then(r => r.json())
   .then(data => {
     mask.classList.remove('show');
-    let raw = data?.choices?.[0]?.message?.content || '';
+    const msgObj = data?.choices?.[0]?.message || {};
+    let raw = msgObj.content || msgObj.reasoning_content || '';
     // 剥掉 markdown 代码块
     raw = raw.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
     let result;
