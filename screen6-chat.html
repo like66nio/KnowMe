@@ -1850,7 +1850,7 @@
     const LLM_CONFIG = {
       provider: 'deepseek',
       apiKey: 'sk-REDACTED',
-      model: 'deepseek-v4-pro',
+      model: 'deepseek-v4-flash',
       endpoint: 'https://api.deepseek.com/v1/chat/completions',
     };
 
@@ -3754,18 +3754,18 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
       }
 
       function applyLayout(kbOpen) {
-        // top-bar 底边以下
         msgList.style.top = topBarBottom + 'px';
 
         if (kbOpen) {
-          // 键盘弹起：消息区底边 = 打字框高度（打字框自己贴键盘顶）
-          msgList.style.bottom = bottomBarH + 'px';
+          // 键盘弹起：tab-bar 隐藏，打字框 bottom:0 贴键盘顶，消息区 bottom = 打字框高度
           if (tabBar) tabBar.classList.add('keyboard-up');
+          bottomBar.style.bottom = '0px';
+          msgList.style.bottom = bottomBarH + 'px';
         } else {
-          // 键盘收起：消息区底边 = tab-bar + 打字框
-          const tabH = (tabBar && !tabBar.classList.contains('keyboard-up')) ? tabBarH : 0;
-          msgList.style.bottom = (tabBarH + bottomBarH) + 'px';
+          // 键盘收起：打字框在 tab-bar 上方
           if (tabBar) tabBar.classList.remove('keyboard-up');
+          bottomBar.style.bottom = tabBarH + 'px';
+          msgList.style.bottom = (tabBarH + bottomBarH) + 'px';
         }
 
         if (kbOpen) {
