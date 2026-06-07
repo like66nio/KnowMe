@@ -1850,7 +1850,7 @@
     const LLM_CONFIG = {
       provider: 'deepseek',
       apiKey: 'sk-REDACTED',
-      model: 'deepseek-v4-flash',
+      model: 'deepseek-v4-pro',
       endpoint: 'https://api.deepseek.com/v1/chat/completions',
     };
 
@@ -2275,6 +2275,7 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
             messages: messages,
             max_tokens: 200,
             temperature: 0.9,
+            thinking: { type: 'disabled' },  // 关闭思考模式，避免 content 为 null
           }),
         });
         if (!res.ok) {
@@ -2283,7 +2284,8 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
           return '嗯……我刚刚走神了一下，你刚才说的，再说一遍？';
         }
         const json = await res.json();
-        return json.choices[0].message.content.trim();
+        const msg = json.choices[0].message;
+        return (msg.content || msg.reasoning_content || '').trim();
       } catch (e) {
         console.error('LLM fetch error:', e);
         return '网络好像有点问题，你说的我听到了，稍等……';
