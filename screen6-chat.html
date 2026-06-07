@@ -12,35 +12,25 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-    /* 防止 iOS 键盘弹起时 body/html 跟着滚动 */
     html, body {
-      height: 100%;
+      height: 100%; width: 100%;
       overflow: hidden;
+      background: #7878C8;
     }
 
     body {
-      background: #7878C8;
       font-family: 'ZCOOL XiaoWei', -apple-system, 'PingFang SC', 'Helvetica Neue', sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      /* dvh = dynamic viewport height，键盘弹起时自动收缩；旧浏览器 fallback 到 100vh */
-      min-height: 100vh;
-      min-height: 100dvh;
-      width: 100%;
     }
 
+    /* phone-frame 只做背景容器，不参与布局 */
     .phone-frame {
       width: min(390px, 100vw);
-      /* position:fixed 使 frame 不被微信键盘/地址栏推走 */
       position: fixed;
       top: 0; left: 50%; transform: translateX(-50%);
-      height: 100vh;
-      height: 100dvh;
+      height: 100%;
       background: transparent;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
+      pointer-events: none; /* 子元素各自处理事件 */
+      overflow: visible;
     }
 
     /* ─── 背景渐变 ─── */
@@ -60,10 +50,12 @@
       background-color: #7878C8;
     }
 
-    /* ─── 顶部导航栏 ─── */
+    /* ─── 顶部导航栏（固定在顶，键盘弹起不影响）─── */
     .top-bar {
-      position: relative; z-index: 10;
-      flex-shrink: 0;
+      position: fixed; z-index: 100;
+      top: 0; left: 50%; transform: translateX(-50%);
+      width: min(390px, 100vw);
+      pointer-events: auto;
       display: flex; align-items: center;
       padding: 52px 20px 12px;
       background: rgba(255,255,255,0.08);
@@ -172,11 +164,15 @@
 
     /* ─── 消息列表 ─── */
     .msg-list {
-      position: relative; z-index: 5;
-      flex: 1; overflow-y: auto; overflow-x: hidden;
+      position: fixed; z-index: 5;
+      top: 116px;   /* top-bar 高度，由 JS 动态修正 */
+      bottom: 120px; /* bottom-bar + tab-bar 高度，由 JS 动态修正 */
+      left: 50%; transform: translateX(-50%);
+      width: min(390px, 100vw);
+      pointer-events: auto;
+      overflow-y: auto; overflow-x: hidden;
       padding: 16px 18px;
       display: flex; flex-direction: column; gap: 14px;
-      /* 隐藏滚动条 */
       scrollbar-width: none; -ms-overflow-style: none;
     }
     /* 多选时 padding-left 腾出勾选框空间 */
@@ -317,12 +313,17 @@
 
     /* ─── 底部功能区（输入） ─── */
     .bottom-bar {
-      position: relative; z-index: 10;
-      flex-shrink: 0;
+      position: fixed; z-index: 100;
+      left: 50%; transform: translateX(-50%);
+      width: min(390px, 100vw);
+      pointer-events: auto;
+      /* bottom 由 JS 动态设置（键盘高度 or tab-bar 高度）*/
+      bottom: 60px; /* 默认贴在 tab-bar 上方，JS 会覆盖 */
       background: rgba(255,255,255,0.10);
       backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
       border-top: 1px solid rgba(255,255,255,0.14);
       padding: 10px 12px 10px;
+      transition: bottom 0.15s ease;
     }
 
     /* ─── 附件展开面板 ─── */
@@ -448,18 +449,20 @@
 
     /* ─── Tab Bar ─── */
     .tab-bar {
-      position: relative; z-index: 10;
-      flex-shrink: 0;
+      position: fixed; z-index: 100;
+      bottom: 0; left: 50%; transform: translateX(-50%);
+      width: min(390px, 100vw);
+      pointer-events: auto;
       display: flex; align-items: stretch;
       background: rgba(255,255,255,0.08);
       backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
       border-top: 1px solid rgba(255,255,255,0.12);
       padding-bottom: env(safe-area-inset-bottom, 20px);
-      transition: transform 0.22s cubic-bezier(0.4,0,0.2,1), opacity 0.22s;
+      transition: opacity 0.18s, visibility 0.18s;
     }
     .tab-bar.keyboard-up {
-      transform: translateY(100%);
       opacity: 0;
+      visibility: hidden;
       pointer-events: none;
     }
     .tab-item {
@@ -3705,81 +3708,96 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
       // 'chat' tab 就留在当前页
     }
 
-    /* ──── 键盘弹起：phone-frame 是 position:fixed，同步高度让输入栏始终可见 ──── */
-    (function initViewportFix() {
-      const frame  = document.querySelector('.phone-frame');
-      const tabBar = document.getElementById('tabBar');
-      const input  = document.getElementById('chatInput');
-      if (!frame) return;
+    /* ──── 键盘修复：全 fixed 布局，只调 bottom-bar.bottom 和 msg-list.bottom ────
+     * 原理：top-bar / bottom-bar / tab-bar / msg-list 全是 position:fixed
+     * 键盘弹起 → bottom-bar.bottom = 键盘高度，tab-bar 隐藏，msg-list.bottom 跟着收
+     * 键盘收起 → 恢复默认值
+     * 不再操作 phone-frame 高度，彻底告别 flex 布局问题
+     */
+    (function initKeyboardFix() {
+      const bottomBar = document.querySelector('.bottom-bar');
+      const msgList   = document.getElementById('msgList');
+      const tabBar    = document.getElementById('tabBar');
+      const input     = document.getElementById('chatInput');
+      if (!bottomBar || !msgList) return;
 
-      let baseH = 0;
-      let kbOpen = false;
+      // 页面加载后测量 top-bar 和 tab-bar 的实际高度
+      let topBarH  = 116;  // 初始估算，load 后修正
+      let tabBarH  = 60;   // 初始估算，load 后修正
+      let bottomBarH = 60; // 初始估算，load 后修正
+      let baseWinH = 0;
+      let kbH = 0;
 
-      function scrollMsgToBottom() {
-        const list = document.getElementById('msgList');
-        if (list) list.scrollTop = list.scrollHeight;
+      function measure() {
+        const tb = document.querySelector('.top-bar');
+        const bb = document.querySelector('.bottom-bar');
+        const tab = document.getElementById('tabBar');
+        if (tb)  topBarH    = tb.getBoundingClientRect().height;
+        if (bb)  bottomBarH = bb.getBoundingClientRect().height;
+        if (tab) tabBarH    = tab.getBoundingClientRect().height;
+        baseWinH = window.innerHeight;
+        applyLayout(0); // 初始状态，键盘高度=0
       }
 
-      function applyHeight(vh) {
-        const shrunk = baseH > 0 && vh < baseH - 80;
-        kbOpen = shrunk;
-        // frame 是 fixed：把高度锁到当前可视区域，输入栏自动贴底
-        frame.style.height = vh + 'px';
-        if (tabBar) tabBar.classList.toggle('keyboard-up', shrunk);
-        if (shrunk) {
-          // 键盘弹起：双帧延迟确保 flex 重排完成，再滚到最新消息
-          requestAnimationFrame(() => requestAnimationFrame(scrollMsgToBottom));
-          setTimeout(scrollMsgToBottom, 300);
+      function applyLayout(keyboardHeight) {
+        kbH = keyboardHeight;
+        const kbOpen = keyboardHeight > 80;
+
+        if (kbOpen) {
+          // 键盘弹起：bottom-bar 贴键盘顶，tab-bar 隐藏
+          bottomBar.style.bottom = keyboardHeight + 'px';
+          bottomBar.style.transition = 'bottom 0.15s ease';
+          msgList.style.bottom = (keyboardHeight + bottomBarH) + 'px';
+          if (tabBar) tabBar.classList.add('keyboard-up');
         } else {
-          frame.style.height = '';
+          // 键盘收起：bottom-bar 在 tab-bar 上方
+          bottomBar.style.bottom = tabBarH + 'px';
+          msgList.style.bottom = (tabBarH + bottomBarH) + 'px';
+          if (tabBar) tabBar.classList.remove('keyboard-up');
+        }
+
+        // top 由 top-bar 高度决定
+        msgList.style.top = topBarH + 'px';
+
+        // 滚到底部
+        if (kbOpen) {
+          setTimeout(function() { msgList.scrollTop = msgList.scrollHeight; }, 100);
+          setTimeout(function() { msgList.scrollTop = msgList.scrollHeight; }, 350);
         }
       }
 
-      function recordBase() {
-        // 用 window.innerHeight（微信兼容性最好）
-        baseH = window.innerHeight;
-        frame.style.height = baseH + 'px'; // 先锁一下，防止初始抖动
-        requestAnimationFrame(() => { frame.style.height = ''; });
-      }
-
-      // ① window.resize —— 微信键盘弹起会触发此事件，innerHeight 变小
-      window.addEventListener('resize', function() {
-        const h = window.innerHeight;
-        if (!baseH || h > baseH) { baseH = h; return; } // 初始或屏幕变大时更新基准
-        applyHeight(h);
-      });
-
-      // ② visualViewport 补充（部分新版微信/Safari 只触发这个）
+      // ① visualViewport（iOS Safari 13+ / 新版微信，最准确）
       if (window.visualViewport) {
         window.visualViewport.addEventListener('resize', function() {
-          const vpH = window.visualViewport.height;
-          const winH = window.innerHeight;
-          // 取较小值，避免微信 VP 不准的问题
-          applyHeight(Math.min(vpH, winH));
+          const vph = window.visualViewport.height;
+          const kb  = Math.max(0, baseWinH - vph);
+          applyLayout(kb);
+        });
+        window.visualViewport.addEventListener('scroll', function() {
+          const vph = window.visualViewport.height;
+          const kb  = Math.max(0, baseWinH - vph);
+          applyLayout(kb);
         });
       }
 
-      // ③ focus/blur 最后保险
+      // ② window.resize 兜底（安卓/旧微信）
+      window.addEventListener('resize', function() {
+        const h = window.innerHeight;
+        if (!baseWinH || h > baseWinH + 50) { baseWinH = h; applyLayout(0); return; }
+        const kb = Math.max(0, baseWinH - h);
+        applyLayout(kb);
+      });
+
+      // ③ input blur → 键盘收起
       if (input) {
-        input.addEventListener('focus', function() {
-          // iOS 键盘动画约 300ms，等完成再滚
-          setTimeout(scrollMsgToBottom, 350);
-          setTimeout(scrollMsgToBottom, 600);
-        });
         input.addEventListener('blur', function() {
-          setTimeout(function() {
-            if (kbOpen) {
-              kbOpen = false;
-              frame.style.height = '';
-              if (tabBar) tabBar.classList.remove('keyboard-up');
-            }
-          }, 150);
+          setTimeout(function() { applyLayout(0); }, 150);
         });
       }
 
-      // 初始记录基准（load 后页面高度才稳定）
-      if (document.readyState === 'complete') { recordBase(); }
-      else { window.addEventListener('load', recordBase); }
+      // 初始化（等 load 后 DOM 尺寸稳定）
+      if (document.readyState === 'complete') { measure(); }
+      else { window.addEventListener('load', measure); }
     })();
 
     /* ──── Enter 发送（Shift+Enter 换行；输入法合成中不触发） ──── */
