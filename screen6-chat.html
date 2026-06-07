@@ -196,6 +196,8 @@
       padding: 13px 16px;
       backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
       box-shadow: 0 2px 12px rgba(120,60,200,0.10);
+      user-select: none; -webkit-user-select: none;
+      -webkit-touch-callout: none;
     }
     .ai-bubble p {
       font-size: 14px; color: #1E1440;
@@ -233,6 +235,8 @@
       padding: 12px 16px;
       backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
       box-shadow: 0 3px 14px rgba(140,60,220,0.20);
+      user-select: none; -webkit-user-select: none;
+      -webkit-touch-callout: none;
     }
     .user-bubble p {
       font-size: 14px; color: rgba(255,255,255,0.95);
@@ -1758,6 +1762,11 @@
   <div class="ctx-menu" id="ctxMenu">
     <!-- 内嵌表情选择面板（自动显示，无需点击） -->
     <div class="ctx-emoji-panel" id="ctxEmojiPanel"></div>
+    <div class="ctx-item" onclick="ctxAction('copy')">
+      <span class="ctx-icon">📋</span>
+      <span class="ctx-label">复制文本</span>
+    </div>
+    <div class="ctx-divider"></div>
     <div class="ctx-item" onclick="ctxAction('quote')">
       <span class="ctx-icon">💬</span>
       <span class="ctx-label">引用回复</span>
@@ -2560,17 +2569,23 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
     // 绑定长按事件（用于静态气泡）
     function bindLongPress(bubbleEl, msgId) {
       let timer = null;
+      let moved = false;
 
       const start = (e) => {
+        moved = false;
         timer = setTimeout(() => {
-          openCtxMenu(bubbleEl, msgId, e);
+          if (!moved) {
+            e.preventDefault(); // 阻止微信/浏览器系统长按菜单
+            openCtxMenu(bubbleEl, msgId, e);
+          }
         }, 480);
       };
       const cancel = () => { clearTimeout(timer); timer = null; };
+      const onMove = () => { moved = true; cancel(); };
 
-      bubbleEl.addEventListener('touchstart', start, { passive: true });
+      bubbleEl.addEventListener('touchstart', start, { passive: false });
       bubbleEl.addEventListener('touchend', cancel);
-      bubbleEl.addEventListener('touchmove', cancel);
+      bubbleEl.addEventListener('touchmove', onMove, { passive: true });
       bubbleEl.addEventListener('mousedown', start);
       bubbleEl.addEventListener('mouseup', cancel);
       bubbleEl.addEventListener('mouseleave', cancel);
@@ -2756,7 +2771,27 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
     }
 
     function ctxAction(type) {
-      if (type === 'quote') {
+      if (type === 'copy') {
+        const t = _ctxText;
+        closeCtxMenu();
+        if (!t) return;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(t).then(() => showToast('已复制')).catch(() => {
+            const ta = document.createElement('textarea');
+            ta.value = t; ta.style.cssText = 'position:fixed;opacity:0';
+            document.body.appendChild(ta); ta.select();
+            try { document.execCommand('copy'); showToast('已复制'); } catch(e) { showToast('复制失败'); }
+            document.body.removeChild(ta);
+          });
+        } else {
+          const ta = document.createElement('textarea');
+          ta.value = t; ta.style.cssText = 'position:fixed;opacity:0';
+          document.body.appendChild(ta); ta.select();
+          try { document.execCommand('copy'); showToast('已复制'); } catch(e) { showToast('复制失败'); }
+          document.body.removeChild(ta);
+        }
+
+      } else if (type === 'quote') {
         closeCtxMenu();
         const short = _ctxText.slice(0, 40) + (_ctxText.length > 40 ? '…' : '');
         document.getElementById('quoteText').textContent = short;
