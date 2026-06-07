@@ -1509,7 +1509,7 @@
       </button>
       <!-- 文字输入框 -->
       <div class="chat-input-wrap4" id="chatInputWrap4">
-        <textarea class="chat-input" id="chatInput" placeholder="跟知己说说你的感受……" rows="1"
+        <textarea class="chat-input" id="chatInput" placeholder="跟知己说说……" rows="1"
           oninput="autoResize(this); updateSendBtn4();"
           onkeydown="if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();handleSend();}"
         ></textarea>
@@ -2277,7 +2277,7 @@
       if (!aiName) {
         setTimeout(() => {
           const inp = document.getElementById('chatInput');
-          if (inp) inp.placeholder = '随便说，想到什么说什么……';
+          if (inp) inp.placeholder = '跟知己说说……';
         }, 100);
       }
 
