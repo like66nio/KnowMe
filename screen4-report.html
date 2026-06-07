@@ -462,6 +462,64 @@
     /* 隐藏类 */
     .hidden { display: none !important; }
 
+    /* ─── 长按菜单 ─── */
+    .ctx-overlay {
+      position: fixed; inset: 0;
+      z-index: 200;
+      background: rgba(0,0,0,0.18);
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.18s;
+    }
+    .ctx-overlay.open { opacity: 1; pointer-events: auto; }
+    .ctx-menu {
+      position: fixed;
+      z-index: 201;
+      background: rgba(255,255,255,0.96);
+      backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+      border-radius: 12px;
+      padding: 3px 0;
+      min-width: 160px;
+      max-width: 240px;
+      width: max-content;
+      box-shadow: 0 6px 24px rgba(80,30,180,0.18), 0 1px 0 rgba(255,255,255,0.9) inset;
+      border: 1px solid rgba(160,100,240,0.12);
+      transform: scale(0.86) translateY(-4px);
+      opacity: 0;
+      pointer-events: none;
+      transition: transform 0.16s cubic-bezier(0.34,1.56,0.64,1), opacity 0.14s;
+      transform-origin: top right;
+    }
+    .ctx-menu.open {
+      transform: scale(1) translateY(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .ctx-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px;
+      cursor: pointer;
+      transition: background 0.12s;
+      border-radius: 8px;
+      margin: 2px 4px;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .ctx-item:active { background: rgba(160,100,240,0.16); transform: scale(0.97); }
+    .ctx-icon { font-size: 16px; width: 22px; text-align: center; flex-shrink: 0; }
+    .ctx-label {
+      font-size: 13px; color: #1E1440;
+      font-weight: 500;
+      letter-spacing: 0.3px; line-height: 1.3;
+    }
+    .ctx-divider {
+      height: 1px; background: rgba(160,100,240,0.14);
+      margin: 3px 10px;
+    }
+    .bubble.ctx-highlight, .bubble-user.ctx-highlight {
+      outline: 2px solid rgba(160,100,240,0.50);
+      outline-offset: 2px;
+    }
+
     /* ════════════════════════════════
        内联注册引导（聊天气泡内）
     ════════════════════════════════ */
@@ -2887,6 +2945,10 @@ ${stateSummary}
         if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
       });
     }
+
+    // 给静态初始气泡绑定长按
+    const initBubble = document.querySelector('#msg-init .bubble');
+    if (initBubble && typeof bindLongPress === 'function') bindLongPress(initBubble);
   });
 
   /* ── DOM 构造辅助 ── */
@@ -2901,6 +2963,8 @@ ${stateSummary}
       <div class="bubble">
         <div class="bubble-text">${html}</div>
       </div>`;
+    const bubbleEl = el.querySelector('.bubble');
+    if (typeof bindLongPress === 'function') bindLongPress(bubbleEl);
     return el;
   }
 
@@ -2911,6 +2975,8 @@ ${stateSummary}
       <div class="bubble-user">
         <div class="bubble-user-text">${text}</div>
       </div>`;
+    const bubbleEl = el.querySelector('.bubble-user');
+    if (typeof bindLongPress === 'function') bindLongPress(bubbleEl);
     return el;
   }
 
@@ -3051,6 +3117,136 @@ ${stateSummary}
   // 保底：如果 toggleMic 因任何原因未注册，给一个空函数防止点击报错
   if (typeof window.toggleMic !== 'function') {
     window.toggleMic = function() {};
+  }
+</script>
+
+<!-- 长按菜单 -->
+<div class="ctx-overlay" id="ctxOverlay" onclick="closeCtxMenu()"></div>
+<div class="ctx-menu" id="ctxMenu">
+  <div class="ctx-item" onclick="ctxCopy()">
+    <span class="ctx-icon">📋</span>
+    <span class="ctx-label">复制文本</span>
+  </div>
+  <div class="ctx-divider"></div>
+  <div class="ctx-item" onclick="ctxSaveDiary()">
+    <span class="ctx-icon">📖</span>
+    <span class="ctx-label">保存到日记</span>
+  </div>
+</div>
+
+<script>
+  // 长按菜单逻辑
+  var _ctxTarget = null;
+  var _ctxText = '';
+
+  function bindLongPress(bubbleEl) {
+    var timer = null;
+    var start = function(e) {
+      timer = setTimeout(function() { openCtxMenu(bubbleEl, e); }, 480);
+    };
+    var cancel = function() { clearTimeout(timer); timer = null; };
+    bubbleEl.addEventListener('touchstart', start, { passive: true });
+    bubbleEl.addEventListener('touchend', cancel);
+    bubbleEl.addEventListener('touchmove', cancel);
+    bubbleEl.addEventListener('mousedown', start);
+    bubbleEl.addEventListener('mouseup', cancel);
+    bubbleEl.addEventListener('mouseleave', cancel);
+    bubbleEl.addEventListener('contextmenu', function(e) {
+      e.preventDefault();
+      clearTimeout(timer); timer = null;
+      openCtxMenu(bubbleEl, e);
+    });
+  }
+
+  function openCtxMenu(bubbleEl, e) {
+    _ctxTarget = bubbleEl;
+    _ctxText = bubbleEl.innerText || bubbleEl.textContent || '';
+    bubbleEl.classList.add('ctx-highlight');
+
+    var menu = document.getElementById('ctxMenu');
+    var rect = bubbleEl.getBoundingClientRect();
+    var menuW = 180;
+    var menuH = 100;
+    var MARGIN = 8;
+    var frameLeft = (window.innerWidth - 390) / 2;
+    var isUser = bubbleEl.classList.contains('bubble-user');
+
+    var left;
+    if (isUser) {
+      left = rect.right - menuW;
+      if (left > frameLeft + 390 - menuW - MARGIN) left = frameLeft + 390 - menuW - MARGIN;
+      if (left < frameLeft + MARGIN) left = frameLeft + MARGIN;
+    } else {
+      left = rect.left;
+      if (left < frameLeft + MARGIN) left = frameLeft + MARGIN;
+      if (left + menuW > frameLeft + 390 - MARGIN) left = frameLeft + 390 - menuW - MARGIN;
+    }
+
+    var screenMid = window.innerHeight / 2;
+    var bubbleMid = (rect.top + rect.bottom) / 2;
+    var top, originV;
+    if (bubbleMid > screenMid) {
+      top = rect.top - menuH - 6;
+      if (top < MARGIN) top = MARGIN;
+      originV = 'bottom';
+    } else {
+      top = rect.bottom + 6;
+      if (top + menuH > window.innerHeight - 60) top = window.innerHeight - 60 - menuH;
+      originV = 'top';
+    }
+
+    menu.style.top = top + 'px';
+    menu.style.left = left + 'px';
+    menu.style.transformOrigin = originV + ' ' + (isUser ? 'right' : 'left');
+
+    document.getElementById('ctxOverlay').classList.add('open');
+    requestAnimationFrame(function() { menu.classList.add('open'); });
+    if (navigator.vibrate) navigator.vibrate(30);
+  }
+
+  function closeCtxMenu() {
+    document.getElementById('ctxMenu').classList.remove('open');
+    document.getElementById('ctxOverlay').classList.remove('open');
+    if (_ctxTarget) { _ctxTarget.classList.remove('ctx-highlight'); _ctxTarget = null; }
+    _ctxText = '';
+  }
+
+  function ctxCopy() {
+    closeCtxMenu();
+    if (!_ctxText) return;
+    var t = _ctxText;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(t).then(function() { showToast('已复制'); }).catch(function() { fallbackCopy(t); });
+    } else { fallbackCopy(t); }
+  }
+
+  function fallbackCopy(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); showToast('已复制'); } catch(e) { showToast('复制失败，请手动长按选择'); }
+    document.body.removeChild(ta);
+  }
+
+  function ctxSaveDiary() {
+    var text = _ctxText;
+    var target = _ctxTarget;
+    closeCtxMenu();
+    if (!text) return;
+    var today = new Date();
+    var key = 'zjDiaryClips_' + today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
+    var role = target && target.classList.contains('bubble-user') ? 'user' : 'ai';
+    var existing = JSON.parse(localStorage.getItem(key) || '[]');
+    existing.push({ role: role, text: text, savedAt: Date.now() });
+    localStorage.setItem(key, JSON.stringify(existing));
+    showToast('已保存到今日日记');
+    if (target) {
+      target.style.transition = 'background 0.3s';
+      target.style.background = 'rgba(200,160,255,0.30)';
+      setTimeout(function() { if(target) target.style.background = ''; }, 800);
+    }
   }
 </script>
 </body>
