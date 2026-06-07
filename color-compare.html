@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>知己 · 色系对比</title>
+  <link href="https://fonts.googleapis.com/css2?family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'ZCOOL XiaoWei', -apple-system, 'PingFang SC', sans-serif;
+      background: #E8E0D8;
+      display: flex;
+      gap: 0;
+      min-height: 100vh;
+      justify-content: center;
+    }
+
+    /* 顶部说明 */
+    .top-bar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 44px;
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 40px;
+      z-index: 100;
+      border-bottom: 1px solid rgba(0,0,0,0.08);
+    }
+    .top-label {
+      font-size: 12px;
+      letter-spacing: 0.5px;
+    }
+    .label-a { color: #7A6A52; }
+    .label-b { color: #7A5578; }
+
+    .compare-wrap {
+      display: flex;
+      padding-top: 44px;
+    }
+
+    /* ══════════════════════ 公共卡片结构 ══════════════════════ */
+    .col {
+      width: 390px;
+      min-height: 100vh;
+      padding: 28px 20px 60px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* 分割线 */
+    .divider {
+      width: 1px;
+      background: rgba(0,0,0,0.1);
+    }
+
+    /* 气泡 */
+    .bubble-row { display: flex; gap: 12px; align-items: flex-start; }
+    .bubble { border-radius: 4px 18px 18px 18px; padding: 16px 18px; flex: 1; }
+    .bubble-text { font-size: 15px; line-height: 1.9; letter-spacing: 0.4px; }
+
+    /* 天赋卡 */
+    .trait-cards { display: flex; flex-direction: column; gap: 10px; }
+    .trait-card {
+      border-radius: 16px; padding: 16px 16px;
+      display: flex; align-items: flex-start; gap: 12px;
+    }
+    .trait-icon {
+      width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .trait-name { font-size: 15px; font-weight: 500; margin-bottom: 5px; line-height: 1.4; }
+    .trait-desc { font-size: 12px; line-height: 1.7; }
+
+    /* 状态卡 */
+    .status-card { border-radius: 18px; padding: 20px 18px; }
+    .status-intro { font-size: 13px; line-height: 1.75; margin-bottom: 16px; }
+    .status-rows { display: flex; flex-direction: column; gap: 12px; }
+    .status-row { display: flex; align-items: center; gap: 10px; }
+    .status-label { font-size: 12px; flex-shrink: 0; width: 50px; }
+    .status-bar-wrap { flex: 1; height: 6px; border-radius: 3px; overflow: hidden; }
+    .status-bar-fill { height: 100%; border-radius: 3px; }
+    .status-value { font-size: 11px; flex-shrink: 0; width: 50px; text-align: right; }
+
+    /* 区块标题 */
+    .section-label { font-size: 10px; letter-spacing: 2.5px; margin-bottom: 10px; padding-left: 2px; }
+
+    /* 头像 */
+    .avatar { width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 16px; margin-top: 2px; }
+
+    /* ══════════════════════ 方案 A：暖驼棕 ══════════════════════ */
+    .col-a { background: #C8B89A; }
+
+    .col-a .avatar { background: linear-gradient(135deg, #7A6A52, #5C4A35); box-shadow: 0 2px 8px rgba(60,46,32,0.2); }
+    .col-a .bubble { background: #5C4A35; box-shadow: 0 3px 12px rgba(60,46,32,0.18); }
+    .col-a .bubble-text { color: #F5EEE4; }
+    .col-a .bubble-text .hl { color: #E8C87A; }
+
+    .col-a .section-label { color: #8A7A62; }
+    .col-a .trait-card { background: #F2EDE4; box-shadow: 0 2px 8px rgba(60,46,32,0.1); }
+    .col-a .trait-name { color: #3C2E20; }
+    .col-a .trait-desc { color: #7A6A52; }
+    .col-a .ti-1 { background: linear-gradient(135deg, #5B8FA8, #3D7090); }
+    .col-a .ti-2 { background: linear-gradient(135deg, #C47B8A, #A85E6E); }
+    .col-a .ti-3 { background: linear-gradient(135deg, #7A9E7E, #5C8260); }
+
+    .col-a .status-card { background: #5C4A35; box-shadow: 0 4px 16px rgba(60,46,32,0.2); }
+    .col-a .status-intro { color: rgba(245,238,228,0.75); }
+    .col-a .status-label { color: #C8B8A0; }
+    .col-a .status-bar-wrap { background: rgba(245,238,228,0.1); }
+    .col-a .status-value { color: rgba(245,238,228,0.5); }
+    .col-a .bar-good { background: linear-gradient(90deg, #7A9E7E, #5C8260); }
+    .col-a .bar-mid  { background: linear-gradient(90deg, #C8A86A, #A88850); }
+
+    .col-a .insight { background: #5C4A35; box-shadow: 0 3px 12px rgba(60,46,32,0.18); }
+    .col-a .insight-text { color: #F5EEE4; font-size: 14px; line-height: 1.9; }
+    .col-a .insight-text .em { color: #E8C87A; background: rgba(232,200,122,0.15); border-radius: 3px; padding: 0 2px; }
+
+    /* ══════════════════════ 方案 B：粉紫 ══════════════════════ */
+    /* 色板：
+       背景       #F0E8F2   浅薰衣草紫
+       深色卡片   #5B3B72   深紫茄色
+       浅色卡片   #FAF3FC   近白紫
+       强调色     #E8A0C0   玫瑰粉
+       高亮文字   #F5C6DC   亮粉
+       辅助文字   #A080A0   灰紫
+    */
+    .col-b { background: #EDE0F4; }
+
+    .col-b .avatar { background: linear-gradient(135deg, #9B6AB8, #6B3A8A); box-shadow: 0 2px 8px rgba(80,40,110,0.25); }
+    .col-b .bubble { background: #5B3B72; box-shadow: 0 3px 12px rgba(70,30,100,0.2); }
+    .col-b .bubble-text { color: #F8F0FC; }
+    .col-b .bubble-text .hl { color: #F5C0DA; }
+
+    .col-b .section-label { color: #9A78B0; }
+    .col-b .trait-card { background: #FAF3FC; box-shadow: 0 2px 8px rgba(80,40,110,0.08); }
+    .col-b .trait-name { color: #3D2050; }
+    .col-b .trait-desc { color: #8060A0; }
+    .col-b .ti-1 { background: linear-gradient(135deg, #8A72C8, #6050A8); }
+    .col-b .ti-2 { background: linear-gradient(135deg, #D888B0, #B86090); }
+    .col-b .ti-3 { background: linear-gradient(135deg, #90A8C8, #6888B0); }
+
+    .col-b .status-card { background: #5B3B72; box-shadow: 0 4px 16px rgba(70,30,100,0.25); }
+    .col-b .status-intro { color: rgba(248,240,252,0.75); }
+    .col-b .status-label { color: #D0B8E0; }
+    .col-b .status-bar-wrap { background: rgba(248,240,252,0.12); }
+    .col-b .status-value { color: rgba(248,240,252,0.5); }
+    .col-b .bar-good { background: linear-gradient(90deg, #90C8A0, #68A880); }
+    .col-b .bar-mid  { background: linear-gradient(90deg, #D8B878, #C09858); }
+
+    .col-b .insight { background: #5B3B72; box-shadow: 0 3px 12px rgba(70,30,100,0.2); }
+    .col-b .insight-text { color: #F8F0FC; font-size: 14px; line-height: 1.9; }
+    .col-b .insight-text .em { color: #F5C0DA; background: rgba(245,192,218,0.15); border-radius: 3px; padding: 0 2px; }
+  </style>
+</head>
+<body>
+
+  <div class="top-bar">
+    <div class="top-label label-a">← 方案 A · 暖驼棕（当前方案）</div>
+    <div class="top-label label-b">方案 B · 粉紫 →</div>
+  </div>
+
+  <div class="compare-wrap">
+
+    <!-- ═══════ 方案 A ═══════ -->
+    <div class="col col-a">
+
+      <!-- 开场白 -->
+      <div class="bubble-row">
+        <div class="avatar">🪞</div>
+        <div class="bubble">
+          <div class="bubble-text">嘿，朋友，辛苦作答——<br>我发现你身上有几个<span class="hl">挺特别的地方</span>，很多人没有。</div>
+        </div>
+      </div>
+
+      <!-- 天赋 -->
+      <div>
+        <div class="section-label">· 你身上的天赋与优势 ·</div>
+        <div class="trait-cards">
+          <div class="trait-card">
+            <div class="trait-icon ti-1">⚡</div>
+            <div>
+              <div class="trait-name">想到了就动，而且动对了</div>
+              <div class="trait-desc">你有一种内建的判断力——值得冒的险，你不会犹豫；不值得的，你一眼看穿。</div>
+            </div>
+          </div>
+          <div class="trait-card">
+            <div class="trait-icon ti-2">🎯</div>
+            <div>
+              <div class="trait-name">对自己有要求，而且这要求是真的</div>
+              <div class="trait-desc">你的标准不是为了给别人看，是真的在意自己做出来的东西够不够好。</div>
+            </div>
+          </div>
+          <div class="trait-card">
+            <div class="trait-icon ti-3">🌿</div>
+            <div>
+              <div class="trait-name">越乱的时候，你越清醒</div>
+              <div class="trait-desc">这种冷静，是你身上一个很安静的优势——安静，但很有用。</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 状态 -->
+      <div class="status-card">
+        <div class="status-intro">作为你的知己，我很关心你的状态。从你给到的信息里，我发现——</div>
+        <div class="status-rows">
+          <div class="status-row">
+            <div class="status-label">开心度</div>
+            <div class="status-bar-wrap"><div class="status-bar-fill bar-good" style="width:72%"></div></div>
+            <div class="status-value">还不错</div>
+          </div>
+          <div class="status-row">
+            <div class="status-label">精力</div>
+            <div class="status-bar-wrap"><div class="status-bar-fill bar-mid" style="width:50%"></div></div>
+            <div class="status-value">中等</div>
+          </div>
+          <div class="status-row">
+            <div class="status-label">压力感</div>
+            <div class="status-bar-wrap"><div class="status-bar-fill bar-mid" style="width:62%"></div></div>
+            <div class="status-value">有但能扛</div>
+          </div>
+          <div class="status-row">
+            <div class="status-label">安全感</div>
+            <div class="status-bar-wrap"><div class="status-bar-fill bar-good" style="width:68%"></div></div>
+            <div class="status-value">还踏实</div>
+          </div>
+          <div class="status-row">
+            <div class="status-label">价值感</div>
+            <div class="status-bar-wrap"><div class="status-bar-fill bar-mid" style="width:48%"></div></div>
+            <div class="status-value">在寻找中</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 洞察 -->
+      <div class="bubble-row">
+        <div class="avatar">🪞</div>
+        <div class="bubble insight">
+          <div class="insight-text">有一个细节我想跟你说——<br><br>你整体状态还行，但<span class="em">精力和价值感</span>都是"够用，但不充盈"的状态。不是你不努力，而是你内心的标准比现实产出高——这个差距，每天都在悄悄漏电。</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ═══════ 方案 B ═══════ -->
+    <div class="col col-b">
+
+      <!-- 开场白 -->
+      <div class="bubble-row">
+        <div class="avatar">🪞</div>
+        <div class="bubble">
+          <div class="bubble-text">嘿，朋友，辛苦作答——<br>我发现你身上有几个<span class="hl">挺特别的地方</span>，很多人没有。</div>
+        </div>
+      </div>
+
+      <!-- 天赋 -->
+      <div>
+        <div class="section-label">· 你身上的天赋与优势 ·</div>
+        <div class="trait-cards">
+          <div class="trait-card">
+            <div class="trait-icon ti-1">⚡</div>
+            <div>
+              <div class="trait-name">想到了就动，而且动对了</div>
+              <div class="trait-desc">你有一种内建的判断力——值得冒的险，你不会犹豫；不值得的，你一眼看穿。</div>
+            </div>
+          </div>
+          <div class="trait-card">
+            <div class="trait-icon ti-2">🎯</div>
+            <div>
+              <div class="trait-name">对自己有要求，而且这要求是真的</div>
+              <div class="trait-desc">你的标准不是为了给别人看，是真的在意自己做出来的东西够不够好。</div>
+            </div>
+          </div>
+          <div class="trait-card">
+            <div class="trait-icon ti-3">🌿</div>
+            <div>
+              <div class="trait-name">越乱的时候，你越清醒</div>
+              <div class="trait-desc">这种冷静，是你身上一个很安静的优势——安静，但很有用。</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 状态 -->
+      <div class="status-card">
+        <div class="status-intro">作为你的知己，我很关心你的状态。从你给到的信息里，我发现——</div>
+        <div class="status-rows">
+          <div class="status-row">
+            <div class="status-label">开心度</div>
+            <div class="status-bar-wrap"><div class="status-bar-fill bar-good" style="width:72%"></div></div>
+            <div class="status-value">还不错</div>
+          </div>
+          <div class="status-row">
+            <div class="status-label">精力</div>
+            <div class="status-bar-wrap"><div class="status-bar-fill bar-mid" style="width:50%"></div></div>
+            <div class="status-value">中等</div>
+          </div>
+          <div class="status-row">
+            <div class="status-label">压力感</div>
+            <div class="status-bar-wrap"><div class="status-bar-fill bar-mid" style="width:62%"></div></div>
+            <div class="status-value">有但能扛</div>
+          </div>
+          <div class="status-row">
+            <div class="status-label">安全感</div>
+            <div class="status-bar-wrap"><div class="status-bar-fill bar-good" style="width:68%"></div></div>
+            <div class="status-value">还踏实</div>
+          </div>
+          <div class="status-row">
+            <div class="status-label">价值感</div>
+            <div class="status-bar-wrap"><div class="status-bar-fill bar-mid" style="width:48%"></div></div>
+            <div class="status-value">在寻找中</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 洞察 -->
+      <div class="bubble-row">
+        <div class="avatar">🪞</div>
+        <div class="bubble insight">
+          <div class="insight-text">有一个细节我想跟你说——<br><br>你整体状态还行，但<span class="em">精力和价值感</span>都是"够用，但不充盈"的状态。不是你不努力，而是你内心的标准比现实产出高——这个差距，每天都在悄悄漏电。</div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</body>
+</html>

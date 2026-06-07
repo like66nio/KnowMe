@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>知己 · 真实对话</title>
+  <link href="https://fonts.googleapis.com/css2?family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      background: #7878C8;
+      font-family: 'ZCOOL XiaoWei', -apple-system, 'PingFang SC', 'Helvetica Neue', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      width: 100%;
+    }
+
+    .phone-frame {
+      width: 390px;
+      flex-shrink: 0;
+      height: 100vh;
+      background: transparent;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ─── 背景渐变 ─── */
+    .bg-glow {
+      position: fixed;
+      top: 0; left: 50%; transform: translateX(-50%);
+      width: 390px; height: 100vh;
+      pointer-events: none; z-index: 0;
+      background:
+        radial-gradient(ellipse 340px 320px at 88%  2%,  #F060B0 0%, transparent 55%),
+        radial-gradient(ellipse 260px 280px at 60% -5%,  #C040E0 0%, transparent 50%),
+        radial-gradient(ellipse 280px 260px at 5%  10%,  #8040D0 0%, transparent 52%),
+        radial-gradient(ellipse 320px 340px at 45%  48%, #4060E8 0%, transparent 58%),
+        radial-gradient(ellipse 300px 260px at 15%  72%, #30C0C0 0%, transparent 55%),
+        radial-gradient(ellipse 240px 220px at 82%  68%, #6080E0 0%, transparent 50%),
+        radial-gradient(ellipse 200px 200px at 50%  90%, #50A8D8 0%, transparent 50%);
+      background-color: #7878C8;
+    }
+
+    /* ─── 顶部导航栏 ─── */
+    .top-bar {
+      position: relative; z-index: 10;
+      flex-shrink: 0;
+      display: flex; align-items: center;
+      padding: 52px 20px 12px;
+      background: rgba(255,255,255,0.08);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255,255,255,0.12);
+    }
+    .back-btn {
+      font-size: 13px; color: rgba(255,255,255,0.55);
+      cursor: pointer; padding: 4px 8px 4px 0;
+      letter-spacing: 0.3px;
+    }
+    .back-btn:active { color: rgba(255,255,255,0.85); }
+    .avatar-wrap {
+      width: 42px; height: 42px; border-radius: 14px;
+      background: linear-gradient(135deg, #C890E8, #8B4FC8);
+      flex-shrink: 0;
+      box-shadow: 0 3px 14px rgba(160,80,220,0.35);
+      overflow: hidden;
+    }
+    .avatar-svg { width: 42px; height: 42px; display: block; }
+    .name-area { flex: 1; margin-left: 12px; }
+    .ai-name {
+      font-size: 16px; color: rgba(255,255,255,0.95);
+      letter-spacing: 1px; font-weight: 500;
+    }
+    .sub-text {
+      font-size: 11px; color: rgba(255,255,255,0.42);
+      margin-top: 2px; letter-spacing: 0.3px;
+    }
+
+    /* ─── 右上角注册胶囊 ─── */
+    .reg-pill {
+      margin-left: auto;
+      background: linear-gradient(135deg, #B060E8, #8038C8);
+      border: none;
+      border-radius: 20px; padding: 7px 16px;
+      font-size: 12px; color: #fff;
+      letter-spacing: 0.5px; cursor: pointer;
+      box-shadow: 0 2px 12px rgba(140,50,210,0.45);
+      transition: opacity 0.15s ease;
+      white-space: nowrap;
+    }
+    .reg-pill:active { opacity: 0.82; }
+
+    /* ─── 顶部提示条 ─── */
+    .story-banner {
+      position: relative; z-index: 8;
+      background: rgba(255,255,255,0.10);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      padding: 9px 20px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .banner-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: #FFD060;
+      box-shadow: 0 0 6px rgba(255,200,60,0.6);
+      flex-shrink: 0;
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+    @keyframes pulse-dot {
+      0%,100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    .banner-text {
+      font-size: 11px; color: rgba(255,255,255,0.50);
+      letter-spacing: 0.5px;
+    }
+
+    /* ─── 消息列表 ─── */
+    .msg-list {
+      position: relative; z-index: 5;
+      flex: 1; overflow-y: auto;
+      padding: 18px 18px 32px;
+      display: flex; flex-direction: column; gap: 14px;
+      scrollbar-width: none; -ms-overflow-style: none;
+    }
+    .msg-list::-webkit-scrollbar { display: none; }
+
+    /* 时间分隔 */
+    .time-divider {
+      text-align: center;
+      font-size: 11px; color: rgba(255,255,255,0.30);
+      letter-spacing: 0.5px; margin: 2px 0;
+    }
+
+    /* 知己气泡（左侧） */
+    .bubble-row {
+      display: flex; align-items: flex-end; gap: 10px;
+    }
+    .bubble-avatar {
+      width: 32px; height: 32px; border-radius: 10px;
+      background: linear-gradient(135deg, #C890E8, #8B4FC8);
+      overflow: hidden; flex-shrink: 0; align-self: flex-end;
+    }
+    .bubble-avatar-sm { width: 100%; height: 100%; display: block; }
+    .ai-bubble {
+      max-width: 272px;
+      background: rgba(255,255,255,0.82);
+      border: 1px solid rgba(160,100,240,0.14);
+      border-radius: 4px 18px 18px 18px;
+      padding: 13px 16px;
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 2px 12px rgba(120,60,200,0.10);
+      opacity: 0; transform: translateY(6px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .ai-bubble.visible { opacity: 1; transform: translateY(0); }
+    .ai-bubble p {
+      font-size: 14px; color: #1E1440;
+      line-height: 1.78; letter-spacing: 0.2px;
+    }
+
+    /* 用户气泡（右侧） */
+    .user-row {
+      display: flex; justify-content: flex-end;
+    }
+    .user-bubble {
+      max-width: 272px;
+      background: linear-gradient(135deg, rgba(180,110,255,0.88), rgba(130,65,220,0.88));
+      border: 1px solid rgba(200,150,255,0.25);
+      border-radius: 18px 4px 18px 18px;
+      padding: 12px 16px;
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 3px 14px rgba(140,60,220,0.20);
+      opacity: 0; transform: translateY(6px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .user-bubble.visible { opacity: 1; transform: translateY(0); }
+    .user-bubble p {
+      font-size: 14px; color: rgba(255,255,255,0.95);
+      line-height: 1.75; letter-spacing: 0.2px;
+    }
+
+    /* 打字动画气泡 */
+    .typing-row { display: flex; align-items: flex-end; gap: 10px; }
+    .typing-bubble {
+      max-width: 80px;
+      background: rgba(255,255,255,0.82);
+      border: 1px solid rgba(160,100,240,0.14);
+      border-radius: 4px 18px 18px 18px;
+      padding: 14px 18px;
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      display: flex; align-items: center; gap: 5px;
+    }
+    .dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: rgba(120,60,200,0.45);
+      animation: bounce 1.2s infinite;
+    }
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce {
+      0%,60%,100% { transform: translateY(0); opacity: 0.45; }
+      30%          { transform: translateY(-5px); opacity: 1; }
+    }
+
+    /* ─── 尾部 CTA ─── */
+    .story-end {
+      position: relative; z-index: 5;
+      padding: 0 20px 40px;
+      display: none; /* 初始不占布局空间 */
+      flex-direction: column; align-items: center; gap: 14px;
+      opacity: 0; transform: translateY(10px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+    .story-end.visible {
+      display: flex;
+      opacity: 1; transform: translateY(0);
+    }
+    .end-hint {
+      font-size: 12px; color: rgba(255,255,255,0.40);
+      letter-spacing: 0.5px; text-align: center;
+    }
+    .cta-btn {
+      width: 100%;
+      background: rgba(255,255,255,0.18);
+      border: 1.5px solid rgba(255,255,255,0.35);
+      border-radius: 18px; padding: 16px 20px;
+      display: flex; align-items: center; gap: 14px;
+      cursor: pointer;
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 4px 20px rgba(60,20,140,0.18), 0 1px 0 rgba(255,255,255,0.28) inset;
+      transition: transform 0.12s ease, background 0.12s ease;
+    }
+    .cta-btn:active { transform: scale(0.972); background: rgba(255,255,255,0.28); }
+    .cta-icon {
+      width: 38px; height: 38px; border-radius: 12px; flex-shrink: 0;
+      background: linear-gradient(135deg, #B070E8, #7840C0);
+      box-shadow: 0 3px 12px rgba(160,80,220,0.32);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .cta-body { flex: 1; }
+    .cta-title {
+      font-size: 15px; color: rgba(255,255,255,0.95);
+      letter-spacing: 0.3px; margin-bottom: 3px;
+    }
+    .cta-desc {
+      font-size: 12px; color: rgba(255,255,255,0.52);
+      line-height: 1.5;
+    }
+    .cta-arrow { color: rgba(255,255,255,0.45); font-size: 20px; }
+    .cta-btn-secondary {
+      background: rgba(255,255,255,0.10);
+      border-color: rgba(255,255,255,0.22);
+    }
+    .cta-btn-secondary:active { background: rgba(255,255,255,0.18); }
+    .cta-icon-secondary {
+      background: linear-gradient(135deg, #70C0D8, #4090B8);
+      box-shadow: 0 3px 12px rgba(70,150,200,0.30);
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-glow"></div>
+
+  <!-- 知己头像 SVG symbol -->
+  <svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute">
+    <defs>
+      <radialGradient id="fg6" cx="50%" cy="45%" r="55%">
+        <stop offset="0%" stop-color="#FFFFFF"/>
+        <stop offset="100%" stop-color="#EDE0F8"/>
+      </radialGradient>
+      <radialGradient id="cg6" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#FAF0FF" stop-opacity="0.9"/>
+        <stop offset="100%" stop-color="#E8D4F4" stop-opacity="0.6"/>
+      </radialGradient>
+      <radialGradient id="eg6" cx="38%" cy="35%" r="60%">
+        <stop offset="0%" stop-color="#5C3A8A"/>
+        <stop offset="100%" stop-color="#2A1040"/>
+      </radialGradient>
+      <linearGradient id="sg6" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#FFE566"/>
+        <stop offset="100%" stop-color="#E090FF"/>
+      </linearGradient>
+      <filter id="glow6" x="-30%" y="-30%" width="160%" height="160%">
+        <feGaussianBlur stdDeviation="1.5" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <symbol id="zj-face-6" viewBox="0 0 100 100">
+        <ellipse cx="21" cy="40" rx="16" ry="20" fill="url(#fg6)" opacity="0.9"/>
+        <ellipse cx="79" cy="40" rx="16" ry="20" fill="url(#fg6)" opacity="0.9"/>
+        <ellipse cx="50" cy="24" rx="22" ry="16" fill="url(#fg6)" opacity="0.85"/>
+        <ellipse cx="18" cy="62" rx="14" ry="12" fill="url(#cg6)"/>
+        <ellipse cx="82" cy="62" rx="14" ry="12" fill="url(#cg6)"/>
+        <circle cx="50" cy="55" r="32" fill="url(#fg6)"/>
+        <circle cx="38" cy="50" r="6" fill="url(#eg6)"/>
+        <circle cx="62" cy="50" r="6" fill="url(#eg6)"/>
+        <circle cx="40.5" cy="47.5" r="2" fill="white" opacity="0.85"/>
+        <circle cx="64.5" cy="47.5" r="2" fill="white" opacity="0.85"/>
+        <ellipse cx="50" cy="61" rx="5" ry="3.5" fill="#3A1A5A"/>
+        <path d="M44 66 Q50 71 56 66" stroke="#5A3070" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+        <g filter="url(#glow6)">
+          <path d="M50 10 L52 16 L58 16 L53 20 L55 26 L50 22 L45 26 L47 20 L42 16 L48 16 Z" fill="url(#sg6)" opacity="0.95"/>
+        </g>
+        <circle cx="70" cy="18" r="2.2" fill="#FFE566" opacity="0.8"/>
+        <circle cx="76" cy="24" r="1.4" fill="#E090FF" opacity="0.7"/>
+      </symbol>
+    </defs>
+  </svg>
+
+  <div class="phone-frame">
+
+    <!-- 顶部导航 -->
+    <div class="top-bar">
+      <span class="back-btn" onclick="history.back()">‹ 返回</span>
+      <div class="avatar-wrap">
+        <svg class="avatar-svg" viewBox="0 0 100 100"><use href="#zj-face-6"/></svg>
+      </div>
+      <div class="name-area">
+        <div class="ai-name">知己</div>
+        <div class="sub-text">真实对话片段</div>
+      </div>
+      <div class="reg-pill" onclick="localStorage.setItem('zjRegSource','no_assess'); window.location.href='screen5-register.html'">注册</div>
+    </div>
+
+    <!-- 提示条 -->
+    <div class="story-banner">
+      <div class="banner-dot"></div>
+      <div class="banner-text">以下是知己与真实用户对话的日常片段</div>
+    </div>
+
+    <!-- 消息列表 -->
+    <div class="msg-list" id="msgList">
+      <div class="time-divider">今天 22:14</div>
+    </div>
+
+    <!-- 底部 CTA（对话结束后出现） -->
+    <div class="story-end" id="storyEnd">
+      <div class="end-hint">以上是知己聊天的日常，你想聊什么</div>
+      <div class="cta-btn" onclick="goAssess()">
+        <div class="cta-icon">✦</div>
+        <div class="cta-body">
+          <div class="cta-title">用 5 分钟让我真正了解你</div>
+          <div class="cta-desc">了解你后，我说的每句话都不会泛泛而谈</div>
+        </div>
+        <div class="cta-arrow">›</div>
+      </div>
+      <div class="cta-btn cta-btn-secondary" onclick="goChat()">
+        <div class="cta-icon cta-icon-secondary">🌊</div>
+        <div class="cta-body">
+          <div class="cta-title">先随便聊聊</div>
+          <div class="cta-desc">不想那么正式，就是想说说话</div>
+        </div>
+        <div class="cta-arrow">›</div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const AVATAR_HTML = `<div class="bubble-avatar"><svg class="bubble-avatar-sm" viewBox="0 0 100 100"><use href="#zj-face-6"/></svg></div>`;
+
+    // 对话脚本（精简版，约14条，保留3个情感弧）
+    const SCRIPT = [
+      // 开场
+      { role: 'ai',   text: '嗨～你来了啊！今天咋样，有什么想聊的吗？', pause: 1400 },
+      // 弧1：重逢，狗老了
+      { role: 'user', text: '今天我把我的比熊狗子接回家了，两周没去接它了', pause: 1100 },
+      { role: 'ai',   text: '哇，两周没见！它见到你的时候是不是疯狂摇尾巴，往你身上扑？', pause: 1800 },
+      { role: 'user', text: '不会，他现在14岁了，看到我都很平常的感觉，不像小时候那种活蹦乱跳来接我了', pause: 1200 },
+      { role: 'ai',   text: '哎，那是老朋友的感觉了，不扑不跳，但心里全是你——就是那种"我知道你会来的"踏实感。这眼神你看懂了吗？', pause: 2000 },
+      { role: 'user', text: '我不确定它是不是这么想的，还是说更像是七年之痒，无感了哈哈哈', pause: 1200 },
+      { role: 'ai',   text: '哈哈哈，七年之痒那是人类才玩的套路！狗子14岁相当于人类快80岁啦，它是从"热烈爱"变成"稳稳爱"了——你进门那刻心里肯定"哦，你来啦"，然后继续趴着，但你要是真走开一会儿，它保准得找你。', pause: 2200 },
+      // 弧2：换粮拉稀，给建议
+      { role: 'user', text: '最近有点拉稀，换狗粮了，想换老年犬狗粮，结果一下全换了，拉了一两周了', pause: 1200 },
+      { role: 'ai',   text: '换粮得慢慢来，旧粮掺新粮，一点点过渡。先换回旧粮养养肠胃，等大便正常了，再花一周时间慢慢掺新粮。它这年纪肠胃娇贵，得温柔对待。', pause: 2000 },
+      { role: 'user', text: '你好懂哦', pause: 900 },
+      { role: 'ai',   text: '嘿嘿，被你夸了～主要是你愿意跟我说这些，我才好帮上忙呀。它现在还是在地上趴着吗？还是已经起来溜达了？', pause: 1800 },
+      // 弧3：担心脱水，结尾有分量
+      { role: 'user', text: '我不知道他会不会拉多了脱水，像人一样。精神好像也没之前好', pause: 1200 },
+      { role: 'ai',   text: '那得重视了——精神不好加上持续拉稀，对14岁的狗子来说不是小事。明天一早就带它去医院看看吧，查个便常规，让医生看看到底是换粮刺激还是肠胃有炎症。今晚先保证它有水喝，你多留意着点。', pause: 1800 },
+      { role: 'user', text: '你说得对，我赶紧带他去医院看看吧', pause: 0 },
+    ];
+
+    const list = document.getElementById('msgList');
+    let step = 0;
+
+    let msgCount = 0;
+
+    function scrollBottom() {
+      if (msgCount < 6) return; // 前5条不滚，第6条起开始跟滚
+      list.scrollTo({ top: list.scrollHeight, behavior: 'smooth' });
+    }
+
+    function showTyping() {
+      const row = document.createElement('div');
+      row.className = 'typing-row';
+      row.id = 'typingRow';
+      row.innerHTML = `${AVATAR_HTML}<div class="typing-bubble"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>`;
+      list.appendChild(row);
+      if (msgCount >= 6) {
+        list.scrollTo({ top: list.scrollHeight, behavior: 'smooth' });
+      }
+    }
+
+    function removeTyping() {
+      const tr = document.getElementById('typingRow');
+      if (tr) tr.remove();
+    }
+
+    function appendMessage(role, text) {
+      msgCount++;
+      const el = document.createElement('div');
+      if (role === 'ai') {
+        el.className = 'bubble-row';
+        el.innerHTML = `${AVATAR_HTML}<div class="ai-bubble"><p>${text}</p></div>`;
+        list.appendChild(el);
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => el.querySelector('.ai-bubble').classList.add('visible'));
+        });
+      } else {
+        el.className = 'user-row';
+        el.innerHTML = `<div class="user-bubble"><p>${text}</p></div>`;
+        list.appendChild(el);
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => el.querySelector('.user-bubble').classList.add('visible'));
+        });
+      }
+      scrollBottom();
+    }
+
+    function runStep() {
+      if (step >= SCRIPT.length) {
+        // 全部播放完，显示 CTA
+        setTimeout(() => {
+          const end = document.getElementById('storyEnd');
+          end.style.display = 'flex'; // 先让它出现在布局里
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              end.style.opacity = '1';
+              end.style.transform = 'translateY(0)';
+            });
+          });
+          scrollBottom();
+        }, 800);
+        return;
+      }
+
+      const item = SCRIPT[step];
+      step++;
+
+      if (item.role === 'ai') {
+        // AI: 先显示打字动画，再替换成消息
+        const typingDelay = Math.min(700 + item.text.length * 22, 2600);
+        showTyping();
+        setTimeout(() => {
+          removeTyping();
+          appendMessage('ai', item.text);
+          setTimeout(runStep, item.pause || 900);
+        }, typingDelay);
+      } else {
+        // User: 直接显示，短暂停顿后继续
+        appendMessage('user', item.text);
+        setTimeout(runStep, item.pause || 700);
+      }
+    }
+
+    // 启动
+    window.addEventListener('DOMContentLoaded', () => {
+      // 已注册则把胶囊改成「开始聊」
+      if (localStorage.getItem('zjIsRegistered')) {
+        document.querySelectorAll('.reg-pill').forEach(el => {
+          el.textContent = '开始聊';
+          el.onclick = () => { window.location.href = 'screen6-chat.html'; };
+        });
+      }
+      setTimeout(runStep, 500);
+    });
+
+    function goAssess() {
+      window.location.href = 'screen3-prototype.html';
+    }
+    function goChat() {
+      if (localStorage.getItem('zjIsRegistered')) {
+        window.location.href = 'screen6-chat.html';
+      } else {
+        window.location.href = 'screen4-report.html?mode=chat';
+      }
+    }
+  </script>
+</body>
+</html>

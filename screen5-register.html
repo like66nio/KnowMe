@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>知己 · 注册</title>
+  <link href="https://fonts.googleapis.com/css2?family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      background: #7878C8;
+      font-family: 'ZCOOL XiaoWei', -apple-system, 'PingFang SC', 'Helvetica Neue', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      width: 100%;
+    }
+
+    .phone-frame {
+      width: 390px;
+      flex-shrink: 0;
+      min-height: 100vh;
+      background: transparent;
+      position: relative;
+      display: block;
+      overflow: hidden;
+    }
+
+    /* ─── 背景渐变 ─── */
+    .bg-glow {
+      position: fixed;
+      top: 0; left: 50%; transform: translateX(-50%);
+      width: 390px; height: 100vh;
+      pointer-events: none; z-index: 0;
+      background:
+        radial-gradient(ellipse 340px 320px at 88%  2%,  #F060B0 0%, transparent 55%),
+        radial-gradient(ellipse 260px 280px at 60% -5%,  #C040E0 0%, transparent 50%),
+        radial-gradient(ellipse 280px 260px at 5%  10%,  #8040D0 0%, transparent 52%),
+        radial-gradient(ellipse 320px 340px at 45%  48%, #4060E8 0%, transparent 58%),
+        radial-gradient(ellipse 300px 260px at 15%  72%, #30C0C0 0%, transparent 55%),
+        radial-gradient(ellipse 240px 220px at 82%  68%, #6080E0 0%, transparent 50%),
+        radial-gradient(ellipse 200px 200px at 50%  90%, #50A8D8 0%, transparent 50%);
+      background-color: #7878C8;
+    }
+
+    /* ─── 主内容区 ─── */
+    .reg-page {
+      position: relative; z-index: 2;
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      justify-content: center;
+      padding: 48px 22px 48px;
+      gap: 32px;
+    }
+
+    /* ─── 顶部：知己气泡区 ─── */
+    .top-section {
+      display: flex; flex-direction: column;
+      gap: 8px;
+    }
+    .msg-who {
+      display: flex; align-items: center; gap: 8px;
+    }
+    .zhiji-avatar-wrap {
+      width: 32px; height: 32px; border-radius: 10px;
+      background: linear-gradient(135deg, #C890E8, #8B4FC8);
+      overflow: hidden; flex-shrink: 0;
+      box-shadow: 0 2px 10px rgba(160,80,220,0.32);
+    }
+    .zhiji-svg { width: 100%; height: 100%; display: block; }
+    .msg-who-name {
+      font-size: 12px; color: rgba(55,30,115,0.72); letter-spacing: 0.5px;
+    }
+    .reg-bubble {
+      background: rgba(255,255,255,0.78);
+      border: 1px solid rgba(160,100,240,0.14);
+      border-radius: 4px 18px 18px 18px;
+      padding: 14px 16px;
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 2px 14px rgba(120,70,200,0.09);
+    }
+    .reg-bubble-text {
+      font-size: 15px; color: #1E1440;
+      line-height: 1.75; letter-spacing: 0.2px;
+    }
+    .reg-bubble-text .hl { color: #7030B8; font-weight: 500; }
+
+    /* ─── 底部：注册卡 ─── */
+    .reg-card {
+      background: rgba(255,255,255,0.72);
+      border: 1px solid rgba(160,80,240,0.16);
+      border-radius: 24px; padding: 26px 22px 22px;
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 4px 28px rgba(120,70,200,0.10), 0 1px 0 rgba(255,255,255,0.9) inset;
+      position: relative; overflow: hidden;
+    }
+    .reg-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(180,100,255,0.5), transparent);
+    }
+
+    /* 步骤行 */
+    .step-row {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 12px;
+    }
+    .step-badge {
+      background: linear-gradient(135deg, rgba(160,80,240,0.16), rgba(120,60,210,0.12));
+      border: 1px solid rgba(160,80,240,0.28);
+      border-radius: 20px; padding: 4px 12px;
+      font-size: 11px; color: rgba(100,50,190,0.82);
+      letter-spacing: 1px; white-space: nowrap; flex-shrink: 0;
+    }
+    .step-body { flex: 1; }
+    .step-title {
+      font-size: 12px; color: rgba(60,35,120,0.62);
+      letter-spacing: 0.3px; line-height: 1.5;
+    }
+    .step-hint {
+      font-size: 11px; color: rgba(80,50,140,0.42);
+      letter-spacing: 0.2px; line-height: 1.6;
+      margin-top: 2px; white-space: nowrap;
+    }
+    /* 两步之间的分隔 */
+    .step-divider {
+      height: 1px; background: rgba(140,80,220,0.12);
+      margin: 14px 0;
+    }
+
+    /* 微信主按钮 */
+    .wechat-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #9B59D8, #7B35BE);
+      color: rgba(255,255,255,0.96);
+      border: none; border-radius: 16px; padding: 16px 0;
+      font-size: 15px; font-family: inherit; letter-spacing: 0.5px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+      box-shadow: 0 4px 20px rgba(140,70,210,0.32);
+      margin-bottom: 0;
+      transition: opacity 0.15s, background 0.3s;
+    }
+    .wechat-btn:active { opacity: 0.88; }
+    .wechat-btn.authorized {
+      background: linear-gradient(135deg, #48B86E, #2E9456);
+      box-shadow: 0 4px 20px rgba(60,160,100,0.28);
+      cursor: default;
+    }
+
+    /* 跳过绑定链接 */
+    .skip-bind-link {
+      display: none;
+      font-size: 12px; color: rgba(60,35,120,0.40);
+      cursor: pointer; letter-spacing: 0.3px; text-align: center;
+      margin-top: 12px;
+    }
+    .skip-bind-link:active { color: rgba(100,55,190,0.70); }
+    .wechat-icon {
+      width: 20px; height: 20px;
+    }
+
+    /* 分隔线 */
+    .divider-row {
+      display: flex; align-items: center; gap: 10px; margin: 16px 0 14px;
+    }
+    .divider-line { flex: 1; height: 1px; background: rgba(140,80,220,0.14); }
+    .divider-text { font-size: 11px; color: rgba(80,50,140,0.38); letter-spacing: 0.5px; white-space: nowrap; }
+
+    /* 手机号区（始终展开） */
+    .phone-panel { display: block; }
+
+    /* 手机号输入区 */
+    .phone-row {
+      display: flex; gap: 8px; margin-bottom: 10px;
+      width: 100%;
+    }
+    .phone-prefix {
+      background: rgba(255,255,255,0.60);
+      border: 1px solid rgba(160,100,240,0.18);
+      border-radius: 12px; padding: 14px 12px;
+      font-size: 14px; color: rgba(30,15,70,0.82);
+      font-family: inherit; letter-spacing: 0.5px;
+      display: flex; align-items: center; flex-shrink: 0;
+      white-space: nowrap; height: 50px;
+    }
+    .phone-input {
+      flex: 1; min-width: 0;
+      background: rgba(255,255,255,0.60);
+      border: 1px solid rgba(160,100,240,0.18);
+      border-radius: 12px; padding: 14px 14px;
+      font-size: 15px; font-family: inherit;
+      color: #1E1440; outline: none;
+      letter-spacing: 0.5px; width: 0;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .phone-input:focus {
+      border-color: rgba(160,80,240,0.42);
+      background: rgba(255,255,255,0.80);
+    }
+    .phone-input::placeholder { color: rgba(80,50,140,0.32); }
+
+    .code-row {
+      display: flex; gap: 8px; margin-bottom: 14px;
+      width: 100%;
+    }
+    .code-input {
+      flex: 1; min-width: 0; width: 0;
+      background: rgba(255,255,255,0.60);
+      border: 1px solid rgba(160,100,240,0.18);
+      border-radius: 12px; padding: 14px 14px;
+      font-size: 15px; font-family: inherit;
+      color: #1E1440; outline: none;
+      letter-spacing: 2px;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .code-input:focus {
+      border-color: rgba(160,80,240,0.42);
+      background: rgba(255,255,255,0.80);
+    }
+    .code-input::placeholder { color: rgba(80,50,140,0.32); letter-spacing: 0; }
+
+    .send-code-btn {
+      background: rgba(160,80,240,0.10);
+      border: 1px solid rgba(160,80,240,0.28);
+      border-radius: 12px; padding: 0 16px;
+      font-size: 13px; color: #8040C0;
+      font-family: inherit; letter-spacing: 0.3px; cursor: pointer;
+      white-space: nowrap; flex-shrink: 0;
+      transition: background 0.15s;
+      min-width: 90px;
+    }
+    .send-code-btn:active { background: rgba(160,80,240,0.18); }
+    .send-code-btn.counting { color: rgba(100,60,180,0.45); cursor: default; border-color: rgba(160,80,240,0.14); }
+
+    /* 确认按钮 */
+    .confirm-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #9B59D8, #7B35BE);
+      color: rgba(255,255,255,0.96);
+      border: none; border-radius: 16px; padding: 16px 0;
+      font-size: 15px; font-family: inherit; letter-spacing: 0.5px;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(140,70,210,0.28);
+      transition: opacity 0.15s;
+    }
+    .confirm-btn:active { opacity: 0.88; }
+    .confirm-btn:disabled {
+      background: rgba(160,100,220,0.22);
+      box-shadow: none; cursor: not-allowed;
+      color: rgba(100,60,180,0.45);
+    }
+
+    /* 协议提示 */
+    .agree-text {
+      text-align: center; margin-top: 16px;
+    }
+    .agree-privacy {
+      font-size: 11px; color: rgba(60,35,120,0.72);
+      letter-spacing: 0.2px; line-height: 1.5;
+      margin-bottom: 10px;
+    }
+    .agree-divider {
+      height: 1px; background: rgba(140,80,220,0.12);
+      margin: 0 8px 10px;
+    }
+    .agree-terms {
+      font-size: 10px; color: rgba(60,35,120,0.38);
+      letter-spacing: 0.2px; line-height: 1.5;
+    }
+    .agree-terms a {
+      color: rgba(100,55,190,0.55); text-decoration: none;
+    }
+
+    /* ─── 手机绑定页（微信注册成功后） ─── */
+    .bind-page {
+      display: none;
+      position: fixed;
+      top: 0; left: 50%; transform: translateX(-50%);
+      width: 390px; height: 100vh;
+      z-index: 90;
+      flex-direction: column; align-items: center; justify-content: center;
+      padding: 0 28px;
+      background: transparent;
+      opacity: 0; transition: opacity 0.5s ease;
+    }
+    .bind-page.visible { display: flex; }
+    .bind-page.shown   { opacity: 1; }
+
+    .bind-card {
+      width: 100%;
+      background: rgba(255,255,255,0.72);
+      border: 1px solid rgba(160,80,240,0.16);
+      border-radius: 24px; padding: 28px 22px 22px;
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 4px 28px rgba(120,70,200,0.10), 0 1px 0 rgba(255,255,255,0.9) inset;
+      position: relative; overflow: hidden;
+    }
+    .bind-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(180,100,255,0.5), transparent);
+    }
+    .bind-title {
+      font-size: 17px; color: rgba(20,10,60,0.92);
+      letter-spacing: 0.3px; margin-bottom: 8px; text-align: center;
+    }
+    .bind-sub {
+      font-size: 12px; color: rgba(60,35,120,0.55);
+      text-align: center; line-height: 1.7; letter-spacing: 0.2px;
+      margin-bottom: 22px;
+    }
+    .bind-skip {
+      font-size: 12px; color: rgba(60,35,120,0.40);
+      cursor: pointer; letter-spacing: 0.3px; text-align: center;
+      margin-top: 14px;
+    }
+    .bind-skip:active { color: rgba(100,55,190,0.70); }
+
+    /* ─── 命名后选择卡 ─── */
+    #namingContent { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 0; }
+    #postNameChoices { width: 100%; }
+    .post-choice-card {
+      background: rgba(255,255,255,0.72);
+      border: 1.5px solid rgba(160,80,240,0.20);
+      border-radius: 18px; padding: 16px 18px;
+      cursor: pointer;
+      display: flex; align-items: center; gap: 12px;
+      transition: background 0.12s ease;
+      margin-bottom: 12px;
+    }
+    .post-choice-card:active { background: rgba(255,255,255,0.88); }
+    .post-choice-secondary {
+      background: rgba(255,255,255,0.42);
+      border-color: rgba(160,80,240,0.12);
+    }
+    .post-choice-icon {
+      width: 38px; height: 38px; border-radius: 12px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 17px;
+    }
+    .post-choice-icon-assess { background: linear-gradient(135deg, #B070E8, #7840C0); box-shadow: 0 3px 12px rgba(160,80,220,0.30); }
+    .post-choice-icon-chat   { background: linear-gradient(135deg, #70C0D8, #4090B8); box-shadow: 0 3px 12px rgba(70,150,200,0.28); }
+    .post-choice-body { flex: 1; min-width: 0; }
+    .post-choice-title { font-size: 14px; color: rgba(20,10,60,0.90); letter-spacing: 0.3px; line-height: 1.4; }
+    .post-choice-desc  { font-size: 11px; color: rgba(60,30,110,0.52); margin-top: 3px; line-height: 1.5; }
+    .post-choice-arrow { color: rgba(80,40,160,0.38); font-size: 20px; align-self: center; flex-shrink: 0; }
+
+    /* ─── 命名页（注册后显示） ─── */
+    .naming-page {
+      display: none;
+      position: fixed;
+      top: 0; left: 50%; transform: translateX(-50%);
+      width: 390px; height: 100vh;
+      z-index: 100;
+      flex-direction: column; align-items: center; justify-content: center;
+      padding: 0 28px;
+      gap: 0;
+      background: transparent;
+      opacity: 0; transition: opacity 0.5s ease;
+    }
+    .naming-page.visible {
+      display: flex;
+    }
+    .naming-page.shown {
+      opacity: 1;
+    }
+
+    /* 命名页内容 */
+    .naming-avatar-wrap {
+      width: 72px; height: 72px; border-radius: 22px;
+      background: linear-gradient(135deg, #C890E8, #8B4FC8);
+      overflow: hidden; margin-bottom: 28px;
+      box-shadow: 0 6px 28px rgba(160,80,220,0.35);
+    }
+    .naming-title {
+      font-size: 20px; color: rgba(30,15,70,0.92);
+      letter-spacing: 0.5px; text-align: center;
+      margin-bottom: 10px; line-height: 1.5;
+    }
+    .naming-sub {
+      font-size: 13px; color: rgba(60,35,120,0.62);
+      letter-spacing: 0.3px; text-align: center;
+      margin-bottom: 32px; line-height: 1.7;
+    }
+
+    /* 命名建议气泡 */
+    .naming-suggestions {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      justify-content: center; margin-bottom: 24px;
+    }
+    .name-chip {
+      background: rgba(255,255,255,0.68);
+      border: 1px solid rgba(160,100,240,0.18);
+      border-radius: 20px; padding: 8px 16px;
+      font-size: 13px; color: rgba(60,30,110,0.72);
+      cursor: pointer; letter-spacing: 0.3px;
+      transition: all 0.15s;
+      box-shadow: 0 1px 6px rgba(120,70,200,0.07);
+    }
+    .name-chip:active, .name-chip.selected {
+      background: linear-gradient(135deg, rgba(160,80,240,0.14), rgba(120,60,210,0.10));
+      border-color: rgba(160,80,240,0.36);
+      color: #7030B8;
+    }
+
+    .naming-input-wrap {
+      width: 100%; margin-bottom: 20px;
+      background: rgba(255,255,255,0.72);
+      border: 1px solid rgba(160,100,240,0.18);
+      border-radius: 16px; padding: 14px 18px;
+      position: relative;
+      backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+      box-shadow: 0 2px 12px rgba(120,70,200,0.07);
+      transition: border-color 0.2s;
+    }
+    .naming-input-wrap:focus-within {
+      border-color: rgba(160,80,240,0.42);
+    }
+    .naming-input {
+      width: 100%; border: none; background: transparent;
+      font-size: 16px; font-family: inherit;
+      color: #1E1440; outline: none; letter-spacing: 0.5px;
+      padding-right: 36px;
+    }
+    .naming-input::placeholder { color: rgba(80,50,140,0.32); font-size: 14px; }
+    .naming-char-count {
+      position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+      font-size: 11px; color: rgba(80,50,140,0.35);
+      pointer-events: none; letter-spacing: 0;
+    }
+
+    .naming-confirm-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #9B59D8, #7B35BE);
+      color: rgba(255,255,255,0.96);
+      border: none; border-radius: 16px; padding: 16px 0;
+      font-size: 15px; font-family: inherit; letter-spacing: 0.5px;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(140,70,210,0.28);
+      transition: opacity 0.15s;
+      margin-bottom: 12px;
+    }
+    .naming-confirm-btn:active { opacity: 0.88; }
+
+    .naming-skip {
+      font-size: 12px; color: rgba(60,35,120,0.48);
+      cursor: pointer; letter-spacing: 0.3px; text-align: center;
+    }
+    .naming-skip:active { color: rgba(100,55,190,0.72); }
+
+    /* ─── 动画 ─── */
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .anim-1 { animation: fadeSlideUp 0.5s ease both; }
+    .anim-2 { animation: fadeSlideUp 0.5s ease 0.12s both; }
+    .anim-3 { animation: fadeSlideUp 0.5s ease 0.24s both; }
+    .anim-4 { animation: fadeSlideUp 0.5s ease 0.36s both; }
+
+  </style>
+</head>
+<body>
+
+<!-- 知己头像 SVG 符号定义 -->
+<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute">
+  <defs>
+    <radialGradient id="furGrad" cx="50%" cy="45%" r="55%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#EDE0F8"/>
+    </radialGradient>
+    <radialGradient id="cheekGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FAF0FF" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#E8D4F4" stop-opacity="0.6"/>
+    </radialGradient>
+    <radialGradient id="eyeGrad" cx="38%" cy="35%" r="60%">
+      <stop offset="0%" stop-color="#5C3A8A"/>
+      <stop offset="100%" stop-color="#2A1040"/>
+    </radialGradient>
+    <linearGradient id="starGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFE566"/>
+      <stop offset="100%" stop-color="#E090FF"/>
+    </linearGradient>
+    <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="1.5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <symbol id="zhiji-face" viewBox="0 0 100 100">
+      <ellipse cx="21" cy="40" rx="16" ry="20" fill="url(#furGrad)" opacity="0.9"/>
+      <ellipse cx="79" cy="40" rx="16" ry="20" fill="url(#furGrad)" opacity="0.9"/>
+      <ellipse cx="50" cy="24" rx="22" ry="16" fill="url(#furGrad)" opacity="0.85"/>
+      <ellipse cx="18" cy="62" rx="14" ry="12" fill="url(#cheekGrad)"/>
+      <ellipse cx="82" cy="62" rx="14" ry="12" fill="url(#cheekGrad)"/>
+      <circle cx="50" cy="55" r="32" fill="url(#furGrad)"/>
+      <circle cx="38" cy="50" r="6" fill="url(#eyeGrad)"/>
+      <circle cx="62" cy="50" r="6" fill="url(#eyeGrad)"/>
+      <circle cx="40.5" cy="47.5" r="2" fill="white" opacity="0.85"/>
+      <circle cx="64.5" cy="47.5" r="2" fill="white" opacity="0.85"/>
+      <ellipse cx="50" cy="61" rx="5" ry="3.5" fill="#3A1A5A"/>
+      <path d="M44 66 Q50 71 56 66" stroke="#5A3070" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+      <g filter="url(#softGlow)">
+        <path d="M50 10 L52 16 L58 16 L53 20 L55 26 L50 22 L45 26 L47 20 L42 16 L48 16 Z" fill="url(#starGrad)" opacity="0.95"/>
+      </g>
+      <circle cx="70" cy="18" r="2.2" fill="#FFE566" opacity="0.8"/>
+      <circle cx="76" cy="24" r="1.4" fill="#E090FF" opacity="0.7"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="phone-frame">
+  <div class="bg-glow"></div>
+
+  <!-- ═══ 注册页主体 ═══ -->
+  <div class="reg-page" id="regPage">
+
+    <div class="top-section anim-1">
+      <div class="msg-who">
+        <div class="zhiji-avatar-wrap">
+          <svg class="zhiji-svg" viewBox="0 0 100 100"><use href="#zhiji-face"/></svg>
+        </div>
+        <div class="msg-who-name">知己</div>
+      </div>
+      <div class="reg-bubble">
+        <div class="reg-bubble-text" id="regBubbleText">
+          <!-- 由 JS 动态填入 -->
+        </div>
+      </div>
+    </div>
+
+    <!-- 注册卡 -->
+    <div class="reg-card anim-2">
+
+      <!-- 第一步 -->
+      <div class="step-row">
+        <span class="step-badge">第一步</span>
+        <div class="step-body">
+          <div class="step-title">微信注册</div>
+        </div>
+      </div>
+      <button class="wechat-btn" id="wechatBtn" onclick="onWechatLogin()">
+        <svg class="wechat-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M8.69 5C5.07 5 2 7.56 2 10.72c0 1.82.96 3.43 2.46 4.48l-.61 1.8 2.05-1.01c.7.19 1.44.3 2.2.3.2 0 .4-.01.6-.02C8.46 15.8 8.4 15.3 8.4 14.79c0-2.86 2.77-5.18 6.19-5.18.2 0 .39.01.58.03C14.47 7.22 11.84 5 8.69 5Z" fill="white"/>
+          <path d="M21.99 14.79c0-2.86-2.77-5.18-6.19-5.18-3.42 0-6.19 2.32-6.19 5.18 0 2.86 2.77 5.18 6.19 5.18.74 0 1.45-.11 2.1-.3l1.94.96-.58-1.71c1.41-1.01 2.33-2.53 2.33-4.13Zm-8.24-.74a.79.79 0 1 1 0-1.58.79.79 0 0 1 0 1.58Zm4.11 0a.79.79 0 1 1 0-1.58.79.79 0 0 1 0 1.58Z" fill="white"/>
+        </svg>
+        微信注册
+      </button>
+
+      <div class="step-divider"></div>
+
+      <!-- 第二步 -->
+      <div class="step-row">
+        <span class="step-badge">第二步</span>
+        <div class="step-body">
+          <div class="step-title">绑定手机号</div>
+          <div class="step-hint">即使微信换了，对话和报告都不会丢</div>
+        </div>
+      </div>
+
+      <!-- 手机号区 -->
+      <div class="phone-panel" id="phonePanel">
+        <div class="phone-row">
+          <div class="phone-prefix">+86</div>
+          <input class="phone-input" id="phoneInput" type="tel" maxlength="11"
+            placeholder="手机号" oninput="onPhoneInput()">
+        </div>
+        <div class="code-row">
+          <input class="code-input" id="codeInput" type="number" maxlength="6"
+            placeholder="验证码" oninput="onCodeInput()">
+          <button class="send-code-btn" id="sendCodeBtn" onclick="onSendCode()">获取验证码</button>
+        </div>
+        <button class="confirm-btn" id="confirmBtn" onclick="onConfirm()" disabled>
+          确认，开始记住你
+        </button>
+      </div>
+
+      <!-- 隐私说明 + 协议 -->
+      <div class="agree-text">
+        <div class="agree-privacy">你的对话只有你能看，未经用户授权产品团队不可见</div>
+        <div class="agree-divider"></div>
+        <div class="agree-terms">注册即表示同意 <a href="#">用户协议</a> 和 <a href="#">隐私政策</a></div>
+      </div>
+    </div>
+
+  </div><!-- /reg-page -->
+
+  <!-- ═══ 手机绑定页（微信注册成功后，命名前） ═══ -->
+  <div class="bind-page" id="bindPage">
+    <div class="bind-card">
+      <div class="bind-title">再加一步，保护你的账号</div>
+      <div class="bind-sub">
+        绑定手机号后，即使微信换了，<br>你的记录和报告都不会丢。
+      </div>
+
+      <!-- 手机号输入 -->
+      <div class="phone-row">
+        <div class="phone-prefix">+86</div>
+        <input class="phone-input" id="bindPhoneInput" type="tel" maxlength="11"
+          placeholder="手机号" oninput="onBindPhoneInput()">
+      </div>
+      <!-- 验证码 -->
+      <div class="code-row">
+        <input class="code-input" id="bindCodeInput" type="number" maxlength="6"
+          placeholder="验证码" oninput="onBindCodeInput()">
+        <button class="send-code-btn" id="bindSendCodeBtn" onclick="onBindSendCode()">获取验证码</button>
+      </div>
+      <!-- 确认绑定 -->
+      <button class="confirm-btn" id="bindConfirmBtn" onclick="onBindConfirm()" disabled>
+        绑定，更安心
+      </button>
+
+      <div class="bind-skip" onclick="onBindSkip()">先跳过，以后再绑</div>
+    </div>
+  </div>
+
+  <!-- ═══ 命名页（注册后） ═══ -->
+  <div class="naming-page" id="namingPage">
+
+    <!-- 命名内容（默认显示） -->
+    <div id="namingContent">
+      <div class="naming-avatar-wrap">
+        <svg class="zhiji-svg" viewBox="0 0 100 100"><use href="#zhiji-face"/></svg>
+      </div>
+
+      <div class="naming-title">给我起个你喜欢的名字吧</div>
+      <div class="naming-sub">
+        以后你可以用这个名字叫我啦
+      </div>
+
+      <!-- 名字建议 -->
+      <div class="naming-suggestions" id="namingChips">
+        <div class="name-chip" onclick="selectChip(this, '知知')">知知</div>
+        <div class="name-chip" onclick="selectChip(this, '暖暖')">暖暖</div>
+        <div class="name-chip" onclick="selectChip(this, '叮当')">叮当</div>
+        <div class="name-chip" onclick="selectChip(this, '哆啦')">哆啦</div>
+      </div>
+
+      <!-- 自定义输入 -->
+      <div class="naming-input-wrap">
+        <input class="naming-input" id="namingInput" type="text"
+          placeholder="或者自己起一个……"
+          maxlength="8"
+          oninput="onNamingInput()">
+        <span class="naming-char-count" id="charCount">0/8</span>
+      </div>
+
+      <button class="naming-confirm-btn" id="namingConfirmBtn" onclick="onNamingConfirm()">
+        就叫这个
+      </button>
+
+      <div class="naming-skip" onclick="onNamingSkip()">跳过，直接开始</div>
+    </div>
+
+    <!-- 第二步：问用户叫什么 -->
+    <div id="userNamingContent" style="display:none; flex-direction:column; align-items:center; width:100%;">
+      <div class="naming-avatar-wrap">
+        <svg class="zhiji-svg" viewBox="0 0 100 100"><use href="#zhiji-face"/></svg>
+      </div>
+      <div class="naming-title" id="userNamingTitle">那我怎么称呼你呢？</div>
+      <div class="naming-sub">你喜欢别人怎么叫你，就告诉我</div>
+
+      <div class="naming-input-wrap">
+        <input class="naming-input" id="userNamingInput" type="text"
+          placeholder="或者直接告诉我你的名字……"
+          maxlength="8"
+          oninput="onUserNamingInput()">
+        <span class="naming-char-count" id="userCharCount">0/8</span>
+      </div>
+
+      <button class="naming-confirm-btn" id="userNamingConfirmBtn" onclick="onUserNamingConfirm()">
+        就这么叫
+      </button>
+      <div class="naming-skip" onclick="onUserNamingSkip()">跳过，直接开始</div>
+    </div>
+
+    <!-- 命名后选择面板（无测评时显示） -->
+    <div id="postNameChoices" style="display:none; flex-direction:column; width:100%;">
+      <div class="naming-title" style="margin-bottom:20px;">接下来，你想怎么开始？</div>
+      <div class="post-choice-card" onclick="window.location.href='screen3-prototype.html'">
+        <div class="post-choice-icon post-choice-icon-assess">✦</div>
+        <div class="post-choice-body">
+          <div class="post-choice-title">用 5 分钟让我真正了解你</div>
+          <div class="post-choice-desc">了解你后，我说的每句话都不会泛泛而谈</div>
+        </div>
+        <div class="post-choice-arrow">›</div>
+      </div>
+      <div class="post-choice-card post-choice-secondary" onclick="window.location.href='screen6-chat.html'">
+        <div class="post-choice-icon post-choice-icon-chat">🌊</div>
+        <div class="post-choice-body">
+          <div class="post-choice-title">先随便聊聊</div>
+          <div class="post-choice-desc">不想那么正式，就是想说说话</div>
+        </div>
+        <div class="post-choice-arrow">›</div>
+      </div>
+    </div>
+
+  </div>
+
+</div><!-- /phone-frame -->
+
+<script>
+  /* ── 倒计时 ── */
+  let countdown = null;
+
+  function onPhoneInput() {
+    const phone = document.getElementById('phoneInput').value;
+    const btn = document.getElementById('sendCodeBtn');
+    // 只在11位且未在倒计时时启用
+    if (phone.length === 11 && !countdown) {
+      btn.style.color = '#8040C0';
+      btn.style.borderColor = 'rgba(160,80,240,0.28)';
+    }
+  }
+
+  function onSendCode() {
+    const phone = document.getElementById('phoneInput').value;
+    if (phone.length < 11) return;
+    if (countdown) return;
+
+    // Demo：自动填入测试验证码
+    const codeInput = document.getElementById('codeInput');
+    codeInput.value = '123456';
+    onCodeInput();
+
+    const btn = document.getElementById('sendCodeBtn');
+    let sec = 60;
+    btn.textContent = `${sec}s 后重发`;
+    btn.classList.add('counting');
+
+    countdown = setInterval(() => {
+      sec--;
+      btn.textContent = `${sec}s 后重发`;
+      if (sec <= 0) {
+        clearInterval(countdown);
+        countdown = null;
+        btn.textContent = '重新获取';
+        btn.classList.remove('counting');
+      }
+    }, 1000);
+  }
+
+  function onCodeInput() {
+    const code = document.getElementById('codeInput').value;
+    const phone = document.getElementById('phoneInput').value;
+    const btn = document.getElementById('confirmBtn');
+    btn.disabled = !(phone.length === 11 && code.length === 6);
+  }
+
+  function onConfirm() {
+    // 手机号注册：直接进入命名页（已有手机号，无需再绑定）
+    localStorage.setItem('zjIsRegistered', 'true');
+    showPage('regPage', 'namingPage');
+  }
+
+  let wechatAuthorized = false;
+
+  function onWechatLogin() {
+    if (wechatAuthorized) return;
+    wechatAuthorized = true;
+
+    const btn = document.getElementById('wechatBtn');
+    btn.classList.add('authorized');
+    btn.innerHTML = '<span style="font-size:18px;line-height:1">✓</span> 微信已授权';
+
+    // 微信授权后，确认按钮文案更新，并解锁"跳过绑定"入口
+    document.getElementById('confirmBtn').textContent = '绑定，更安心';
+
+    // 允许不填手机号直接跳过（在确认按钮下方显示跳过链接）
+    let skip = document.getElementById('skipBindLink');
+    if (!skip) {
+      skip = document.createElement('div');
+      skip.id = 'skipBindLink';
+      skip.className = 'skip-bind-link';
+      skip.textContent = '先跳过，直接开始';
+      skip.onclick = onSkipBind;
+      document.getElementById('confirmBtn').insertAdjacentElement('afterend', skip);
+    }
+    skip.style.display = 'block';
+  }
+
+  function onSkipBind() {
+    localStorage.setItem('zjIsRegistered', 'true');
+    showPage('regPage', 'namingPage');
+  }
+
+  /* ── 手机绑定页交互 ── */
+  let bindCountdown = null;
+
+  function onBindPhoneInput() {
+    const phone = document.getElementById('bindPhoneInput').value;
+    if (phone.length === 11 && !bindCountdown) {
+      const btn = document.getElementById('bindSendCodeBtn');
+      btn.style.color = '#8040C0';
+    }
+  }
+
+  function onBindSendCode() {
+    const phone = document.getElementById('bindPhoneInput').value;
+    if (phone.length < 11) return;
+    if (bindCountdown) return;
+
+    // Demo：自动填入测试验证码
+    const codeInput = document.getElementById('bindCodeInput');
+    codeInput.value = '123456';
+    onBindCodeInput();
+
+    const btn = document.getElementById('bindSendCodeBtn');
+    let sec = 60;
+    btn.textContent = `${sec}s 后重发`;
+    btn.classList.add('counting');
+    bindCountdown = setInterval(() => {
+      sec--;
+      btn.textContent = `${sec}s 后重发`;
+      if (sec <= 0) {
+        clearInterval(bindCountdown);
+        bindCountdown = null;
+        btn.textContent = '重新获取';
+        btn.classList.remove('counting');
+      }
+    }, 1000);
+  }
+
+  function onBindCodeInput() {
+    const code = document.getElementById('bindCodeInput').value;
+    const phone = document.getElementById('bindPhoneInput').value;
+    document.getElementById('bindConfirmBtn').disabled = !(phone.length === 11 && code.length === 6);
+  }
+
+  function onBindConfirm() {
+    // 绑定成功 → 进命名页
+    localStorage.setItem('zjIsRegistered', 'true');
+    showPage('bindPage', 'namingPage');
+  }
+
+  function onBindSkip() {
+    // 跳过绑定 → 直接进命名页
+    localStorage.setItem('zjIsRegistered', 'true');
+    showPage('bindPage', 'namingPage');
+  }
+
+  /* ── 页面切换通用函数 ── */
+  function showPage(fromId, toId) {
+    const from = document.getElementById(fromId);
+    const to   = document.getElementById(toId);
+
+    from.style.transition = 'opacity 0.4s ease';
+    from.style.opacity = '0';
+    from.style.pointerEvents = 'none';
+
+    setTimeout(() => {
+      to.classList.add('visible');
+      setTimeout(() => to.classList.add('shown'), 20);
+    }, 350);
+  }
+
+  /* ── 命名交互 ── */
+  let selectedName = ''; // 无默认，用户自选
+
+  function selectChip(el, name) {
+    // 清除所有 selected
+    document.querySelectorAll('.name-chip').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedName = name;
+    document.getElementById('namingInput').value = '';
+    document.getElementById('charCount').textContent = '0/8';
+    updateNamingBtn();
+  }
+
+  function onNamingInput() {
+    const val = document.getElementById('namingInput').value;
+    document.getElementById('charCount').textContent = `${val.length}/8`;
+    if (val.length > 0) {
+      // 取消 chip 选中
+      document.querySelectorAll('.name-chip').forEach(c => c.classList.remove('selected'));
+      selectedName = val;
+    } else {
+      selectedName = '知己'; // 没有输入则用默认
+    }
+    updateNamingBtn();
+  }
+
+  function updateNamingBtn() {
+    const btn = document.getElementById('namingConfirmBtn');
+    btn.textContent = selectedName ? `就叫「${selectedName}」` : '就叫这个';
+  }
+
+  function onNamingConfirm() {
+    const name = selectedName || '知己';
+    localStorage.setItem('zjAiName', name);
+    // 过渡到第二步：问用户叫什么
+    showUserNamingStep(name);
+  }
+
+  function onNamingSkip() {
+    // 跳过起名，直接进第二步
+    showUserNamingStep('知己');
+  }
+
+  // ── 第二步：问用户称呼 ──
+  let selectedUserName = '';
+
+  function showUserNamingStep(aiName) {
+    const content = document.getElementById('namingContent');
+    content.style.transition = 'opacity 0.3s';
+    content.style.opacity = '0';
+    setTimeout(() => {
+      content.style.display = 'none';
+      const step2 = document.getElementById('userNamingContent');
+      step2.style.display = 'flex';
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => { step2.style.opacity = '1'; });
+      });
+      // 标题里带上知己的名字
+      document.getElementById('userNamingTitle').textContent = `那我怎么称呼你呢？`;
+    }, 300);
+  }
+
+  function onUserNamingInput() {
+    const val = document.getElementById('userNamingInput').value;
+    document.getElementById('userCharCount').textContent = `${val.length}/8`;
+    selectedUserName = val;
+    updateUserNamingBtn();
+  }
+
+  function updateUserNamingBtn() {
+    const btn = document.getElementById('userNamingConfirmBtn');
+    btn.textContent = selectedUserName ? `好的，我记住了` : '就这么叫';
+  }
+
+  function onUserNamingConfirm() {
+    const uname = selectedUserName || '';
+    if (uname) localStorage.setItem('zjUserNickname', uname);
+    goToChat(localStorage.getItem('zjAiName') || '知己');
+  }
+
+  function onUserNamingSkip() {
+    goToChat(localStorage.getItem('zjAiName') || '知己');
+  }
+
+  function goToChat(name) {
+    localStorage.setItem('zjIsRegistered', 'true'); // 兜底：无论走哪条路，命名完成就标记已注册
+    if (name) localStorage.setItem('zjAiName', name);
+    const source = localStorage.getItem('zjRegSource') || 'no_assess';
+    const hasAssess = !!localStorage.getItem('zjAssessment');
+
+    const namingPage = document.getElementById('namingPage');
+    namingPage.style.transition = 'opacity 0.4s ease';
+    namingPage.style.opacity = '0';
+
+    setTimeout(() => {
+      if (source === 'done_assess' || hasAssess) {
+        // 情境3：测评已完成 → 进主聊天界面（可从 tab bar 查看报告）
+        // 如果来源是随便聊聊但意外有旧测评数据，清除掉，不展示折叠条
+        if (source !== 'done_assess') localStorage.removeItem('zjAssessment');
+        window.location.href = 'screen6-chat.html';
+      } else if (source === 'mid_assess') {
+        // 情境2：测评中途 → 回测评继续
+        const midScreen = localStorage.getItem('zjMidScreen') || '1';
+        window.location.href = 'screen3-prototype.html?resume=' + midScreen;
+      } else {
+        // 情境1：未做测评 → 显示两个选择卡
+        namingPage.style.opacity = '1';
+        namingPage.style.pointerEvents = 'auto';
+        document.getElementById('namingContent').style.display = 'none';
+        const choices = document.getElementById('postNameChoices');
+        choices.style.display = 'flex';
+      }
+    }, 400);
+  }
+
+  /* ── 从测评数据生成注册页个性化气泡 ── */
+  function buildRegisterMessage(data) {
+    if (!data) {
+      return '注册一下，你随时都可以找我聊天啦。';
+    }
+    const r = data.raw || {};
+    const state = data.state || {};
+    const COLOR_SCORE = { s1: 3, s2: 2, s3: 0, s4: 1 };
+    const sc  = (q, o) => { const c = r[q] && r[q][o]; return c ? (COLOR_SCORE[c] || 0) : 1; };
+    const scB = (q, pole) => {
+      const raw = r[q];
+      if (!raw || raw.bias === undefined) return 1;
+      const b = raw.bias;
+      return b === pole ? 3 : b === 0 ? 1 : 0;
+    };
+
+    // 读取最突出的一个特质用来个性化
+    const rational    = sc('q1', 'rational');     // 四色：理性分析
+    const intuitive   = sc('q1', 'intuitive');   // 四色：直觉经验
+    const decisive    = scB('q5_speed', 1);      // bias右=果断行动
+    const quality     = sc('q7','quality');
+    const confident   = scB('q17', -1);          // bias左=自信
+    const optimistic  = scB('q18', -1);          // bias左=乐观
+    const other_focus = scB('q13', 1);           // bias右=关注他人
+    const hi_sens     = scB('q14', -1);          // bias左=高敏感
+
+    // 当下状态信号
+    const mood     = state.mood;
+    const stress   = state.stress;
+    const meaning  = state.meaning;
+    const security = state.security;
+
+    // 优先用情绪状态打头（更有温度）
+    let opener = '';
+    if (stress === 'high' && mood === 'down') {
+      opener = '你刚才说最近压力挺大的，心情也有些沉——';
+    } else if (mood === 'down' || meaning === 'lost') {
+      opener = '你刚才说的那些，我都记在心里了——';
+    } else if (mood === 'happy' && meaning === 'fulfilled') {
+      opener = '感觉你现在的状态挺好的——';
+    } else if (security === 'anxious') {
+      opener = '你提到对未来有些不安——';
+    } else {
+      opener = '和你聊了这么多——';
+    }
+
+    // 用最高特质给一句洞察
+    const scores = [
+      { k: 'rational',    v: rational,              text: '你是那种想清楚再动的人，这份清醒很少见' },
+      { k: 'intuitive',   v: intuitive,             text: '你靠感觉做决定，而且感觉通常是准的' },
+      { k: 'decisive',    v: decisive,              text: '你行动起来比大多数人都快' },
+      { k: 'quality',     v: quality,               text: '你做事不喜欢凑合，这一点让你和别人不一样' },
+      { k: 'empathy',     v: (other_focus + hi_sens)/2, text: '你对身边人的感受，比他们意识到的还要敏锐' },
+      { k: 'confident',   v: confident,             text: '你身上有一种不容易被动摇的稳定感' },
+      { k: 'optimistic',  v: optimistic,            text: '你受伤之后，比别人恢复得更快' },
+    ].sort((a, b) => b.v - a.v);
+
+    // 收尾：注册引导
+    return '注册一下，你随时都可以找我聊天啦。';
+  }
+
+  /* ── 初始化：填充气泡 + 第一个 chip 默认选中 ── */
+  document.addEventListener('DOMContentLoaded', () => {
+    // 填充气泡
+    try {
+      const raw = localStorage.getItem('zjAssessment');
+      const data = raw ? JSON.parse(raw) : null;
+      const msg = buildRegisterMessage(data);
+      document.getElementById('regBubbleText').innerHTML = msg;
+    } catch(e) {
+      document.getElementById('regBubbleText').innerHTML = '注册一下，你随时都可以找我聊天啦。';
+    }
+
+    // 不默认选中任何 chip，由用户主动选择
+  });
+</script>
+</body>
+</html>

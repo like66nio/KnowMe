@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>知己 · 风格对比</title>
+  <link href="https://fonts.googleapis.com/css2?family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      font-family: 'ZCOOL XiaoWei', -apple-system, 'PingFang SC', sans-serif;
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+      background: #0a0a14;
+    }
+
+    /* ─── Tab Bar ─── */
+    .tab-bar {
+      position: fixed; top: 0; left: 0; right: 0; height: 50px;
+      background: rgba(8,6,18,0.95);
+      backdrop-filter: blur(20px);
+      display: flex; align-items: center; justify-content: center; gap: 4px;
+      z-index: 200;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .tab-btn {
+      padding: 7px 24px; font-size: 13px; font-family: inherit;
+      border: none; background: transparent; color: rgba(255,255,255,0.38);
+      cursor: pointer; border-radius: 20px; letter-spacing: 0.5px; transition: all 0.2s;
+    }
+    .tab-btn.active { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.9); }
+    .tab-div { width: 1px; height: 14px; background: rgba(255,255,255,0.1); }
+
+    /* ─── Column ─── */
+    .col { width: 390px; min-height: 100vh; padding-top: 50px; display: none; flex-direction: column; }
+    .col.active { display: flex; }
+
+    /* ══════════════════════════
+       方案 A · 暗调驼色
+    ══════════════════════════ */
+    .col-a { background: #161008; }
+
+    .a-load {
+      position: fixed; top: 50px; left: 50%; transform: translateX(-50%);
+      width: 390px; height: calc(100vh - 50px);
+      background: #161008;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+      z-index: 150; transition: opacity 0.7s;
+    }
+    .a-load.gone { opacity: 0; pointer-events: none; }
+    .a-load-icon {
+      width: 66px; height: 66px; border-radius: 20px;
+      background: linear-gradient(135deg, #D4A06A, #8A5530);
+      display: flex; align-items: center; justify-content: center; font-size: 30px;
+      box-shadow: 0 0 40px rgba(200,140,80,0.4);
+    }
+    .a-load-txt { font-size: 16px; color: rgba(240,220,185,0.75); letter-spacing: 1px; line-height: 2; text-align: center; }
+
+    .a-body {
+      padding: 24px 16px 110px;
+      display: flex; flex-direction: column; gap: 12px;
+      opacity: 0; transform: translateY(14px);
+      transition: opacity 0.55s ease 0.1s, transform 0.55s ease 0.1s;
+    }
+    .a-body.show { opacity: 1; transform: translateY(0); }
+
+    /* A 知己发言块 */
+    .a-msg {
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .a-msg-who {
+      display: flex; align-items: center; gap: 8px; padding-left: 2px;
+    }
+    .a-who-dot {
+      width: 24px; height: 24px; border-radius: 8px; flex-shrink: 0;
+      background: linear-gradient(135deg, #D4A06A, #8A5530);
+      display: flex; align-items: center; justify-content: center; font-size: 12px;
+      box-shadow: 0 2px 8px rgba(200,140,80,0.35);
+    }
+    .a-who-name { font-size: 11px; color: rgba(200,160,100,0.6); letter-spacing: 1px; }
+    .a-bubble {
+      background: rgba(255,255,255,0.045);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 16px;
+      padding: 16px 18px;
+      backdrop-filter: blur(12px);
+    }
+    .a-btext { font-size: 15px; color: rgba(240,220,185,0.9); line-height: 2; letter-spacing: 0.3px; }
+    .a-btext .hl { color: #E8B870; }
+
+    /* A 段落标题 */
+    .a-slabel { font-size: 10px; color: rgba(200,150,80,0.45); letter-spacing: 3px; padding: 4px 2px 0; }
+
+    /* A 天赋卡 */
+    .a-cards { display: flex; flex-direction: column; gap: 10px; }
+    .a-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 16px; padding: 16px 18px;
+      backdrop-filter: blur(10px);
+    }
+    .a-card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .a-card-icon {
+      width: 36px; height: 36px; border-radius: 11px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 17px;
+    }
+    .a-ci-1 { background: linear-gradient(135deg,#D4A06A,#8A5530); box-shadow:0 3px 12px rgba(200,140,80,0.4); }
+    .a-ci-2 { background: linear-gradient(135deg,#B07898,#785060); box-shadow:0 3px 12px rgba(160,100,130,0.4); }
+    .a-ci-3 { background: linear-gradient(135deg,#72A882,#4A7860); box-shadow:0 3px 12px rgba(100,160,110,0.4); }
+    .a-card-name { font-size: 15px; color: rgba(240,220,185,0.95); font-weight: 500; letter-spacing: 0.3px; }
+    .a-card-desc { font-size: 12px; color: rgba(200,175,140,0.58); line-height: 1.8; letter-spacing: 0.2px; }
+
+    /* A 状态卡 */
+    .a-status {
+      background: rgba(200,140,70,0.07);
+      border: 1px solid rgba(200,140,70,0.15);
+      border-radius: 16px; padding: 18px;
+    }
+    .a-st-intro { font-size: 13px; color: rgba(200,175,140,0.58); line-height: 1.85; margin-bottom: 16px; }
+    .a-st-rows { display: flex; flex-direction: column; gap: 11px; }
+    .a-st-row { display: flex; align-items: center; gap: 10px; }
+    .a-st-lbl { font-size: 12px; color: rgba(200,175,140,0.55); flex-shrink: 0; width: 46px; }
+    .a-st-bg { flex: 1; height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden; }
+    .a-st-fill { height: 100%; border-radius: 2px; }
+    .af-g { background: linear-gradient(90deg,#72A882,#4A7860); }
+    .af-m { background: linear-gradient(90deg,#D4A06A,#A07040); }
+    .af-l { background: linear-gradient(90deg,#B07898,#785060); }
+    .a-st-val { font-size: 11px; color: rgba(200,175,140,0.4); flex-shrink: 0; width: 50px; text-align: right; }
+
+    /* A 邀聊 */
+    .a-cliff { font-size: 14px; color: rgba(240,220,185,0.88); line-height: 2; margin-bottom: 14px; }
+    .a-cliff .hl { color: #E8B870; }
+    .a-btn {
+      width: 100%;
+      background: rgba(200,140,70,0.1);
+      border: 1px solid rgba(200,140,70,0.25);
+      color: rgba(210,160,90,0.85);
+      border-radius: 12px; padding: 13px 0;
+      font-size: 13px; font-family: inherit; letter-spacing: 0.3px; cursor: pointer;
+    }
+
+    /* A 底部输入 */
+    .a-bar {
+      position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 390px;
+      background: linear-gradient(to top, #161008 60%, rgba(22,16,8,0));
+      padding: 8px 16px 28px;
+      z-index: 50;
+    }
+    .a-bar-wrap {
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 24px; padding: 10px 12px 10px 18px;
+      backdrop-filter: blur(14px);
+    }
+    .a-inp { flex: 1; border: none; background: transparent; font-size: 14px; font-family: inherit; color: rgba(240,220,185,0.82); outline: none; }
+    .a-inp::placeholder { color: rgba(200,175,140,0.3); }
+    .a-voice { width: 32px; height: 32px; border-radius: 50%; border: none; background: rgba(255,255,255,0.05); color: rgba(200,175,140,0.55); font-size: 15px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+    .a-send { width: 32px; height: 32px; border-radius: 50%; border: none; background: linear-gradient(135deg,#D4A06A,#8A5530); color: #fff; font-size: 14px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 3px 10px rgba(200,140,80,0.45); }
+
+    /* loading dots共用 */
+    .ldots { display: flex; gap: 8px; }
+    .ldot { width: 6px; height: 6px; border-radius: 50%; animation: pulse 1.2s ease-in-out infinite; }
+    .ldot:nth-child(2){animation-delay:.2s} .ldot:nth-child(3){animation-delay:.4s}
+    @keyframes pulse{0%,80%,100%{opacity:.25;transform:scale(.75)}40%{opacity:1;transform:scale(1)}}
+    .ldot-a { background: rgba(200,140,80,0.6); }
+    .ldot-b { background: rgba(180,100,220,0.6); }
+
+    /* ══════════════════════════
+       方案 B · 深色粉紫
+    ══════════════════════════ */
+    .col-b { background: #0C0818; position: relative; overflow: hidden; }
+    .b-glow {
+      position: fixed; top: 50px; left: 50%; transform: translateX(-50%);
+      width: 390px; height: 320px; pointer-events: none; z-index: 1;
+      background:
+        radial-gradient(ellipse 260px 180px at 75% 5%, rgba(150,70,210,0.25) 0%, transparent 70%),
+        radial-gradient(ellipse 180px 140px at 15% 12%, rgba(70,80,220,0.2) 0%, transparent 65%);
+    }
+
+    .b-load {
+      position: fixed; top: 50px; left: 50%; transform: translateX(-50%);
+      width: 390px; height: calc(100vh - 50px);
+      background: #0C0818;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+      z-index: 150; transition: opacity 0.7s;
+    }
+    .b-load.gone { opacity: 0; pointer-events: none; }
+    .b-load-icon {
+      width: 66px; height: 66px; border-radius: 20px;
+      background: linear-gradient(135deg, #C060E0, #6030B0);
+      display: flex; align-items: center; justify-content: center; font-size: 30px;
+      box-shadow: 0 0 40px rgba(160,70,210,0.55);
+    }
+    .b-load-txt { font-size: 16px; color: rgba(225,205,255,0.75); letter-spacing: 1px; line-height: 2; text-align: center; }
+
+    .b-body {
+      padding: 24px 16px 110px;
+      display: flex; flex-direction: column; gap: 12px;
+      position: relative; z-index: 2;
+      opacity: 0; transform: translateY(14px);
+      transition: opacity 0.55s ease 0.1s, transform 0.55s ease 0.1s;
+    }
+    .b-body.show { opacity: 1; transform: translateY(0); }
+
+    /* B 知己发言块 */
+    .b-msg { display: flex; flex-direction: column; gap: 6px; }
+    .b-msg-who { display: flex; align-items: center; gap: 8px; padding-left: 2px; }
+    .b-who-dot {
+      width: 24px; height: 24px; border-radius: 8px; flex-shrink: 0;
+      background: linear-gradient(135deg, #C060E0, #6030B0);
+      display: flex; align-items: center; justify-content: center; font-size: 12px;
+      box-shadow: 0 2px 10px rgba(160,70,210,0.5);
+    }
+    .b-who-name { font-size: 11px; color: rgba(190,140,240,0.55); letter-spacing: 1px; }
+    .b-bubble {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(200,150,255,0.1);
+      border-radius: 16px; padding: 16px 18px;
+      backdrop-filter: blur(14px);
+      box-shadow: 0 2px 20px rgba(120,50,180,0.1);
+    }
+    .b-btext { font-size: 15px; color: rgba(225,210,255,0.9); line-height: 2; letter-spacing: 0.3px; }
+    .b-btext .hl { color: #D080F0; }
+    .b-btext .em { background: rgba(200,100,240,0.14); border-radius: 4px; padding: 0 3px; color: #D080F0; }
+
+    /* B 段落标题 */
+    .b-slabel { font-size: 10px; color: rgba(180,110,230,0.45); letter-spacing: 3px; padding: 4px 2px 0; }
+
+    /* B 天赋卡 */
+    .b-cards { display: flex; flex-direction: column; gap: 10px; }
+    .b-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(200,150,255,0.09);
+      border-radius: 16px; padding: 16px 18px;
+      backdrop-filter: blur(12px);
+    }
+    .b-card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .b-card-icon {
+      width: 36px; height: 36px; border-radius: 11px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 17px;
+    }
+    .b-ci-1 { background: linear-gradient(135deg,#C060E0,#7030B0); box-shadow:0 3px 12px rgba(160,60,200,0.5); }
+    .b-ci-2 { background: linear-gradient(135deg,#6050E0,#3030A0); box-shadow:0 3px 12px rgba(90,70,200,0.5); }
+    .b-ci-3 { background: linear-gradient(135deg,#E050A0,#A02870); box-shadow:0 3px 12px rgba(200,70,140,0.5); }
+    .b-card-name { font-size: 15px; color: rgba(225,210,255,0.95); font-weight: 500; letter-spacing: 0.3px; }
+    .b-card-desc { font-size: 12px; color: rgba(180,155,225,0.55); line-height: 1.8; letter-spacing: 0.2px; }
+
+    /* B 状态卡 */
+    .b-status {
+      background: rgba(140,60,200,0.09);
+      border: 1px solid rgba(180,100,240,0.18);
+      border-radius: 16px; padding: 18px;
+    }
+    .b-st-intro { font-size: 13px; color: rgba(180,155,225,0.55); line-height: 1.85; margin-bottom: 16px; }
+    .b-st-rows { display: flex; flex-direction: column; gap: 11px; }
+    .b-st-row { display: flex; align-items: center; gap: 10px; }
+    .b-st-lbl { font-size: 12px; color: rgba(180,155,225,0.5); flex-shrink: 0; width: 46px; }
+    .b-st-bg { flex: 1; height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden; }
+    .b-st-fill { height: 100%; border-radius: 2px; }
+    .bf-g { background: linear-gradient(90deg,#60B880,#309060); }
+    .bf-m { background: linear-gradient(90deg,#A060E0,#6030A0); }
+    .bf-l { background: linear-gradient(90deg,#E060A0,#A02870); }
+    .b-st-val { font-size: 11px; color: rgba(180,155,225,0.38); flex-shrink: 0; width: 50px; text-align: right; }
+
+    /* B 邀聊 */
+    .b-cliff { font-size: 14px; color: rgba(225,210,255,0.88); line-height: 2; margin-bottom: 14px; }
+    .b-cliff .hl { color: #D080F0; }
+    .b-btn {
+      width: 100%;
+      background: rgba(160,80,220,0.1);
+      border: 1px solid rgba(180,100,240,0.25);
+      color: rgba(200,140,245,0.85);
+      border-radius: 12px; padding: 13px 0;
+      font-size: 13px; font-family: inherit; letter-spacing: 0.3px; cursor: pointer;
+    }
+
+    /* B 底部输入 */
+    .b-bar {
+      position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 390px;
+      background: linear-gradient(to top, #0C0818 60%, rgba(12,8,24,0));
+      padding: 8px 16px 28px; z-index: 50;
+    }
+    .b-bar-wrap {
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(180,100,240,0.18);
+      border-radius: 24px; padding: 10px 12px 10px 18px;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 4px 20px rgba(120,50,180,0.18);
+    }
+    .b-inp { flex: 1; border: none; background: transparent; font-size: 14px; font-family: inherit; color: rgba(225,210,255,0.82); outline: none; }
+    .b-inp::placeholder { color: rgba(180,155,225,0.28); }
+    .b-voice { width: 32px; height: 32px; border-radius: 50%; border: none; background: rgba(255,255,255,0.05); color: rgba(180,155,225,0.55); font-size: 15px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+    .b-send { width: 32px; height: 32px; border-radius: 50%; border: none; background: linear-gradient(135deg,#C060E0,#6030B0); color: #fff; font-size: 14px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 3px 12px rgba(160,70,210,0.55); }
+  </style>
+</head>
+<body>
+
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="sw('A',this)">方案 A · 暗调驼色</button>
+  <div class="tab-div"></div>
+  <button class="tab-btn" onclick="sw('B',this)">方案 B · 深色粉紫</button>
+</div>
+
+<!-- ═══════════════ 方案 A ═══════════════ -->
+<div class="col col-a active" id="colA">
+  <div class="a-load" id="aLoad">
+    <div class="a-load-icon">🪞</div>
+    <div class="a-load-txt">好了，我对你有点感觉了<br>让我整理一下……</div>
+    <div class="ldots"><div class="ldot ldot-a"></div><div class="ldot ldot-a"></div><div class="ldot ldot-a"></div></div>
+  </div>
+
+  <div class="a-body" id="aBody">
+
+    <!-- 知己开场 -->
+    <div class="a-msg">
+      <div class="a-msg-who">
+        <div class="a-who-dot">🪞</div>
+        <div class="a-who-name">知己</div>
+      </div>
+      <div class="a-bubble">
+        <div class="a-btext">
+          嘿，朋友，辛苦作答——<br>
+          我现在对你有一些感觉了。<br><br>
+          我发现你身上有几个<span class="hl">挺特别的地方</span>，很多人没有。
+        </div>
+      </div>
+    </div>
+
+    <!-- 天赋 -->
+    <div class="a-slabel">· 你身上的天赋与优势 ·</div>
+    <div class="a-cards">
+      <div class="a-card">
+        <div class="a-card-head">
+          <div class="a-card-icon a-ci-1">⚡</div>
+          <div class="a-card-name">想到了就动，而且动对了</div>
+        </div>
+        <div class="a-card-desc">你不是那种冲动行事的人，但你也不会把一件事反复推敲到失去时机。你有一种内建的判断力——值得冒的险，你不会犹豫；不值得的，你一眼看穿。这种"敢动又动对"的能力，很多人练了一辈子也没练出来，而你好像天生就有。</div>
+      </div>
+      <div class="a-card">
+        <div class="a-card-head">
+          <div class="a-card-icon a-ci-2">🎯</div>
+          <div class="a-card-name">对自己有要求，而且这要求是真的</div>
+        </div>
+        <div class="a-card-desc">你的标准不是为了给别人看，是真的在意自己做出来的东西够不够好。做不到位你会不甘心，这种不甘心会驱动你一遍一遍地做，直到满意为止。这份内驱力不是每个人都有的——它稀有，也很珍贵。</div>
+      </div>
+      <div class="a-card">
+        <div class="a-card-head">
+          <div class="a-card-icon a-ci-3">🌿</div>
+          <div class="a-card-name">越乱的时候，你越清醒</div>
+        </div>
+        <div class="a-card-desc">碰到复杂的情况，你的本能不是慌，而是先把事情拆开来看看。你有一种天然的"理清楚再说"的习惯，这让你在很多人乱成一锅粥的时候，往往是那个最先看清楚局面的人。</div>
+      </div>
+    </div>
+
+    <!-- 状态 -->
+    <div class="a-status">
+      <div class="a-st-intro">作为你的知己，我很关心你的状态。<br>从你给到的信息里，我发现——</div>
+      <div class="a-st-rows">
+        <div class="a-st-row"><div class="a-st-lbl">开心度</div><div class="a-st-bg"><div class="a-st-fill af-g" style="width:72%"></div></div><div class="a-st-val">还不错</div></div>
+        <div class="a-st-row"><div class="a-st-lbl">精力</div><div class="a-st-bg"><div class="a-st-fill af-m" style="width:50%"></div></div><div class="a-st-val">中等</div></div>
+        <div class="a-st-row"><div class="a-st-lbl">压力感</div><div class="a-st-bg"><div class="a-st-fill af-m" style="width:62%"></div></div><div class="a-st-val">有但能扛</div></div>
+        <div class="a-st-row"><div class="a-st-lbl">安全感</div><div class="a-st-bg"><div class="a-st-fill af-g" style="width:68%"></div></div><div class="a-st-val">还踏实</div></div>
+        <div class="a-st-row"><div class="a-st-lbl">价值感</div><div class="a-st-bg"><div class="a-st-fill af-m" style="width:48%"></div></div><div class="a-st-val">在寻找中</div></div>
+      </div>
+    </div>
+
+    <!-- 洞察 -->
+    <div class="a-msg">
+      <div class="a-msg-who">
+        <div class="a-who-dot">🪞</div>
+        <div class="a-who-name">知己</div>
+      </div>
+      <div class="a-bubble">
+        <div class="a-btext">
+          有一个细节我想跟你说——<br><br>
+          你整体状态还行，但<span class="hl">精力和价值感</span>都是"够用，但不充盈"的状态。<br><br>
+          对你这种有标准的人来说，这其实挺消耗的。不是你不努力，而是你<span class="hl">内心的标准比现实产出高</span>——这个差距，每天都在悄悄漏电。
+        </div>
+      </div>
+    </div>
+
+    <!-- 邀聊 -->
+    <div class="a-msg">
+      <div class="a-msg-who">
+        <div class="a-who-dot">🪞</div>
+        <div class="a-who-name">知己</div>
+      </div>
+      <div class="a-bubble">
+        <div class="a-cliff">
+          怎么样，你觉得我有理解到真正的你吗？<br><br>
+          有什么烦心的事，可以跟我分享……<span class="hl">我在听</span>。
+        </div>
+        <button class="a-btn">先看完整报告 ↓</button>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="a-bar" id="aBar" style="display:none;">
+    <div class="a-bar-wrap">
+      <input class="a-inp" type="text" placeholder="随便说说……">
+      <button class="a-voice">🎙</button>
+      <button class="a-send">↑</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ 方案 B ═══════════════ -->
+<div class="col col-b" id="colB">
+  <div class="b-glow"></div>
+  <div class="b-load" id="bLoad">
+    <div class="b-load-icon">🪞</div>
+    <div class="b-load-txt">好了，我对你有点感觉了<br>让我整理一下……</div>
+    <div class="ldots"><div class="ldot ldot-b"></div><div class="ldot ldot-b"></div><div class="ldot ldot-b"></div></div>
+  </div>
+
+  <div class="b-body" id="bBody">
+
+    <!-- 知己开场 -->
+    <div class="b-msg">
+      <div class="b-msg-who">
+        <div class="b-who-dot">🪞</div>
+        <div class="b-who-name">知己</div>
+      </div>
+      <div class="b-bubble">
+        <div class="b-btext">
+          嘿，朋友，辛苦作答——<br>
+          我现在对你有一些感觉了。<br><br>
+          我发现你身上有几个<span class="hl">挺特别的地方</span>，很多人没有。
+        </div>
+      </div>
+    </div>
+
+    <!-- 天赋 -->
+    <div class="b-slabel">· 你身上的天赋与优势 ·</div>
+    <div class="b-cards">
+      <div class="b-card">
+        <div class="b-card-head">
+          <div class="b-card-icon b-ci-1">⚡</div>
+          <div class="b-card-name">想到了就动，而且动对了</div>
+        </div>
+        <div class="b-card-desc">你不是那种冲动行事的人，但你也不会把一件事反复推敲到失去时机。你有一种内建的判断力——值得冒的险，你不会犹豫；不值得的，你一眼看穿。这种"敢动又动对"的能力，很多人练了一辈子也没练出来，而你好像天生就有。</div>
+      </div>
+      <div class="b-card">
+        <div class="b-card-head">
+          <div class="b-card-icon b-ci-2">🎯</div>
+          <div class="b-card-name">对自己有要求，而且这要求是真的</div>
+        </div>
+        <div class="b-card-desc">你的标准不是为了给别人看，是真的在意自己做出来的东西够不够好。做不到位你会不甘心，这种不甘心会驱动你一遍一遍地做，直到满意为止。这份内驱力不是每个人都有的——它稀有，也很珍贵。</div>
+      </div>
+      <div class="b-card">
+        <div class="b-card-head">
+          <div class="b-card-icon b-ci-3">🌿</div>
+          <div class="b-card-name">越乱的时候，你越清醒</div>
+        </div>
+        <div class="b-card-desc">碰到复杂的情况，你的本能不是慌，而是先把事情拆开来看看。你有一种天然的"理清楚再说"的习惯，这让你在很多人乱成一锅粥的时候，往往是那个最先看清楚局面的人。</div>
+      </div>
+    </div>
+
+    <!-- 状态 -->
+    <div class="b-status">
+      <div class="b-st-intro">作为你的知己，我很关心你的状态。<br>从你给到的信息里，我发现——</div>
+      <div class="b-st-rows">
+        <div class="b-st-row"><div class="b-st-lbl">开心度</div><div class="b-st-bg"><div class="b-st-fill bf-g" style="width:72%"></div></div><div class="b-st-val">还不错</div></div>
+        <div class="b-st-row"><div class="b-st-lbl">精力</div><div class="b-st-bg"><div class="b-st-fill bf-m" style="width:50%"></div></div><div class="b-st-val">中等</div></div>
+        <div class="b-st-row"><div class="b-st-lbl">压力感</div><div class="b-st-bg"><div class="b-st-fill bf-m" style="width:62%"></div></div><div class="b-st-val">有但能扛</div></div>
+        <div class="b-st-row"><div class="b-st-lbl">安全感</div><div class="b-st-bg"><div class="b-st-fill bf-g" style="width:68%"></div></div><div class="b-st-val">还踏实</div></div>
+        <div class="b-st-row"><div class="b-st-lbl">价值感</div><div class="b-st-bg"><div class="b-st-fill bf-m" style="width:48%"></div></div><div class="b-st-val">在寻找中</div></div>
+      </div>
+    </div>
+
+    <!-- 洞察 -->
+    <div class="b-msg">
+      <div class="b-msg-who">
+        <div class="b-who-dot">🪞</div>
+        <div class="b-who-name">知己</div>
+      </div>
+      <div class="b-bubble">
+        <div class="b-btext">
+          有一个细节我想跟你说——<br><br>
+          你整体状态还行，但<span class="em">精力和价值感</span>都是"够用，但不充盈"的状态。<br><br>
+          对你这种有标准的人来说，这其实挺消耗的。不是你不努力，而是你<span class="hl">内心的标准比现实产出高</span>——这个差距，每天都在悄悄漏电。
+        </div>
+      </div>
+    </div>
+
+    <!-- 邀聊 -->
+    <div class="b-msg">
+      <div class="b-msg-who">
+        <div class="b-who-dot">🪞</div>
+        <div class="b-who-name">知己</div>
+      </div>
+      <div class="b-bubble">
+        <div class="b-cliff">
+          怎么样，你觉得我有理解到真正的你吗？<br><br>
+          有什么烦心的事，可以跟我分享……<span class="hl">我在听</span>。
+        </div>
+        <button class="b-btn">先看完整报告 ↓</button>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="b-bar" id="bBar" style="display:none;">
+    <div class="b-bar-wrap">
+      <input class="b-inp" type="text" placeholder="随便说说……">
+      <button class="b-voice">🎙</button>
+      <button class="b-send">↑</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function sw(which, btn) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.col').forEach(c => c.classList.remove('active'));
+    document.getElementById('col' + which).classList.add('active');
+  }
+
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      ['aLoad','bLoad'].forEach(id => document.getElementById(id).classList.add('gone'));
+      ['aBody','bBody'].forEach(id => document.getElementById(id).classList.add('show'));
+      setTimeout(() => {
+        ['aBar','bBar'].forEach(id => document.getElementById(id).style.display = 'block');
+      }, 600);
+    }, 2000);
+  });
+</script>
+</body>
+</html>

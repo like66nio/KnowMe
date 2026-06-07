@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>知己 · 怎么开始</title>
+  <link href="https://fonts.googleapis.com/css2?family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      background: #7878C8;
+      font-family: 'ZCOOL XiaoWei', -apple-system, 'PingFang SC', 'Helvetica Neue', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      width: 100%;
+    }
+
+    .phone-frame {
+      width: 390px;
+      flex-shrink: 0;
+      min-height: 100vh;
+      background: transparent;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ─── 背景渐变 ─── */
+    .bg-glow {
+      position: fixed;
+      top: 0; left: 50%; transform: translateX(-50%);
+      width: 390px; height: 100vh;
+      pointer-events: none; z-index: 0;
+      background:
+        radial-gradient(ellipse 340px 320px at 88%  2%,  #F060B0 0%, transparent 55%),
+        radial-gradient(ellipse 260px 280px at 60% -5%,  #C040E0 0%, transparent 50%),
+        radial-gradient(ellipse 280px 260px at 5%  10%,  #8040D0 0%, transparent 52%),
+        radial-gradient(ellipse 320px 340px at 45%  48%, #4060E8 0%, transparent 58%),
+        radial-gradient(ellipse 300px 260px at 15%  72%, #30C0C0 0%, transparent 55%),
+        radial-gradient(ellipse 240px 220px at 82%  68%, #6080E0 0%, transparent 50%),
+        radial-gradient(ellipse 200px 200px at 50%  90%, #50A8D8 0%, transparent 50%);
+      background-color: #7878C8;
+    }
+
+    /* ─── 顶部导航（知己名片行） ─── */
+    .top-nav {
+      position: relative; z-index: 5;
+      display: flex; align-items: center; gap: 10px;
+      padding: 56px 22px 16px;
+    }
+    .nav-avatar {
+      width: 36px; height: 36px; border-radius: 12px;
+      background: linear-gradient(135deg, #C890E8, #8B4FC8);
+      overflow: hidden; flex-shrink: 0;
+      box-shadow: 0 2px 12px rgba(160,80,220,0.30);
+    }
+    .nav-avatar-svg { width: 100%; height: 100%; display: block; }
+    .nav-name {
+      font-size: 14px; color: rgba(255,255,255,0.90);
+      letter-spacing: 1.5px;
+    }
+    .nav-back {
+      margin-left: auto;
+      font-size: 12px; color: rgba(255,255,255,0.42);
+      letter-spacing: 0.3px; cursor: pointer;
+    }
+    .nav-back:active { color: rgba(255,255,255,0.70); }
+
+    /* ─── 主区域 ─── */
+    .main {
+      position: relative; z-index: 2;
+      flex: 1;
+      padding: 0 20px 48px;
+      display: flex; flex-direction: column; gap: 20px;
+    }
+
+    /* 知己回应气泡 */
+    .bubble {
+      background: rgba(255,255,255,0.82);
+      border: 1px solid rgba(160,100,240,0.13);
+      border-radius: 4px 20px 20px 20px;
+      padding: 16px 18px;
+      backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+      box-shadow: 0 2px 14px rgba(120,60,200,0.09);
+      opacity: 0; transform: translateY(8px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+    .bubble.visible { opacity: 1; transform: translateY(0); }
+    .bubble-text {
+      font-size: 16px; color: #1E1440;
+      line-height: 1.6; letter-spacing: 0.2px;
+    }
+    .bubble-text .hl { color: #7030B8; font-weight: 500; }
+
+    /* 打字光标 */
+    .cursor {
+      display: inline-block;
+      width: 2px; height: 1em;
+      background: #9040C8;
+      margin-left: 2px;
+      vertical-align: text-bottom;
+      animation: blink 0.8s step-end infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+    .cursor.done { display: none; }
+
+    /* ─── 场景标签（用户选择回显） ─── */
+    .scene-tag {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(255,255,255,0.22);
+      border: 1px solid rgba(255,255,255,0.30);
+      border-radius: 20px; padding: 6px 14px;
+      font-size: 12px; color: rgba(255,255,255,0.82);
+      letter-spacing: 0.5px;
+      align-self: flex-end;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .scene-tag.visible { opacity: 1; }
+
+    /* ─── 三选项卡片区 ─── */
+    .options-area {
+      display: flex; flex-direction: column; gap: 12px;
+      opacity: 0; transform: translateY(12px);
+      transition: opacity 0.45s ease, transform 0.45s ease;
+    }
+    .options-area.visible { opacity: 1; transform: translateY(0); }
+
+    .option-card {
+      background: rgba(255,255,255,0.18);
+      border: 1.5px solid rgba(255,255,255,0.38);
+      border-radius: 18px; padding: 16px 18px;
+      cursor: pointer;
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 4px 20px rgba(60,20,140,0.18), 0 1px 0 rgba(255,255,255,0.28) inset;
+      display: flex; align-items: center; gap: 12px;
+      transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+    }
+    .option-card:active {
+      transform: scale(0.972);
+      background: rgba(255,255,255,0.28);
+      box-shadow: 0 2px 10px rgba(60,20,140,0.22);
+    }
+
+    /* 彩色图标 */
+    .opt-icon {
+      width: 38px; height: 38px; border-radius: 12px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .icon-story  { background: linear-gradient(135deg, #E090A0, #C05070); box-shadow: 0 3px 12px rgba(200,80,110,0.30); }
+    .icon-assess { background: linear-gradient(135deg, #B070E8, #7840C0); box-shadow: 0 3px 12px rgba(160,80,220,0.32); }
+    .icon-chat   { background: linear-gradient(135deg, #70C0D8, #4090B8); box-shadow: 0 3px 12px rgba(70,150,200,0.30); }
+
+    .opt-body { flex: 1; min-width: 0; }
+    .opt-title {
+      font-size: 15px; color: rgba(255,255,255,0.95);
+      letter-spacing: 0.3px; line-height: 1.3; margin-bottom: 4px;
+    }
+    .opt-desc {
+      font-size: 12px; color: rgba(255,255,255,0.55);
+      line-height: 1.6; letter-spacing: 0.2px;
+    }
+    .opt-arrow {
+      color: rgba(255,255,255,0.45); font-size: 20px;
+      align-self: center; flex-shrink: 0;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="bg-glow"></div>
+
+  <!-- 知己头像 SVG symbol -->
+  <svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute">
+    <defs>
+      <radialGradient id="fg2" cx="50%" cy="45%" r="55%">
+        <stop offset="0%" stop-color="#FFFFFF"/>
+        <stop offset="100%" stop-color="#EDE0F8"/>
+      </radialGradient>
+      <radialGradient id="cg2" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#FAF0FF" stop-opacity="0.9"/>
+        <stop offset="100%" stop-color="#E8D4F4" stop-opacity="0.6"/>
+      </radialGradient>
+      <radialGradient id="eg2" cx="38%" cy="35%" r="60%">
+        <stop offset="0%" stop-color="#5C3A8A"/>
+        <stop offset="100%" stop-color="#2A1040"/>
+      </radialGradient>
+      <linearGradient id="sg2" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#FFE566"/>
+        <stop offset="100%" stop-color="#E090FF"/>
+      </linearGradient>
+      <filter id="glow2" x="-30%" y="-30%" width="160%" height="160%">
+        <feGaussianBlur stdDeviation="1.5" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <symbol id="zj-face-2" viewBox="0 0 100 100">
+        <ellipse cx="21" cy="40" rx="16" ry="20" fill="url(#fg2)" opacity="0.9"/>
+        <ellipse cx="79" cy="40" rx="16" ry="20" fill="url(#fg2)" opacity="0.9"/>
+        <ellipse cx="50" cy="24" rx="22" ry="16" fill="url(#fg2)" opacity="0.85"/>
+        <ellipse cx="18" cy="62" rx="14" ry="12" fill="url(#cg2)"/>
+        <ellipse cx="82" cy="62" rx="14" ry="12" fill="url(#cg2)"/>
+        <circle cx="50" cy="55" r="32" fill="url(#fg2)"/>
+        <circle cx="38" cy="50" r="6" fill="url(#eg2)"/>
+        <circle cx="62" cy="50" r="6" fill="url(#eg2)"/>
+        <circle cx="40.5" cy="47.5" r="2" fill="white" opacity="0.85"/>
+        <circle cx="64.5" cy="47.5" r="2" fill="white" opacity="0.85"/>
+        <ellipse cx="50" cy="61" rx="5" ry="3.5" fill="#3A1A5A"/>
+        <path d="M44 66 Q50 71 56 66" stroke="#5A3070" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+        <g filter="url(#glow2)">
+          <path d="M50 10 L52 16 L58 16 L53 20 L55 26 L50 22 L45 26 L47 20 L42 16 L48 16 Z" fill="url(#sg2)" opacity="0.95"/>
+        </g>
+        <circle cx="70" cy="18" r="2.2" fill="#FFE566" opacity="0.8"/>
+        <circle cx="76" cy="24" r="1.4" fill="#E090FF" opacity="0.7"/>
+      </symbol>
+    </defs>
+  </svg>
+
+  <div class="phone-frame">
+
+    <!-- 顶部导航 -->
+    <div class="top-nav">
+      <div class="nav-avatar">
+        <svg class="nav-avatar-svg" viewBox="0 0 100 100"><use href="#zj-face-2"/></svg>
+      </div>
+      <div class="nav-name">知己</div>
+    </div>
+
+    <!-- 主内容 -->
+    <div class="main" id="main">
+
+      <!-- 知己回应气泡 -->
+      <div class="bubble" id="bubble1">
+        <div class="bubble-text" id="bubbText"></div>
+      </div>
+
+      <!-- 三个入口 -->
+      <div class="options-area" id="optionsArea">
+
+        <div class="option-card" onclick="goAssess()">
+          <div class="opt-icon icon-assess">✦</div>
+          <div class="opt-body">
+            <div class="opt-title">用 5 分钟让我真正了解你</div>
+            <div class="opt-desc">了解你后，我说的每句话都不会泛泛而谈</div>
+          </div>
+          <div class="opt-arrow">›</div>
+        </div>
+
+        <div class="option-card" onclick="goChat()">
+          <div class="opt-icon icon-chat">🌊</div>
+          <div class="opt-body">
+            <div class="opt-title">先随便聊聊</div>
+            <div class="opt-desc">不想那么正式，就是想说说话</div>
+          </div>
+          <div class="opt-arrow">›</div>
+        </div>
+
+        <div class="option-card" onclick="goStory()">
+          <div class="opt-icon icon-story">💬</div>
+          <div class="opt-body">
+            <div class="opt-title">先看看知己如何帮助其他人</div>
+            <div class="opt-desc">看看我能做什么，再决定要不要深入</div>
+          </div>
+          <div class="opt-arrow">›</div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const REPLY = '你想<span class="hl">怎么开始</span>？';
+
+    /* 打字机（兼容 HTML 标签） */
+    function parseSegments(html) {
+      const parts = [];
+      const re = /(<[^>]+>.*?<\/[^>]+>|<[^>]+\/>|<[^>]+>)/gs;
+      let last = 0, m;
+      while ((m = re.exec(html)) !== null) {
+        if (m.index > last) parts.push({ type: 'text', val: html.slice(last, m.index) });
+        parts.push({ type: 'tag', val: m[0] });
+        last = re.lastIndex;
+      }
+      if (last < html.length) parts.push({ type: 'text', val: html.slice(last) });
+      return parts;
+    }
+
+    function typewrite(el, html, speed, onDone) {
+      const normalized = html.replace(/\n/g, '<br>');
+      const segments = parseSegments(normalized);
+      let output = '';
+      let si = 0, ci = 0;
+
+      const cursor = document.createElement('span');
+      cursor.className = 'cursor';
+      el.appendChild(cursor);
+
+      function tick() {
+        if (si >= segments.length) {
+          cursor.classList.add('done');
+          if (onDone) onDone();
+          return;
+        }
+        const seg = segments[si];
+        if (seg.type === 'tag') {
+          output += seg.val; si++;
+          el.innerHTML = output; el.appendChild(cursor);
+          tick();
+        } else {
+          if (ci < seg.val.length) {
+            output += seg.val[ci++];
+            el.innerHTML = output; el.appendChild(cursor);
+            setTimeout(tick, speed);
+          } else { si++; ci = 0; tick(); }
+        }
+      }
+      tick();
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      // 显示气泡并打字
+      const bubble = document.getElementById('bubble1');
+      const textEl = document.getElementById('bubbText');
+      setTimeout(() => {
+        bubble.classList.add('visible');
+        typewrite(textEl, REPLY, 28, () => {
+          // 打完后显示选项
+          setTimeout(() => {
+            document.getElementById('optionsArea').classList.add('visible');
+          }, 200);
+        });
+      }, 400);
+    });
+
+    /* 导航 */
+    function goAssess() {
+      window.location.href = 'screen3-prototype.html';
+    }
+    function goStory() {
+      window.location.href = 'screen-story.html';
+    }
+    function goChat() {
+      window.location.href = 'screen4-report.html?mode=chat';
+    }
+  </script>
+</body>
+</html>

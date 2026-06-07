@@ -1,0 +1,1679 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>知己 · 测评</title>
+  <link href="https://fonts.googleapis.com/css2?family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      background: #7878C8;
+      font-family: 'ZCOOL XiaoWei', -apple-system, 'PingFang SC', 'Helvetica Neue', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+    }
+
+    .phone-frame {
+      width: 390px;
+      min-height: 100vh;
+      background: transparent;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ─── 背景渐变 ─── */
+    .bg-glow {
+      position: fixed;
+      top: 0; left: 50%; transform: translateX(-50%);
+      width: 390px; height: 100vh;
+      pointer-events: none; z-index: 0;
+      background:
+        radial-gradient(ellipse 340px 320px at 88%  2%,  #F060B0 0%, transparent 55%),
+        radial-gradient(ellipse 260px 280px at 60% -5%,  #C040E0 0%, transparent 50%),
+        radial-gradient(ellipse 280px 260px at 5%  10%,  #8040D0 0%, transparent 52%),
+        radial-gradient(ellipse 320px 340px at 45%  48%, #4060E8 0%, transparent 58%),
+        radial-gradient(ellipse 300px 260px at 15%  72%, #30C0C0 0%, transparent 55%),
+        radial-gradient(ellipse 240px 220px at 82%  68%, #6080E0 0%, transparent 50%),
+        radial-gradient(ellipse 200px 200px at 50%  90%, #50A8D8 0%, transparent 50%);
+      background-color: #7878C8;
+    }
+
+    /* 进度条 */
+    .progress-bar-wrap {
+      width: 100%;
+      height: 3px;
+      background: rgba(255,255,255,0.2);
+      position: relative;
+      z-index: 2;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: rgba(255,255,255,0.75);
+      border-radius: 0 2px 2px 0;
+      transition: width 0.4s ease;
+    }
+    /* 右上角注册胶囊 */
+    .reg-pill {
+      position: absolute;
+      left: 18px;
+      top: 7px;
+      background: linear-gradient(135deg, #B060E8, #8038C8);
+      border: none;
+      border-radius: 20px; padding: 6px 14px;
+      font-size: 11px; color: #fff;
+      letter-spacing: 0.5px; cursor: pointer;
+      box-shadow: 0 2px 10px rgba(140,50,210,0.40);
+      transition: opacity 0.15s ease;
+      white-space: nowrap; z-index: 3;
+    }
+    .reg-pill:active { opacity: 0.82; }
+
+    .progress-label {
+      position: absolute;
+      right: 20px;
+      top: 10px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.85);
+      letter-spacing: 0.5px;
+      z-index: 2;
+    }
+
+    /* 顶部区域 */
+    .top-area {
+      padding: 52px 0 0 0;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* 主内容区 */
+    .content {
+      flex: 1;
+      padding: 22px 18px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      position: relative; z-index: 2;
+    }
+
+    /* 题干卡片：毛玻璃白，彩色顶线 */
+    .question-card {
+      background: rgba(255,255,255,0.72);
+      border: 1px solid rgba(180,130,255,0.18);
+      border-radius: 22px;
+      padding: 18px 18px 16px;
+      margin-bottom: 10px;
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      box-shadow:
+        0 4px 28px rgba(140,80,220,0.1),
+        0 1px 0 rgba(255,255,255,0.9) inset;
+      position: relative;
+      overflow: hidden;
+    }
+    .question-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, #A06AD8, #C890F0, #F0A0CC);
+      border-radius: 22px 22px 0 0;
+    }
+    .question-text {
+      font-size: 19px;
+      font-weight: 400;
+      color: #140C30;
+      line-height: 1.75;
+      letter-spacing: 0.5px;
+      font-family: 'ZCOOL XiaoWei', serif;
+    }
+
+    /* 颜色说明 */
+    .legend-wrap {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(160,100,220,0.1);
+    }
+    .legend-toggle {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .legend-toggle-text {
+      font-size: 12px;
+      color: rgba(60,35,110,0.85);
+    }
+    .legend-toggle-arrow {
+      font-size: 10px;
+      color: rgba(60,35,110,0.78);
+      transition: transform 0.2s;
+    }
+    .legend-toggle-arrow.open {
+      transform: rotate(180deg);
+    }
+
+    /* 图例展开 */
+    .legend-expanded {
+      margin-top: 12px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .legend-dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .legend-dot.d1 { background: linear-gradient(135deg, #5B8FA8 0%, #3D7090 100%); box-shadow: 0 1px 5px rgba(61,112,144,0.45); }
+    .legend-dot.d2 { background: linear-gradient(135deg, #C47B8A 0%, #A85E6E 100%); box-shadow: 0 1px 5px rgba(168,94,110,0.45); }
+    .legend-dot.d3 { background: linear-gradient(135deg, #7A9E7E 0%, #5C8260 100%); box-shadow: 0 1px 5px rgba(92,130,96,0.4); }
+    .legend-dot.d4 {
+      background: linear-gradient(135deg, #9B8FB0 0%, #7A6E90 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      color: #F0ECF8;
+      font-weight: 900;
+      box-shadow: 0 1px 5px rgba(122,110,144,0.4);
+      line-height: 1;
+    }
+    .legend-label {
+      font-size: 12px;
+      color: rgba(45,25,90,0.85);
+      line-height: 1.4;
+    }
+    .legend-label strong {
+      display: block;
+      color: rgba(30,15,75,0.95);
+      font-weight: 500;
+      font-size: 12px;
+    }
+    .legend-hint {
+      margin-top: 10px;
+      font-size: 11px;
+      color: rgba(80,50,140,0.50);
+      letter-spacing: 0.3px;
+    }
+
+    /* 选项区域 */
+    .options-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      margin-bottom: 14px;
+    }
+
+    /* 选项卡片：四色标记类型 */
+    .option-row {
+      background: rgba(255,255,255,0.82);
+      border: 1px solid rgba(180,140,240,0.15);
+      border-radius: 14px;
+      padding: 11px 13px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      cursor: pointer;
+      transition: background 0.15s, box-shadow 0.15s;
+      box-shadow: 0 2px 8px rgba(120,80,200,0.06);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .option-row:active {
+      background: rgba(240,230,255,0.9);
+      box-shadow: 0 2px 10px rgba(120,80,200,0.14);
+    }
+    .option-text {
+      font-size: 14px;
+      color: #140C30;
+      line-height: 1.55;
+      flex: 1;
+      font-family: 'ZCOOL XiaoWei', serif;
+      letter-spacing: 0.3px;
+    }
+    .option-selectors {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      flex-shrink: 0;
+    }
+
+    .sel-btn {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: none;
+      outline: none;
+      transition: transform 0.2s, box-shadow 0.2s;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .sel-btn:active { transform: scale(0.9); }
+    .sel-btn.s1 { background: linear-gradient(135deg, #5B8FA8 0%, #3D7090 100%); box-shadow: 0 1px 4px rgba(61,112,144,0.35); }
+    .sel-btn.s2 { background: linear-gradient(135deg, #C47B8A 0%, #A85E6E 100%); box-shadow: 0 1px 4px rgba(168,94,110,0.35); }
+    .sel-btn.s3 { background: linear-gradient(135deg, #7A9E7E 0%, #5C8260 100%); box-shadow: 0 1px 4px rgba(92,130,96,0.35); }
+    .sel-btn.s4 {
+      background: linear-gradient(135deg, #9B8FB0 0%, #7A6E90 100%);
+      box-shadow: 0 1px 4px rgba(122,110,144,0.35);
+      font-size: 14px; color: #F0ECF8; font-weight: 900; line-height: 1;
+    }
+    .sel-btn.selected.s1 { transform: scale(1.22); box-shadow: 0 3px 10px rgba(61,112,144,0.55), inset 0 1px 0 rgba(255,255,255,0.3); }
+    .sel-btn.selected.s2 { transform: scale(1.22); box-shadow: 0 3px 10px rgba(168,94,110,0.55), inset 0 1px 0 rgba(255,255,255,0.25); }
+    .sel-btn.selected.s3 { transform: scale(1.22); box-shadow: 0 3px 10px rgba(92,130,96,0.55), inset 0 1px 0 rgba(255,255,255,0.25); }
+    .sel-btn.selected.s4 { transform: scale(1.22); box-shadow: 0 3px 10px rgba(122,110,144,0.5), inset 0 1px 0 rgba(255,255,255,0.2); }
+
+    /* 状态快照区块标题 */
+    .snapshot-section-title {
+      font-size: 11px;
+      color: rgba(60,35,115,0.72);
+      letter-spacing: 1.8px;
+      margin-bottom: 10px;
+      padding-left: 2px;
+    }
+
+    /* 状态快照选项（单选，彩色左边条） */
+    .snapshot-options-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 0;
+    }
+    .snapshot-option {
+      background: rgba(255,255,255,0.86);
+      border: 1.5px solid rgba(180,140,240,0.16);
+      border-left: 4px solid rgba(160,100,220,0.22);
+      border-radius: 14px;
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, box-shadow 0.15s, border-left-color 0.15s;
+      box-shadow: 0 2px 10px rgba(120,80,200,0.07);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      font-size: 15px;
+      color: #140C30;
+      line-height: 1.6;
+      letter-spacing: 0.4px;
+      font-family: 'ZCOOL XiaoWei', serif;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .snapshot-option-emoji {
+      font-size: 16px;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+    .snapshot-option:active {
+      background: rgba(230,220,255,0.92);
+    }
+    .snapshot-option.selected {
+      background: rgba(218,202,255,0.92);
+      border-color: rgba(140,80,220,0.42);
+      border-left-color: rgba(140,80,220,0.72);
+      box-shadow: 0 3px 14px rgba(120,70,200,0.18), inset 0 1px 0 rgba(255,255,255,0.5);
+      color: #180E36;
+    }
+
+    /* 状态快照题干卡（复用 question-card，但更紧凑） */
+    .state-question-card {
+      background: linear-gradient(135deg, rgba(230,215,255,0.72), rgba(255,255,255,0.80));
+      border: 1px solid rgba(160,100,240,0.22);
+      border-left: 4px solid rgba(140,80,220,0.60);
+      border-radius: 14px;
+      padding: 13px 16px;
+      margin-bottom: 10px;
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      box-shadow: 0 3px 16px rgba(140,80,220,0.12), 0 1px 0 rgba(255,255,255,0.9) inset;
+      position: relative;
+      overflow: hidden;
+    }
+    .state-question-text {
+      font-size: 16px;
+      font-weight: 500;
+      color: #1A0840;
+      line-height: 1.55;
+      letter-spacing: 0.4px;
+      font-family: 'ZCOOL XiaoWei', serif;
+    }
+
+    /* 状态快照屏的内容区间距 */
+    .state-block {
+      margin-bottom: 20px;
+    }
+    .state-block:last-of-type {
+      margin-bottom: 18px;
+    }
+
+    /* 过渡气泡屏 */
+    .transition-screen .content {
+      gap: 0;
+    }
+    .transition-bubble {
+      background: rgba(255,255,255,0.88);
+      border: 1px solid rgba(160,100,240,0.15);
+      border-radius: 4px 20px 20px 20px;
+      padding: 14px 18px;
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      box-shadow: 0 2px 18px rgba(120,60,200,0.10);
+    }
+    .transition-bubble-text {
+      font-size: 15px;
+      color: #140C30;
+      line-height: 1.6;
+      letter-spacing: 0.3px;
+    }
+    .transition-bubble-text .hl {
+      color: #7030B8;
+      font-weight: 500;
+    }
+
+    /* 底部按钮行 */
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    /* 上一题按钮 */
+    .prev-btn {
+      flex: 0 0 auto;
+      width: 52px;
+      padding: 16px 0;
+      border-radius: 14px;
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+      transition: background 0.2s, opacity 0.2s;
+      font-family: inherit;
+      background: rgba(160,120,220,0.10);
+      color: rgba(100,60,180,0.55);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .prev-btn:active {
+      background: rgba(160,120,220,0.20);
+      color: rgba(100,60,180,0.8);
+    }
+
+    /* 下一题按钮 */
+    .next-btn {
+      flex: 1;
+      padding: 16px;
+      border-radius: 14px;
+      border: none;
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: background 0.2s, box-shadow 0.2s, opacity 0.2s;
+      font-family: inherit;
+    }
+    .next-btn.active {
+      background: linear-gradient(135deg, #9B59D8, #7B35BE);
+      color: #fff;
+      box-shadow: 0 4px 18px rgba(155,89,216,0.38);
+    }
+    .next-btn.inactive {
+      background: rgba(160,120,220,0.12);
+      color: rgba(120,80,180,0.35);
+      cursor: not-allowed;
+    }
+
+    .screen { display: none; }
+    .screen.visible { display: flex; flex-direction: column; flex: 1; }
+
+    .hint {
+      text-align: center;
+      font-size: 11px;
+      color: rgba(55,32,110,0.75);
+      padding: 10px 0 14px;
+      letter-spacing: 0.3px;
+    }
+
+    /* ── 左中右轴选择器 ── */
+    .axis-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .axis-row {
+      background: rgba(255,255,255,0.82);
+      border: 1px solid rgba(180,140,240,0.15);
+      border-radius: 16px;
+      padding: 14px 16px 16px;
+      box-shadow: 0 2px 10px rgba(120,80,200,0.07);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .axis-row.axis-selected {
+      background: rgba(235,224,255,0.88);
+      border-color: rgba(140,80,220,0.28);
+    }
+
+    .axis-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .axis-label-left,
+    .axis-label-right {
+      font-size: 13px;
+      color: #3A1A6A;
+      line-height: 1.45;
+      font-family: 'ZCOOL XiaoWei', serif;
+      max-width: 42%;
+    }
+    .axis-label-left { text-align: left; }
+    .axis-label-right { text-align: right; }
+
+    .axis-track {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      padding: 0 4px;
+    }
+    .axis-track::before {
+      content: '';
+      position: absolute;
+      left: 20px; right: 20px;
+      top: 50%; transform: translateY(-50%);
+      height: 2px;
+      background: rgba(160,100,220,0.18);
+      border-radius: 1px;
+    }
+
+    .axis-node {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 2px solid rgba(160,100,220,0.30);
+      background: rgba(255,255,255,0.85);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      z-index: 1;
+      transition: transform 0.18s, background 0.18s, border-color 0.18s, box-shadow 0.18s;
+      flex-shrink: 0;
+    }
+    .axis-node:active { transform: scale(0.88); }
+    .axis-node .axis-node-label {
+      font-size: 10px;
+      color: rgba(80,50,140,0.65);
+      letter-spacing: 0.2px;
+      line-height: 1;
+      font-family: -apple-system, 'PingFang SC', sans-serif;
+    }
+    /* left node */
+    .axis-node.node-left.selected {
+      background: linear-gradient(135deg, #9B59D8, #7B35BE);
+      border-color: #7B35BE;
+      box-shadow: 0 3px 12px rgba(155,89,216,0.45);
+      transform: scale(1.15);
+    }
+    .axis-node.node-left.selected .axis-node-label { color: #fff; }
+    /* mid node */
+    .axis-node.node-mid.selected {
+      background: linear-gradient(135deg, #A878E0, #8855C8);
+      border-color: #8855C8;
+      box-shadow: 0 3px 12px rgba(140,85,200,0.40);
+      transform: scale(1.15);
+    }
+    .axis-node.node-mid.selected .axis-node-label { color: #fff; }
+    /* right node */
+    .axis-node.node-right.selected {
+      background: linear-gradient(135deg, #9B59D8, #7B35BE);
+      border-color: #7B35BE;
+      box-shadow: 0 3px 12px rgba(155,89,216,0.45);
+      transform: scale(1.15);
+    }
+    .axis-node.node-right.selected .axis-node-label { color: #fff; }
+  </style>
+</head>
+<body>
+<div class="phone-frame">
+
+  <div class="bg-glow"></div>
+
+  <!-- ========== 第2题：多快好省 ========== -->
+  <div class="screen" id="screen2">
+    <div class="top-area">
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" style="width: 16.7%"></div>
+      </div>
+      <div class="progress-label">第 2 题 / 共 12 题</div>
+    </div>
+    <div class="content">
+      <div class="question-card">
+        <div class="question-text">
+          做一件事的时候，你最在意哪些方面？
+        </div>
+        <div class="legend-wrap">
+          <div class="legend-expanded">
+            <div class="legend-item"><div class="legend-dot d1"></div><div class="legend-label"><strong>很典型</strong>经常这样</div></div>
+            <div class="legend-item"><div class="legend-dot d2"></div><div class="legend-label"><strong>偶尔会</strong>有时这样</div></div>
+            <div class="legend-item"><div class="legend-dot d3"></div><div class="legend-label"><strong>不太像</strong>很少这样</div></div>
+            <div class="legend-item"><div class="legend-dot d4">～</div><div class="legend-label"><strong>不确定</strong>说不清楚</div></div>
+          </div>
+          <div class="legend-hint">每一行都选一个，再进入下一题</div>
+        </div>
+      </div>
+      <div class="options-wrap" id="options2">
+        <div class="option-row">
+          <div class="option-text">能快就快，效率第一</div>
+          <div class="option-selectors">
+            <button class="sel-btn s1" onclick="select(this,'q7','efficiency','s1')"></button>
+            <button class="sel-btn s2" onclick="select(this,'q7','efficiency','s2')"></button>
+            <button class="sel-btn s3" onclick="select(this,'q7','efficiency','s3')"></button>
+            <button class="sel-btn s4" onclick="select(this,'q7','efficiency','s4')">～</button>
+          </div>
+        </div>
+        <div class="option-row">
+          <div class="option-text">要做就做好，宁可慢也不凑合</div>
+          <div class="option-selectors">
+            <button class="sel-btn s1" onclick="select(this,'q7','quality','s1')"></button>
+            <button class="sel-btn s2" onclick="select(this,'q7','quality','s2')"></button>
+            <button class="sel-btn s3" onclick="select(this,'q7','quality','s3')"></button>
+            <button class="sel-btn s4" onclick="select(this,'q7','quality','s4')">～</button>
+          </div>
+        </div>
+        <div class="option-row">
+          <div class="option-text">习惯考虑周全，不想漏掉任何细节</div>
+          <div class="option-selectors">
+            <button class="sel-btn s1" onclick="select(this,'q7','thorough','s1')"></button>
+            <button class="sel-btn s2" onclick="select(this,'q7','thorough','s2')"></button>
+            <button class="sel-btn s3" onclick="select(this,'q7','thorough','s3')"></button>
+            <button class="sel-btn s4" onclick="select(this,'q7','thorough','s4')">～</button>
+          </div>
+        </div>
+        <div class="option-row">
+          <div class="option-text">有始有终，不喜欢烂尾</div>
+          <div class="option-selectors">
+            <button class="sel-btn s1" onclick="select(this,'q7','completion','s1')"></button>
+            <button class="sel-btn s2" onclick="select(this,'q7','completion','s2')"></button>
+            <button class="sel-btn s3" onclick="select(this,'q7','completion','s3')"></button>
+            <button class="sel-btn s4" onclick="select(this,'q7','completion','s4')">～</button>
+          </div>
+        </div>
+        <div class="option-row">
+          <div class="option-text">过程姿势可以不优美，但事儿一定要办成，拿结果才是王道</div>
+          <div class="option-selectors">
+            <button class="sel-btn s1" onclick="select(this,'q7','result_oriented','s1')"></button>
+            <button class="sel-btn s2" onclick="select(this,'q7','result_oriented','s2')"></button>
+            <button class="sel-btn s3" onclick="select(this,'q7','result_oriented','s3')"></button>
+            <button class="sel-btn s4" onclick="select(this,'q7','result_oriented','s4')">～</button>
+          </div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="prev-btn" onclick="goPrev(2)">‹</button>
+        <button class="next-btn inactive" id="nextBtn2" onclick="goNext(2)">下一题 →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 第3题：外在动力来源（上） ========== -->
+  <div class="screen" id="screen3">
+    <div class="top-area">
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" style="width: 25.0%"></div>
+      </div>
+      <div class="progress-label">第 3 题 / 共 12 题</div>
+    </div>
+    <div class="content">
+      <div class="question-card">
+        <div class="question-text">
+          在与人和环境的互动中，哪些东西会驱动你去行动？
+        </div>
+        <div class="legend-wrap">
+          <div class="legend-expanded">
+            <div class="legend-item"><div class="legend-dot d1"></div><div class="legend-label"><strong>没有它</strong>非常难受</div></div>
+            <div class="legend-item"><div class="legend-dot d2"></div><div class="legend-label"><strong>有它更好</strong>加分项</div></div>
+            <div class="legend-item"><div class="legend-dot d3"></div><div class="legend-label"><strong>无所谓</strong>对我没太大区别</div></div>
+            <div class="legend-item"><div class="legend-dot d4">～</div><div class="legend-label"><strong>说不清</strong>不确定</div></div>
+          </div>
+          <div class="legend-hint">每一行都选一个，再进入下一题</div>
+        </div>
+      </div>
+      <div class="options-wrap" id="options3">
+        <div class="option-row">
+          <div class="option-text">竞争——要赢，要比别人做得好</div>
+          <div class="option-selectors">
+            <button class="sel-btn s1" onclick="select(this,'q21','compete','s1')"></button>
+            <button class="sel-btn s2" onclick="select(this,'q21','compete','s2')"></button>
+            <button class="sel-btn s3" onclick="select(this,'q21','compete','s3')"></button>
+            <button class="sel-btn s4" onclick="select(this,'q21','compete','s4')">～</button>
+          </div>
+        </div>
+        <div class="option-row">
+          <div class="option-text">影响力——在自己的影响下，让人或事发生积极改变</div>
+          <div class="option-selectors">
+            <button class="sel-btn s1" onclick="select(this,'q21','impact','s1')"></button>
+            <button class="sel-btn s2" onclick="select(this,'q21','impact','s2')"></button>
+            <button class="sel-btn s3" onclick="select(this,'q21','impact','s3')"></button>
+            <button class="sel-btn s4" onclick="select(this,'q21','impact','s4')">～</button>
+          </div>
+        </div>
+        <div class="option-row">
+          <div class="option-text">权力——掌控局面，说了算，能主导</div>
+          <div class="option-selectors">
+            <button class="sel-btn s1" onclick="select(this,'q21','power','s1')"></button>
+            <button class="sel-btn s2" onclick="select(this,'q21','power','s2')"></button>
+            <button class="sel-btn s3" onclick="select(this,'q21','power','s3')"></button>
+            <button class="sel-btn s4" onclick="select(this,'q21','power','s4')">～</button>
+          </div>
+        </div>
+        <div class="option-row">
+          <div class="option-text">责任——当被他人需要或承担一份职责时，我感到责无旁贷</div>
+          <div class="option-selectors">
+            <button class="sel-btn s1" onclick="select(this,'q21','duty','s1')"></button>
+            <button class="sel-btn s2" onclick="select(this,'q21','duty','s2')"></button>
+            <button class="sel-btn s3" onclick="select(this,'q21','duty','s3')"></button>
+            <button class="sel-btn s4" onclick="select(this,'q21','duty','s4')">～</button>
+          </div>
+        </div>
+        <div class="option-row">
+          <div class="option-text">承诺——答应了别人的事，一定要做到</div>
+          <div class="option-selectors">
+            <button class="sel-btn s1" onclick="select(this,'q21','commit','s1')"></button>
+            <button class="sel-btn s2" onclick="select(this,'q21','commit','s2')"></button>
+            <button class="sel-btn s3" onclick="select(this,'q21','commit','s3')"></button>
+            <button class="sel-btn s4" onclick="select(this,'q21','commit','s4')">～</button>
+          </div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="prev-btn" onclick="goPrev(3)">‹</button>
+        <button class="next-btn inactive" id="nextBtn3" onclick="goNext(3)">下一题 →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 第4题：外在动力来源（续） ========== -->
+  <div class="screen" id="screen4">
+    <div class="top-area">
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" style="width: 33.3%"></div>
+      </div>
+      <div class="progress-label">第 4 题 / 共 12 题</div>
+    </div>
+    <div class="content">
+      <div class="question-card">
+        <div class="question-text">
+          在与人和环境的互动中，哪些东西会驱动你去行动？
+        </div>
+        <div style="margin-top: 6px; margin-bottom: 2px;">
+          <span style="font-size: 12px; color: #7030B8; background: rgba(160,100,220,0.18); border: 1px solid rgba(140,80,210,0.35); border-radius: 8px; padding: 4px 10px; letter-spacing: 0.5px; font-weight: 600;">续 · 上题同组</span>
+        </div>
+        <div class="legend-wrap">
+          <div class="legend-expanded">
+            <div class="legend-item"><div class="legend-dot d1"></div><div class="legend-label"><strong>没有它</strong>非常难受</div></div>
+            <div class="legend-item"><div class="legend-dot d2"></div><div class="legend-label"><strong>有它更好</strong>加分项</div></div>
+            <div class="legend-item"><div class="legend-dot d3"></div><div class="legend-label"><strong>无所谓</strong>对我没太大区别</div></div>
+            <div class="legend-item"><div class="legend-dot d4">～</div><div class="legend-label"><strong>说不清</strong>不确定</div></div>
+          </div>
+          <div class="legend-hint">每一行都选一个，再进入下一题</div>
+        </div>
+      </div>
+      <div class="options-wrap" id="options4">
+        <div class="option-row">
+          <div class="option-text">利他——帮助别人，看到对方因我而变好</div>
+          <div class="option-selectors">
+            <button class="sel-btn s1" onclick="select(this,'q21','altruism','s1')"></button>
+            <button class="sel-btn s2" onclick="select(this,'q21','altruism','s2')"></button>
+            <button class="sel-btn s3" onclick="select(this,'q21','altruism','s3')"></button>
+            <button class="sel-btn s4" onclick="select(this,'q21','altruism','s4')">～</button>
+          </div>
+        </div>
+        <div class="option-row">
+          <div class="option-text">亲和——被认同、被接纳，关系融洽、重情义</div>
+          <div class="option-selectors">
+            <button class="sel-btn s1" onclick="select(this,'q21','affiliation','s1')"></button>
+            <button class="sel-btn s2" onclick="select(this,'q21','affiliation','s2')"></button>
+            <button class="sel-btn s3" onclick="select(this,'q21','affiliation','s3')"></button>
+            <button class="sel-btn s4" onclick="select(this,'q21','affiliation','s4')">～</button>
+          </div>
+        </div>
+        <div class="option-row">
+          <div class="option-text">认可——被肯定、被夸，听到正面反馈</div>
+          <div class="option-selectors">
+            <button class="sel-btn s1" onclick="select(this,'q21','recognition','s1')"></button>
+            <button class="sel-btn s2" onclick="select(this,'q21','recognition','s2')"></button>
+            <button class="sel-btn s3" onclick="select(this,'q21','recognition','s3')"></button>
+            <button class="sel-btn s4" onclick="select(this,'q21','recognition','s4')">～</button>
+          </div>
+        </div>
+        <div class="option-row">
+          <div class="option-text">安全感——需要确保一切稳妥，才能真正放松下来</div>
+          <div class="option-selectors">
+            <button class="sel-btn s1" onclick="select(this,'q21','crisis','s1')"></button>
+            <button class="sel-btn s2" onclick="select(this,'q21','crisis','s2')"></button>
+            <button class="sel-btn s3" onclick="select(this,'q21','crisis','s3')"></button>
+            <button class="sel-btn s4" onclick="select(this,'q21','crisis','s4')">～</button>
+          </div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="prev-btn" onclick="goPrev(4)">‹</button>
+        <button class="next-btn inactive" id="nextBtn4" onclick="goNext(4)">下一题 →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 第5题：内在动力来源（上） ========== -->
+  <div class="screen" id="screen5">
+    <div class="top-area">
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" style="width: 41.7%"></div>
+      </div>
+      <div class="progress-label">第 5 题 / 共 12 题</div>
+    </div>
+    <div class="content">
+      <div class="question-card">
+        <div class="question-text">
+          自己内心里，哪些东西让你动力满满？
+        </div>
+        <div class="legend-wrap">
+          <div class="legend-expanded">
+            <div class="legend-item"><div class="legend-dot d1"></div><div class="legend-label"><strong>没有它</strong>非常难受</div></div>
+            <div class="legend-item"><div class="legend-dot d2"></div><div class="legend-label"><strong>有它更好</strong>加分项</div></div>
+            <div class="legend-item"><div class="legend-dot d3"></div><div class="legend-label"><strong>无所谓</strong>对我没太大区别</div></div>
+            <div class="legend-item"><div class="legend-dot d4">～</div><div class="legend-label"><strong>说不清</strong>不确定</div></div>
+          </div>
+          <div class="legend-hint">每一行都选一个，再进入下一题</div>
+        </div>
+      </div>
+      <div class="options-wrap" id="options5">
+        <div class="option-row">
+          <div class="option-text">抱负/愿景——有自己特别热爱或者想做成的一份事业</div>
+          <div class="option-selectors">
+            <button class="sel-btn s1" onclick="select(this,'q22','ambition','s1')"></button>
+            <button class="sel-btn s2" onclick="select(this,'q22','ambition','s2')"></button>
+            <button class="sel-btn s3" onclick="select(this,'q22','ambition','s3')"></button>
+            <button class="sel-btn s4" onclick="select(this,'q22','ambition','s4')">～</button>
+          </div>
+        </div>
+        <div class="option-row">
+          <div class="option-text">结果导向——做出成果，看到实际效果</div>
+          <div class="option-selectors">
+            <button class="sel-btn s1" onclick="select(this,'q22','outcome','s1')"></button>
+            <button class="sel-btn s2" onclick="select(this,'q22','outcome','s2')"></button>
+            <button class="sel-btn s3" onclick="select(this,'q22','outcome','s3')"></button>
+            <button class="sel-btn s4" onclick="select(this,'q22','outcome','s4')">～</button>
+          </div>
+        </div>
+        <div class="option-row">
+          <div class="option-text">价值感——做有意义的事，感到自己有价值</div>
+          <div class="option-selectors">
+            <button class="sel-btn s1" onclick="select(this,'q22','meaning','s1')"></button>
+            <button class="sel-btn s2" onclick="select(this,'q22','meaning','s2')"></button>
+            <button class="sel-btn s3" onclick="select(this,'q22','meaning','s3')"></button>
+            <button class="sel-btn s4" onclick="select(this,'q22','meaning','s4')">～</button>
+          </div>
+        </div>
+        <div class="option-row">
+          <div class="option-text">完美主义——把事情做精，不能将就</div>
+          <div class="option-selectors">
+            <button class="sel-btn s1" onclick="select(this,'q22','perfection','s1')"></button>
+            <button class="sel-btn s2" onclick="select(this,'q22','perfection','s2')"></button>
+            <button class="sel-btn s3" onclick="select(this,'q22','perfection','s3')"></button>
+            <button class="sel-btn s4" onclick="select(this,'q22','perfection','s4')">～</button>
+          </div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="prev-btn" onclick="goPrev(5)">‹</button>
+        <button class="next-btn inactive" id="nextBtn5" onclick="goNext(5)">下一题 →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 第6题：内在动力来源（续） ========== -->
+  <div class="screen" id="screen6">
+    <div class="top-area">
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" style="width: 50.0%"></div>
+      </div>
+      <div class="progress-label">第 6 题 / 共 12 题</div>
+    </div>
+    <div class="content">
+      <div class="question-card">
+        <div class="question-text">
+          自己内心里，哪些东西让你动力满满？
+        </div>
+        <div style="margin-top: 6px; margin-bottom: 2px;">
+          <span style="font-size: 12px; color: #7030B8; background: rgba(160,100,220,0.18); border: 1px solid rgba(140,80,210,0.35); border-radius: 8px; padding: 4px 10px; letter-spacing: 0.5px; font-weight: 600;">续 · 上题同组</span>
+        </div>
+        <div class="legend-wrap">
+          <div class="legend-expanded">
+            <div class="legend-item"><div class="legend-dot d1"></div><div class="legend-label"><strong>没有它</strong>非常难受</div></div>
+            <div class="legend-item"><div class="legend-dot d2"></div><div class="legend-label"><strong>有它更好</strong>加分项</div></div>
+            <div class="legend-item"><div class="legend-dot d3"></div><div class="legend-label"><strong>无所谓</strong>对我没太大区别</div></div>
+            <div class="legend-item"><div class="legend-dot d4">～</div><div class="legend-label"><strong>说不清</strong>不确定</div></div>
+          </div>
+          <div class="legend-hint">每一行都选一个，再进入下一题</div>
+        </div>
+      </div>
+      <div class="options-wrap" id="options6">
+        <div class="option-row">
+          <div class="option-text">自主——按自己的想法做事情</div>
+          <div class="option-selectors">
+            <button class="sel-btn s1" onclick="select(this,'q22','autonomy','s1')"></button>
+            <button class="sel-btn s2" onclick="select(this,'q22','autonomy','s2')"></button>
+            <button class="sel-btn s3" onclick="select(this,'q22','autonomy','s3')"></button>
+            <button class="sel-btn s4" onclick="select(this,'q22','autonomy','s4')">～</button>
+          </div>
+        </div>
+        <div class="option-row">
+          <div class="option-text">理性——无论喜欢与否，去做理性正确的事情</div>
+          <div class="option-selectors">
+            <button class="sel-btn s1" onclick="select(this,'q22','logic','s1')"></button>
+            <button class="sel-btn s2" onclick="select(this,'q22','logic','s2')"></button>
+            <button class="sel-btn s3" onclick="select(this,'q22','logic','s3')"></button>
+            <button class="sel-btn s4" onclick="select(this,'q22','logic','s4')">～</button>
+          </div>
+        </div>
+        <div class="option-row">
+          <div class="option-text">探究欲——搞懂一件事的本质，通透的感觉</div>
+          <div class="option-selectors">
+            <button class="sel-btn s1" onclick="select(this,'q22','curiosity','s1')"></button>
+            <button class="sel-btn s2" onclick="select(this,'q22','curiosity','s2')"></button>
+            <button class="sel-btn s3" onclick="select(this,'q22','curiosity','s3')"></button>
+            <button class="sel-btn s4" onclick="select(this,'q22','curiosity','s4')">～</button>
+          </div>
+        </div>
+        <div class="option-row">
+          <div class="option-text">好奇心——多多体验新鲜事物，满足好奇心</div>
+          <div class="option-selectors">
+            <button class="sel-btn s1" onclick="select(this,'q22','novelty','s1')"></button>
+            <button class="sel-btn s2" onclick="select(this,'q22','novelty','s2')"></button>
+            <button class="sel-btn s3" onclick="select(this,'q22','novelty','s3')"></button>
+            <button class="sel-btn s4" onclick="select(this,'q22','novelty','s4')">～</button>
+          </div>
+        </div>
+        <div class="option-row">
+          <div class="option-text">审美——喜欢追求美感，美的东西让我愉悦</div>
+          <div class="option-selectors">
+            <button class="sel-btn s1" onclick="select(this,'q22','aesthetics','s1')"></button>
+            <button class="sel-btn s2" onclick="select(this,'q22','aesthetics','s2')"></button>
+            <button class="sel-btn s3" onclick="select(this,'q22','aesthetics','s3')"></button>
+            <button class="sel-btn s4" onclick="select(this,'q22','aesthetics','s4')">～</button>
+          </div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="prev-btn" onclick="goPrev(6)">‹</button>
+        <button class="next-btn inactive" id="nextBtn6" onclick="goNext(6)">下一题 →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 第7题：沟通方式 + 人际注意力（4轴） ========== -->
+  <div class="screen" id="screen7">
+    <div class="top-area">
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" style="width: 58.3%"></div>
+      </div>
+      <div class="progress-label">第 7 题 / 共 12 题</div>
+    </div>
+    <div class="content">
+      <div class="question-card">
+        <div class="question-text">
+          与人相处时，你的状态和互动方式是怎样的？
+        </div>
+      </div>
+      <div class="axis-wrap">
+        <div class="axis-row">
+          <div class="axis-labels">
+            <div class="axis-label-left">我表达欲挺强的，我会想方设法影响对方</div>
+            <div class="axis-label-right">说服他人蛮累的，如果无法影响，那就各自保留观点</div>
+          </div>
+          <div class="axis-track">
+            <div class="axis-node node-left" onclick="selectAxis(this,'q12_persuade',-1)">
+              <span class="axis-node-label">偏左</span>
+            </div>
+            <div class="axis-node node-mid" onclick="selectAxis(this,'q12_persuade',0)">
+              <span class="axis-node-label">中间</span>
+            </div>
+            <div class="axis-node node-right" onclick="selectAxis(this,'q12_persuade',1)">
+              <span class="axis-node-label">偏右</span>
+            </div>
+          </div>
+        </div>
+        <div class="axis-row">
+          <div class="axis-labels">
+            <div class="axis-label-left">有话直说，不怕正面表达</div>
+            <div class="axis-label-right">倾向委婉，避免正面冲突</div>
+          </div>
+          <div class="axis-track">
+            <div class="axis-node node-left" onclick="selectAxis(this,'q12_style',-1)">
+              <span class="axis-node-label">偏左</span>
+            </div>
+            <div class="axis-node node-mid" onclick="selectAxis(this,'q12_style',0)">
+              <span class="axis-node-label">中间</span>
+            </div>
+            <div class="axis-node node-right" onclick="selectAxis(this,'q12_style',1)">
+              <span class="axis-node-label">偏右</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="axis-wrap">
+        <div class="axis-row">
+          <div class="axis-labels">
+            <div class="axis-label-left">更关注自己的感受</div>
+            <div class="axis-label-right">更关注对方的状态</div>
+          </div>
+          <div class="axis-track">
+            <div class="axis-node node-left" onclick="selectAxis(this,'q13',-1)">
+              <span class="axis-node-label">偏左</span>
+            </div>
+            <div class="axis-node node-mid" onclick="selectAxis(this,'q13',0)">
+              <span class="axis-node-label">中间</span>
+            </div>
+            <div class="axis-node node-right" onclick="selectAxis(this,'q13',1)">
+              <span class="axis-node-label">偏右</span>
+            </div>
+          </div>
+        </div>
+        <div class="axis-row">
+          <div class="axis-labels">
+            <div class="axis-label-left">感知力强，一个眼神都能察觉</div>
+            <div class="axis-label-right">感知力弱，常常事后才发现</div>
+          </div>
+          <div class="axis-track">
+            <div class="axis-node node-left" onclick="selectAxis(this,'q14',-1)">
+              <span class="axis-node-label">偏左</span>
+            </div>
+            <div class="axis-node node-mid" onclick="selectAxis(this,'q14',0)">
+              <span class="axis-node-label">中间</span>
+            </div>
+            <div class="axis-node node-right" onclick="selectAxis(this,'q14',1)">
+              <span class="axis-node-label">偏右</span>
+            </div>
+          </div>
+        </div>
+        <div class="axis-row">
+          <div class="axis-labels">
+            <div class="axis-label-left">一个人待着，才真正能恢复能量</div>
+            <div class="axis-label-right">和人在一起，状态反而更好</div>
+          </div>
+          <div class="axis-track">
+            <div class="axis-node node-left" onclick="selectAxis(this,'q_social',-1)">
+              <span class="axis-node-label">偏左</span>
+            </div>
+            <div class="axis-node node-mid" onclick="selectAxis(this,'q_social',0)">
+              <span class="axis-node-label">中间</span>
+            </div>
+            <div class="axis-node node-right" onclick="selectAxis(this,'q_social',1)">
+              <span class="axis-node-label">偏右</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="prev-btn" onclick="goPrev(7)">‹</button>
+        <button class="next-btn inactive" id="nextBtn7" onclick="goNext(7)">下一题 →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 第8题：做决定 + 冒险 + 时间感（4轴） ========== -->
+  <div class="screen" id="screen8">
+    <div class="top-area">
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" style="width: 66.7%"></div>
+      </div>
+      <div class="progress-label">第 8 题 / 共 12 题</div>
+    </div>
+    <div class="content">
+      <div class="question-card">
+        <div class="question-text">
+          关于做决定和面对风险——
+        </div>
+      </div>
+      <div class="axis-wrap">
+        <div class="axis-row">
+          <div class="axis-labels">
+            <div class="axis-label-left">想清楚再行动</div>
+            <div class="axis-label-right">稍微思考就行动起来</div>
+          </div>
+          <div class="axis-track">
+            <div class="axis-node node-left" onclick="selectAxis(this,'q5_speed',-1)">
+              <span class="axis-node-label">偏左</span>
+            </div>
+            <div class="axis-node node-mid" onclick="selectAxis(this,'q5_speed',0)">
+              <span class="axis-node-label">中间</span>
+            </div>
+            <div class="axis-node node-right" onclick="selectAxis(this,'q5_speed',1)">
+              <span class="axis-node-label">偏右</span>
+            </div>
+          </div>
+        </div>
+        <div class="axis-row">
+          <div class="axis-labels">
+            <div class="axis-label-left">自己拿主意</div>
+            <div class="axis-label-right">问问身边人再决定</div>
+          </div>
+          <div class="axis-track">
+            <div class="axis-node node-left" onclick="selectAxis(this,'q5_consult',-1)">
+              <span class="axis-node-label">偏左</span>
+            </div>
+            <div class="axis-node node-mid" onclick="selectAxis(this,'q5_consult',0)">
+              <span class="axis-node-label">中间</span>
+            </div>
+            <div class="axis-node node-right" onclick="selectAxis(this,'q5_consult',1)">
+              <span class="axis-node-label">偏右</span>
+            </div>
+          </div>
+        </div>
+        <div class="axis-row">
+          <div class="axis-labels">
+            <div class="axis-label-left">稳扎稳打，我要稳稳的小确幸</div>
+            <div class="axis-label-right">值得就去做，哪怕有风险我也不怕</div>
+          </div>
+          <div class="axis-track">
+            <div class="axis-node node-left" onclick="selectAxis(this,'q8',-1)">
+              <span class="axis-node-label">偏左</span>
+            </div>
+            <div class="axis-node node-mid" onclick="selectAxis(this,'q8',0)">
+              <span class="axis-node-label">中间</span>
+            </div>
+            <div class="axis-node node-right" onclick="selectAxis(this,'q8',1)">
+              <span class="axis-node-label">偏右</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="question-card" style="margin-top: 4px;">
+        <div class="question-text">
+          你更喜欢思考未来，还是关注当下？
+        </div>
+      </div>
+      <div class="axis-wrap">
+        <div class="axis-row">
+          <div class="axis-labels">
+            <div class="axis-label-left">爱想以后，常畅想未来</div>
+            <div class="axis-label-right">专注眼前，活在当下</div>
+          </div>
+          <div class="axis-track">
+            <div class="axis-node node-left" onclick="selectAxis(this,'q3',-1)">
+              <span class="axis-node-label">偏左</span>
+            </div>
+            <div class="axis-node node-mid" onclick="selectAxis(this,'q3',0)">
+              <span class="axis-node-label">中间</span>
+            </div>
+            <div class="axis-node node-right" onclick="selectAxis(this,'q3',1)">
+              <span class="axis-node-label">偏右</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="prev-btn" onclick="goPrev(8)">‹</button>
+        <button class="next-btn inactive" id="nextBtn8" onclick="goNext(8)">下一题 →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 第9题：自信/乐观 + 情绪处理（3轴） ========== -->
+  <div class="screen" id="screen9">
+    <div class="top-area">
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" style="width: 75.0%"></div>
+      </div>
+      <div class="progress-label">第 9 题 / 共 12 题</div>
+    </div>
+    <div class="content">
+      <div class="question-card">
+        <div class="question-text">
+          你如何看待自己，以及处理情绪？
+        </div>
+      </div>
+      <div class="axis-wrap">
+        <div class="axis-row">
+          <div class="axis-labels">
+            <div class="axis-label-left">自我认可度高，有优缺点，但我仍然爱自己</div>
+            <div class="axis-label-right">我时常觉得自己还不够好，做得足够好才会认可自己</div>
+          </div>
+          <div class="axis-track">
+            <div class="axis-node node-left" onclick="selectAxis(this,'q17',-1)">
+              <span class="axis-node-label">偏左</span>
+            </div>
+            <div class="axis-node node-mid" onclick="selectAxis(this,'q17',0)">
+              <span class="axis-node-label">中间</span>
+            </div>
+            <div class="axis-node node-right" onclick="selectAxis(this,'q17',1)">
+              <span class="axis-node-label">偏右</span>
+            </div>
+          </div>
+        </div>
+        <div class="axis-row">
+          <div class="axis-labels">
+            <div class="axis-label-left">容易看到好的一面，相信问题会解决</div>
+            <div class="axis-label-right">容易看到风险，喜欢做最坏打算</div>
+          </div>
+          <div class="axis-track">
+            <div class="axis-node node-left" onclick="selectAxis(this,'q18',-1)">
+              <span class="axis-node-label">偏左</span>
+            </div>
+            <div class="axis-node node-mid" onclick="selectAxis(this,'q18',0)">
+              <span class="axis-node-label">中间</span>
+            </div>
+            <div class="axis-node node-right" onclick="selectAxis(this,'q18',1)">
+              <span class="axis-node-label">偏右</span>
+            </div>
+          </div>
+        </div>
+        <div class="axis-row">
+          <div class="axis-labels">
+            <div class="axis-label-left">藏起来，自己慢慢消化，不想让别人知道</div>
+            <div class="axis-label-right">说出来，找人倾诉或用行动释放</div>
+          </div>
+          <div class="axis-track">
+            <div class="axis-node node-left" onclick="selectAxis(this,'q_emotion',-1)">
+              <span class="axis-node-label">偏左</span>
+            </div>
+            <div class="axis-node node-mid" onclick="selectAxis(this,'q_emotion',0)">
+              <span class="axis-node-label">中间</span>
+            </div>
+            <div class="axis-node node-right" onclick="selectAxis(this,'q_emotion',1)">
+              <span class="axis-node-label">偏右</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="prev-btn" onclick="goPrev(9)">‹</button>
+        <button class="next-btn inactive" id="nextBtn9" onclick="goNext(9)">下一题 →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 第1题：理性与直觉（四色） ========== -->
+  <div class="screen visible" id="screen1">
+    <div class="top-area">
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" style="width: 8.3%"></div>
+      </div>
+      <div class="progress-label">第 1 题 / 共 12 题</div>
+    </div>
+    <div class="content">
+      <div class="question-card">
+        <div class="question-text">
+          当需要思考和认知一件复杂的事情，你通常怎么应对？
+        </div>
+        <div class="legend-wrap">
+          <div class="legend-expanded">
+            <div class="legend-item"><div class="legend-dot d1"></div><div class="legend-label"><strong>很典型</strong>经常这样</div></div>
+            <div class="legend-item"><div class="legend-dot d2"></div><div class="legend-label"><strong>偶尔会</strong>有时这样</div></div>
+            <div class="legend-item"><div class="legend-dot d3"></div><div class="legend-label"><strong>不太像</strong>很少这样</div></div>
+            <div class="legend-item"><div class="legend-dot d4">～</div><div class="legend-label"><strong>不确定</strong>说不清楚</div></div>
+          </div>
+          <div class="legend-hint">每一行都选一个，再进入下一题</div>
+        </div>
+      </div>
+      <div class="options-wrap" id="options1">
+        <div class="option-row">
+          <div class="option-text">理性分析——先搞清楚事实，然后用逻辑帮我梳理分析</div>
+          <div class="option-selectors">
+            <button class="sel-btn s1" onclick="select(this,'q1','rational','s1')"></button>
+            <button class="sel-btn s2" onclick="select(this,'q1','rational','s2')"></button>
+            <button class="sel-btn s3" onclick="select(this,'q1','rational','s3')"></button>
+            <button class="sel-btn s4" onclick="select(this,'q1','rational','s4')">～</button>
+          </div>
+        </div>
+        <div class="option-row">
+          <div class="option-text">靠直觉——不见得总能说清楚为什么，但感觉会告诉我怎么做</div>
+          <div class="option-selectors">
+            <button class="sel-btn s1" onclick="select(this,'q1','intuitive','s1')"></button>
+            <button class="sel-btn s2" onclick="select(this,'q1','intuitive','s2')"></button>
+            <button class="sel-btn s3" onclick="select(this,'q1','intuitive','s3')"></button>
+            <button class="sel-btn s4" onclick="select(this,'q1','intuitive','s4')">～</button>
+          </div>
+        </div>
+        <div class="option-row">
+          <div class="option-text">深入探究——刨根问底、搞明白了才爽</div>
+          <div class="option-selectors">
+            <button class="sel-btn s1" onclick="select(this,'q1','curious','s1')"></button>
+            <button class="sel-btn s2" onclick="select(this,'q1','curious','s2')"></button>
+            <button class="sel-btn s3" onclick="select(this,'q1','curious','s3')"></button>
+            <button class="sel-btn s4" onclick="select(this,'q1','curious','s4')">～</button>
+          </div>
+        </div>
+        <div class="option-row">
+          <div class="option-text">适度思考——实在搞不明白就算了，不必想太多</div>
+          <div class="option-selectors">
+            <button class="sel-btn s1" onclick="select(this,'q1','acceptant','s1')"></button>
+            <button class="sel-btn s2" onclick="select(this,'q1','acceptant','s2')"></button>
+            <button class="sel-btn s3" onclick="select(this,'q1','acceptant','s3')"></button>
+            <button class="sel-btn s4" onclick="select(this,'q1','acceptant','s4')">～</button>
+          </div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="next-btn inactive" id="nextBtn1" onclick="goNext(1)">下一题 →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 第10题：心情（过渡+状态快照） ========== -->
+  <div class="screen transition-screen" id="screen10">
+    <div class="top-area">
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" style="width: 83.3%"></div>
+      </div>
+      <div class="progress-label">第 10 题 / 共 12 题</div>
+    </div>
+    <div class="content">
+      <!-- 知己过渡气泡 -->
+      <div class="transition-bubble" style="margin-bottom: 20px;">
+        <div class="transition-bubble-text">
+          好，关于你是<span class="hl">什么样的人</span>，我有点感觉了。<br><br>
+          再问你几个问题，关于你<span class="hl">最近的状态</span>——
+        </div>
+      </div>
+
+      <!-- S1 状态快照：开心度 -->
+      <div class="state-block">
+        <div class="state-question-card">
+          <div class="state-question-text">最近这段时间，你的心情如何？</div>
+        </div>
+        <div class="snapshot-options-wrap" id="snapshotS1">
+          <div class="snapshot-option" onclick="selectSnapshot(this, 's1', 'happy')"><span class="snapshot-option-emoji">😊</span>很开心，整体状态不错</div>
+          <div class="snapshot-option" onclick="selectSnapshot(this, 's1', 'ok')"><span class="snapshot-option-emoji">🙂</span>还行，有时也会开心</div>
+          <div class="snapshot-option" onclick="selectSnapshot(this, 's1', 'down')"><span class="snapshot-option-emoji">😔</span>整体比较郁闷</div>
+          <div class="snapshot-option" onclick="selectSnapshot(this, 's1', 'unsure')"><span class="snapshot-option-emoji">🤔</span>说不清楚</div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="prev-btn" onclick="goPrev(10)">‹</button>
+        <button class="next-btn inactive" id="nextBtn10" onclick="goNext(10)">下一题 →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 第11题：精力 + 压力 ========== -->
+  <div class="screen" id="screen12">
+    <div class="top-area">
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" style="width: 91.7%"></div>
+      </div>
+      <div class="progress-label">第 11 题 / 共 12 题</div>
+    </div>
+    <div class="content">
+      <div class="state-block">
+        <div class="state-question-card">
+          <div class="state-question-text">一天结束后，你通常还剩多少精力？</div>
+        </div>
+        <div class="snapshot-options-wrap" id="snapshotS2">
+          <div class="snapshot-option" onclick="selectSnapshot(this, 's2', 'full')"><span class="snapshot-option-emoji">⚡</span>能量满满，还能做点别的</div>
+          <div class="snapshot-option" onclick="selectSnapshot(this, 's2', 'medium')"><span class="snapshot-option-emoji">🔋</span>还够用，勉强撑着</div>
+          <div class="snapshot-option" onclick="selectSnapshot(this, 's2', 'drained')"><span class="snapshot-option-emoji">😮‍💨</span>疲惫不堪，什么都不想做</div>
+          <div class="snapshot-option" onclick="selectSnapshot(this, 's2', 'unsure')"><span class="snapshot-option-emoji">🤔</span>说不清楚</div>
+        </div>
+      </div>
+
+      <div class="state-block">
+        <div class="state-question-card">
+          <div class="state-question-text">最近你感受到的压力程度？</div>
+        </div>
+        <div class="snapshot-options-wrap" id="snapshotS3">
+          <div class="snapshot-option" onclick="selectSnapshot(this, 's3', 'healthy')"><span class="snapshot-option-emoji">🌿</span>张弛有度，压力不大</div>
+          <div class="snapshot-option" onclick="selectSnapshot(this, 's3', 'medium')"><span class="snapshot-option-emoji">😤</span>有压力但能承受</div>
+          <div class="snapshot-option" onclick="selectSnapshot(this, 's3', 'high')"><span class="snapshot-option-emoji">😰</span>压力很大，有些透不过气</div>
+          <div class="snapshot-option" onclick="selectSnapshot(this, 's3', 'unsure')"><span class="snapshot-option-emoji">🤔</span>说不清楚</div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="prev-btn" onclick="goPrev(12)">‹</button>
+        <button class="next-btn inactive" id="nextBtn12" onclick="goNext(12)">下一题 →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 第13题：安全感 + 价值感 ========== -->
+  <div class="screen" id="screen13">
+    <div class="top-area">
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" style="width: 100%"></div>
+      </div>
+      <div class="progress-label">第 12 题 / 共 12 题</div>
+    </div>
+    <div class="content">
+      <div class="state-block">
+        <div class="state-question-card">
+          <div class="state-question-text">对当前生活的稳定感和踏实感？</div>
+        </div>
+        <div class="snapshot-options-wrap" id="snapshotS4">
+          <div class="snapshot-option" onclick="selectSnapshot(this, 's4', 'stable')"><span class="snapshot-option-emoji">🏠</span>生活很稳定，有踏实感</div>
+          <div class="snapshot-option" onclick="selectSnapshot(this, 's4', 'uncertain')"><span class="snapshot-option-emoji">🌤</span>有些不确定，但还好</div>
+          <div class="snapshot-option" onclick="selectSnapshot(this, 's4', 'anxious')"><span class="snapshot-option-emoji">😟</span>对未来感到焦虑和不安</div>
+          <div class="snapshot-option" onclick="selectSnapshot(this, 's4', 'unsure')"><span class="snapshot-option-emoji">🤔</span>说不清楚</div>
+        </div>
+      </div>
+
+      <div class="state-block">
+        <div class="state-question-card">
+          <div class="state-question-text">现阶段，你的价值感和意义感如何？</div>
+        </div>
+        <div class="snapshot-options-wrap" id="snapshotS5">
+          <div class="snapshot-option" onclick="selectSnapshot(this, 's5', 'fulfilled')"><span class="snapshot-option-emoji">✨</span>很认可自己当下的价值</div>
+          <div class="snapshot-option" onclick="selectSnapshot(this, 's5', 'seeking')"><span class="snapshot-option-emoji">🔍</span>有价值感，但还在寻找更好的状态</div>
+          <div class="snapshot-option" onclick="selectSnapshot(this, 's5', 'lost')"><span class="snapshot-option-emoji">🌫</span>有点迷茫，找不到方向</div>
+          <div class="snapshot-option" onclick="selectSnapshot(this, 's5', 'unsure')"><span class="snapshot-option-emoji">🤔</span>说不清楚</div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="prev-btn" onclick="goPrev(13)">‹</button>
+        <button class="next-btn inactive" id="nextBtn13" onclick="goNext(13)">完成测评 →</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ── 答题数据存储 ──
+  const answers = {};
+
+  // ── 左中右轴：单行单选 ──
+  // bias: -1 = 偏左, 0 = 居中, 1 = 偏右
+  function selectAxis(node, qKey, bias) {
+    const row = node.closest('.axis-row');
+    row.querySelectorAll('.axis-node').forEach(n => n.classList.remove('selected'));
+    node.classList.add('selected');
+    row.classList.add('axis-selected');
+
+    answers[qKey] = { bias: bias };
+
+    checkAxisScreen(node.closest('.screen'));
+  }
+
+  function checkAxisScreen(screenEl) {
+    const rows = screenEl.querySelectorAll('.axis-row');
+    const allDone = rows.length > 0 && Array.from(rows).every(row =>
+      row.querySelector('.axis-node.selected') !== null
+    );
+    // also check regular option-rows if mixed screen
+    const optRows = screenEl.querySelectorAll('.option-row');
+    const optDone = optRows.length === 0 || Array.from(optRows).every(row =>
+      row.querySelector('.sel-btn.selected') !== null
+    );
+    const snapshotWraps = screenEl.querySelectorAll('.snapshot-options-wrap');
+    const snapDone = snapshotWraps.length === 0 || Array.from(snapshotWraps).every(w =>
+      w.querySelector('.snapshot-option.selected') !== null
+    );
+    const nextBtn = screenEl.querySelector('.next-btn');
+    if (allDone && optDone && snapDone) {
+      nextBtn.classList.remove('inactive');
+      nextBtn.classList.add('active');
+    } else {
+      nextBtn.classList.remove('active');
+      nextBtn.classList.add('inactive');
+    }
+  }
+
+  // ── 四色标记：单行单选 ──
+  function select(btn, qKey, optKey, colorKey) {
+    const row = btn.closest('.option-selectors');
+    row.querySelectorAll('.sel-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+
+    // 记录答案：answers.q1.rational = 's1'
+    if (!answers[qKey]) answers[qKey] = {};
+    answers[qKey][optKey] = colorKey;
+
+    checkAllSelected(btn.closest('.options-wrap'));
+  }
+
+  function checkAllSelected(optionsWrap) {
+    const rows = optionsWrap.querySelectorAll('.option-row');
+    const allSelected = Array.from(rows).every(row =>
+      row.querySelector('.sel-btn.selected') !== null
+    );
+    const screen = optionsWrap.closest('.screen');
+    const nextBtn = screen.querySelector('.next-btn');
+    if (allSelected) {
+      nextBtn.classList.remove('inactive');
+      nextBtn.classList.add('active');
+    } else {
+      nextBtn.classList.remove('active');
+      nextBtn.classList.add('inactive');
+    }
+  }
+
+  // ── 状态快照：单选 ──
+  function selectSnapshot(el, sKey, valKey) {
+    const wrap = el.parentElement;
+    wrap.querySelectorAll('.snapshot-option').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+    answers[sKey] = valKey;
+
+    // 检查当前 screen 内所有 snapshot 组是否都选了
+    checkSnapshotScreen(el.closest('.screen'));
+  }
+
+  function checkSnapshotScreen(screenEl) {
+    const wraps = screenEl.querySelectorAll('.snapshot-options-wrap');
+    const allDone = Array.from(wraps).every(w =>
+      w.querySelector('.snapshot-option.selected') !== null
+    );
+    const nextBtn = screenEl.querySelector('.next-btn');
+    if (allDone) {
+      nextBtn.classList.remove('inactive');
+      nextBtn.classList.add('active');
+    } else {
+      nextBtn.classList.remove('active');
+      nextBtn.classList.add('inactive');
+    }
+  }
+
+  // ── 图例折叠 ──
+  function toggleLegend(toggle) {
+    const expanded = toggle.nextElementSibling;
+    const arrow = toggle.querySelector('.legend-toggle-arrow');
+    if (expanded.style.display === 'none') {
+      expanded.style.display = 'grid';
+      arrow.classList.add('open');
+    } else {
+      expanded.style.display = 'none';
+      arrow.classList.remove('open');
+    }
+  }
+
+  // ── 题目导航 ──
+  function goNext(screenNum) {
+    const current = document.getElementById('screen' + screenNum);
+    const nextBtn = current.querySelector('.next-btn');
+    if (nextBtn.classList.contains('inactive')) return;
+
+    if (screenNum === 13) {
+      // 最后一题：保存结果，跳转报告
+      saveAndGoReport();
+      return;
+    }
+
+    current.classList.remove('visible');
+    // screen11 已删除，screen10 直接跳 screen12
+    const nextNum = screenNum === 10 ? 12 : screenNum + 1;
+    const next = document.getElementById('screen' + nextNum);
+    next.classList.add('visible');
+    window.scrollTo(0, 0);
+  }
+
+  function goPrev(screenNum) {
+    if (screenNum <= 1) return;
+    const current = document.getElementById('screen' + screenNum);
+    current.classList.remove('visible');
+    // screen11 已删除，screen12 回退到 screen10
+    const prevNum = screenNum === 12 ? 10 : screenNum - 1;
+    const prev = document.getElementById('screen' + prevNum);
+    prev.classList.add('visible');
+    window.scrollTo(0, 0);
+  }
+
+  // ── 计算维度得分并保存 ──
+  function saveAndGoReport() {
+    // 四色分值映射：s1=很典型(3), s2=偶尔会(2), s3=不太像(0), s4=不确定(1)
+    const COLOR_SCORE = { s1: 3, s2: 2, s3: 0, s4: 1 };
+
+    // 计算各维度主特征（取最高分选项）
+    const result = {};
+
+    // 思考维度 (q1[color], q3[bias], q5_speed[bias], q5_consult[bias])
+    result.thinking = calcDimension({
+      // q1 四色：rational/intuitive/curious/acceptant
+      rational: getScore('q1', 'rational'),
+      intuitive: getScore('q1', 'intuitive'),
+      high_exploration: getScore('q1', 'curious'),
+      acceptant: getScore('q1', 'acceptant'),
+      // q3 bias: -1=future, 0=balanced, 1=present
+      future_oriented: getBiasScore('q3', -1),
+      present_oriented: getBiasScore('q3', 1),
+      // q5_speed bias: -1=deliberate, 1=decisive
+      decisive: getBiasScore('q5_speed', 1),
+      deliberate: getBiasScore('q5_speed', -1),
+      // q5_consult bias: -1=independent, 1=consultive
+      independent: getBiasScore('q5_consult', -1),
+      consultive: getBiasScore('q5_consult', 1),
+    });
+
+    // 推动维度 (q7[color], q8[bias])
+    result.driving = calcDimension({
+      efficiency: getScore('q7', 'efficiency'),
+      quality: getScore('q7', 'quality'),
+      thorough: getScore('q7', 'thorough'),
+      completion: getScore('q7', 'completion'),
+      result_oriented: getScore('q7', 'result_oriented'),
+      // q8 bias: -1=cautious, 1=adventurous
+      cautious: getBiasScore('q8', -1),
+      adventurous: getBiasScore('q8', 1),
+    });
+
+    // 互动维度 (q12_persuade[bias], q12_style[bias], q13[bias], q14[bias])
+    result.social = calcDimension({
+      // q12_persuade bias: -1=strong_influence, 1=weak_influence
+      strong_influence: getBiasScore('q12_persuade', -1),
+      weak_influence: getBiasScore('q12_persuade', 1),
+      // q12_style bias: -1=direct, 1=indirect
+      direct: getBiasScore('q12_style', -1),
+      indirect: getBiasScore('q12_style', 1),
+      // q13 bias: -1=self_focus, 1=other_focus
+      self_focus: getBiasScore('q13', -1),
+      other_focus: getBiasScore('q13', 1),
+      // q14 bias: -1=high_sensitivity, 1=low_sensitivity
+      high_sensitivity: getBiasScore('q14', -1),
+      low_sensitivity: getBiasScore('q14', 1),
+    });
+
+    // 适应维度 (q17[bias], q18[bias])
+    result.adaptation = calcDimension({
+      // q17 bias: -1=confident, 1=insecure
+      confident: getBiasScore('q17', -1),
+      insecure: getBiasScore('q17', 1),
+      // q18 bias: -1=optimistic, 1=pessimistic
+      optimistic: getBiasScore('q18', -1),
+      pessimistic: getBiasScore('q18', 1),
+    });
+
+    // 状态快照
+    result.state = {
+      mood: answers.s1 || 'unsure',
+      energy: answers.s2 || 'unsure',
+      stress: answers.s3 || 'unsure',
+      security: answers.s4 || 'unsure',
+      meaning: answers.s5 || 'unsure',
+    };
+
+    // 原始答案（供报告详情用）
+    result.raw = JSON.parse(JSON.stringify(answers));
+
+    // 存入 localStorage
+    localStorage.setItem('zjAssessment', JSON.stringify(result));
+    localStorage.setItem('zjRegSource', 'done_assess');
+
+    // 跳转聊天页（带报告预览条）
+    window.location.href = 'screen6-chat.html';
+  }
+
+  function getScore(qKey, optKey) {
+    const COLOR_SCORE = { s1: 3, s2: 2, s3: 0, s4: 1 };
+    const colorKey = answers[qKey] && answers[qKey][optKey];
+    return colorKey ? (COLOR_SCORE[colorKey] || 0) : 0;
+  }
+
+  // 轴偏向得分：若答案的 bias === expectedBias 返回 3；若 bias === 0（中间）返回 1；否则返回 0
+  function getBiasScore(qKey, expectedBias) {
+    const a = answers[qKey];
+    if (!a || a.bias === undefined) return 0;
+    if (a.bias === expectedBias) return 3;
+    if (a.bias === 0) return 1;
+    return 0;
+  }
+
+  function calcDimension(scoreMap) {
+    // 返回分数最高的那个 key（即主特征）
+    let maxKey = null, maxVal = -1;
+    for (const [k, v] of Object.entries(scoreMap)) {
+      if (v > maxVal) { maxVal = v; maxKey = k; }
+    }
+    return { top: maxKey, scores: scoreMap };
+  }
+
+  // 给所有 .top-area 注入注册胶囊（已注册则不注入）
+  if (!localStorage.getItem('zjIsRegistered')) {
+    document.querySelectorAll('.top-area').forEach(el => {
+      const pill = document.createElement('div');
+      pill.className = 'reg-pill';
+      pill.textContent = '注册';
+      pill.onclick = () => {
+        const visibleScreen = document.querySelector('.screen.visible');
+        const screenNum = visibleScreen ? visibleScreen.id.replace('screen', '') : '1';
+        localStorage.setItem('zjRegSource', 'mid_assess');
+        localStorage.setItem('zjMidScreen', screenNum);
+        window.location.href = 'screen5-register.html';
+      };
+      el.appendChild(pill);
+    });
+  }
+
+  // 注册后恢复测评进度
+  (function() {
+    const params = new URLSearchParams(window.location.search);
+    const resumeScreen = params.get('resume');
+    if (resumeScreen) {
+      document.getElementById('screen1').classList.remove('visible');
+      const target = document.getElementById('screen' + resumeScreen);
+      if (target) target.classList.add('visible');
+    }
+  })();
+</script>
+</body>
+</html>

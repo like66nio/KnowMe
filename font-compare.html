@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>知己 · 字体对比</title>
+  <link href="https://fonts.googleapis.com/css2?family=ZCOOL+XiaoWei&family=Ma+Shan+Zheng&family=Zhi+Mang+Xing&family=Liu+Jian+Mao+Cao&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #C8B89A;
+      padding: 32px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    .label {
+      font-size: 11px;
+      color: #7A6A52;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      font-family: -apple-system, sans-serif;
+    }
+
+    .card {
+      background: #5C4A35;
+      border-radius: 20px;
+      padding: 28px 22px 22px;
+      box-shadow: 0 4px 20px rgba(60,46,32,0.2);
+    }
+
+    .question {
+      font-size: 20px;
+      font-weight: 400;
+      color: #F5EEE4;
+      line-height: 1.7;
+      letter-spacing: 0.5px;
+      margin-bottom: 20px;
+    }
+
+    .divider {
+      border-top: 1px solid rgba(245,238,228,0.12);
+      margin-bottom: 16px;
+    }
+
+    .legend {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .dot {
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .d1 { background: linear-gradient(135deg, #5B8FA8, #3D7090); }
+    .d2 { background: linear-gradient(135deg, #C47B8A, #A85E6E); }
+    .d3 { background: linear-gradient(135deg, #7A9E7E, #5C8260); }
+    .d4 { background: linear-gradient(135deg, #7A7470, #5A5450); display:flex; align-items:center; justify-content:center; font-size:10px; color:#E8E2DC; font-weight:900; line-height:1; }
+
+    .legend-text {
+      font-size: 12px;
+      color: #A09080;
+      line-height: 1.4;
+      font-family: -apple-system, sans-serif;
+    }
+    .legend-text strong {
+      display: block;
+      color: #C8B8A0;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .option-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 14px;
+    }
+    .option {
+      background: #F2EDE4;
+      border-radius: 14px;
+      padding: 14px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      box-shadow: 0 2px 6px rgba(60,46,32,0.1);
+    }
+    .option-text {
+      font-size: 14px;
+      color: #3C2E20;
+      line-height: 1.6;
+      flex: 1;
+    }
+    .dots {
+      display: flex;
+      gap: 6px;
+    }
+    .mini-dot {
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* 字体方案 */
+    .f-zcool .question,
+    .f-zcool .option-text { font-family: 'ZCOOL XiaoWei', serif; }
+
+    .f-mashan .question,
+    .f-mashan .option-text { font-family: 'Ma Shan Zheng', cursive; }
+
+    .f-zhimang .question,
+    .f-zhimang .option-text { font-family: 'Zhi Mang Xing', cursive; }
+
+    .f-liujian .question,
+    .f-liujian .option-text { font-family: 'Liu Jian Mao Cao', cursive; }
+
+    .tag {
+      display: inline-block;
+      background: rgba(245,238,228,0.15);
+      color: #C8B8A0;
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      margin-bottom: 12px;
+      font-family: -apple-system, sans-serif;
+      letter-spacing: 0.5px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 方案 A：ZCOOL XiaoWei 站酷小薇 -->
+  <div>
+    <div class="label">方案 A — 站酷小薇 ZCOOL XiaoWei（当前方案）</div>
+    <div class="card f-zcool">
+      <span class="tag">字形圆润，笔触细腻，温柔感强</span>
+      <div class="question">碰到看不懂、想不通的事儿，你一般都是怎么把它搞明白的？</div>
+      <div class="divider"></div>
+      <div class="legend">
+        <div class="legend-item"><div class="dot d1"></div><div class="legend-text"><strong>很典型</strong>经常这样</div></div>
+        <div class="legend-item"><div class="dot d2"></div><div class="legend-text"><strong>偶尔会</strong>有时这样</div></div>
+        <div class="legend-item"><div class="dot d3"></div><div class="legend-text"><strong>不太像</strong>很少这样</div></div>
+        <div class="legend-item"><div class="dot d4">～</div><div class="legend-text"><strong>不确定</strong>说不清楚</div></div>
+      </div>
+      <div class="option-wrap">
+        <div class="option">
+          <div class="option-text">先搞清楚发生了什么，梳理前因后果，分析利弊，再做判断</div>
+          <div class="dots">
+            <div class="mini-dot d1"></div>
+            <div class="mini-dot d2"></div>
+            <div class="mini-dot d3"></div>
+            <div class="mini-dot d4" style="display:flex;align-items:center;justify-content:center;font-size:10px;color:#E8E2DC;font-weight:900;">～</div>
+          </div>
+        </div>
+        <div class="option">
+          <div class="option-text">更相信自己的直觉和经验，感觉对了就去做</div>
+          <div class="dots">
+            <div class="mini-dot d1"></div>
+            <div class="mini-dot d2"></div>
+            <div class="mini-dot d3"></div>
+            <div class="mini-dot d4" style="display:flex;align-items:center;justify-content:center;font-size:10px;color:#E8E2DC;font-weight:900;">～</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 方案 B：Ma Shan Zheng 马善政 -->
+  <div>
+    <div class="label">方案 B — 马善政 Ma Shan Zheng</div>
+    <div class="card f-mashan">
+      <span class="tag">楷书感，端正又不失温柔，有文人气质</span>
+      <div class="question">碰到看不懂、想不通的事儿，你一般都是怎么把它搞明白的？</div>
+      <div class="divider"></div>
+      <div class="legend">
+        <div class="legend-item"><div class="dot d1"></div><div class="legend-text"><strong>很典型</strong>经常这样</div></div>
+        <div class="legend-item"><div class="dot d2"></div><div class="legend-text"><strong>偶尔会</strong>有时这样</div></div>
+        <div class="legend-item"><div class="dot d3"></div><div class="legend-text"><strong>不太像</strong>很少这样</div></div>
+        <div class="legend-item"><div class="dot d4">～</div><div class="legend-text"><strong>不确定</strong>说不清楚</div></div>
+      </div>
+      <div class="option-wrap">
+        <div class="option">
+          <div class="option-text">先搞清楚发生了什么，梳理前因后果，分析利弊，再做判断</div>
+          <div class="dots">
+            <div class="mini-dot d1"></div>
+            <div class="mini-dot d2"></div>
+            <div class="mini-dot d3"></div>
+            <div class="mini-dot d4" style="display:flex;align-items:center;justify-content:center;font-size:10px;color:#E8E2DC;font-weight:900;">～</div>
+          </div>
+        </div>
+        <div class="option">
+          <div class="option-text">更相信自己的直觉和经验，感觉对了就去做</div>
+          <div class="dots">
+            <div class="mini-dot d1"></div>
+            <div class="mini-dot d2"></div>
+            <div class="mini-dot d3"></div>
+            <div class="mini-dot d4" style="display:flex;align-items:center;justify-content:center;font-size:10px;color:#E8E2DC;font-weight:900;">～</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 方案 C：Zhi Mang Xing 志莽行 -->
+  <div>
+    <div class="label">方案 C — 志莽行 Zhi Mang Xing</div>
+    <div class="card f-zhimang">
+      <span class="tag">行书感，笔触流动，有随性洒脱气质</span>
+      <div class="question">碰到看不懂、想不通的事儿，你一般都是怎么把它搞明白的？</div>
+      <div class="divider"></div>
+      <div class="legend">
+        <div class="legend-item"><div class="dot d1"></div><div class="legend-text"><strong>很典型</strong>经常这样</div></div>
+        <div class="legend-item"><div class="dot d2"></div><div class="legend-text"><strong>偶尔会</strong>有时这样</div></div>
+        <div class="legend-item"><div class="dot d3"></div><div class="legend-text"><strong>不太像</strong>很少这样</div></div>
+        <div class="legend-item"><div class="dot d4">～</div><div class="legend-text"><strong>不确定</strong>说不清楚</div></div>
+      </div>
+      <div class="option-wrap">
+        <div class="option">
+          <div class="option-text">先搞清楚发生了什么，梳理前因后果，分析利弊，再做判断</div>
+          <div class="dots">
+            <div class="mini-dot d1"></div>
+            <div class="mini-dot d2"></div>
+            <div class="mini-dot d3"></div>
+            <div class="mini-dot d4" style="display:flex;align-items:center;justify-content:center;font-size:10px;color:#E8E2DC;font-weight:900;">～</div>
+          </div>
+        </div>
+        <div class="option">
+          <div class="option-text">更相信自己的直觉和经验，感觉对了就去做</div>
+          <div class="dots">
+            <div class="mini-dot d1"></div>
+            <div class="mini-dot d2"></div>
+            <div class="mini-dot d3"></div>
+            <div class="mini-dot d4" style="display:flex;align-items:center;justify-content:center;font-size:10px;color:#E8E2DC;font-weight:900;">～</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 方案 D：Liu Jian Mao Cao 流见猫草 -->
+  <div>
+    <div class="label">方案 D — 流见猫草 Liu Jian Mao Cao</div>
+    <div class="card f-liujian">
+      <span class="tag">草书感最强，最随意，像在纸上随手写下</span>
+      <div class="question">碰到看不懂、想不通的事儿，你一般都是怎么把它搞明白的？</div>
+      <div class="divider"></div>
+      <div class="legend">
+        <div class="legend-item"><div class="dot d1"></div><div class="legend-text"><strong>很典型</strong>经常这样</div></div>
+        <div class="legend-item"><div class="dot d2"></div><div class="legend-text"><strong>偶尔会</strong>有时这样</div></div>
+        <div class="legend-item"><div class="dot d3"></div><div class="legend-text"><strong>不太像</strong>很少这样</div></div>
+        <div class="legend-item"><div class="dot d4">～</div><div class="legend-text"><strong>不确定</strong>说不清楚</div></div>
+      </div>
+      <div class="option-wrap">
+        <div class="option">
+          <div class="option-text">先搞清楚发生了什么，梳理前因后果，分析利弊，再做判断</div>
+          <div class="dots">
+            <div class="mini-dot d1"></div>
+            <div class="mini-dot d2"></div>
+            <div class="mini-dot d3"></div>
+            <div class="mini-dot d4" style="display:flex;align-items:center;justify-content:center;font-size:10px;color:#E8E2DC;font-weight:900;">～</div>
+          </div>
+        </div>
+        <div class="option">
+          <div class="option-text">更相信自己的直觉和经验，感觉对了就去做</div>
+          <div class="dots">
+            <div class="mini-dot d1"></div>
+            <div class="mini-dot d2"></div>
+            <div class="mini-dot d3"></div>
+            <div class="mini-dot d4" style="display:flex;align-items:center;justify-content:center;font-size:10px;color:#E8E2DC;font-weight:900;">～</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

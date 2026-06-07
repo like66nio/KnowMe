@@ -1,0 +1,2141 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>知己 · 你的报告</title>
+  <link href="https://fonts.googleapis.com/css2?family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      background: #7878C8;
+      font-family: 'ZCOOL XiaoWei', -apple-system, 'PingFang SC', 'Helvetica Neue', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      width: 100%;
+    }
+
+    .phone-frame {
+      width: 390px;
+      flex-shrink: 0;
+      min-height: 100vh;
+      background: transparent;
+      position: relative;
+      display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ─── 背景渐变 ─── */
+    .bg-glow {
+      position: fixed;
+      top: 0; left: 50%; transform: translateX(-50%);
+      width: 390px; height: 100vh;
+      pointer-events: none; z-index: 0;
+      background:
+        radial-gradient(ellipse 340px 320px at 88%  2%,  #F060B0 0%, transparent 55%),
+        radial-gradient(ellipse 260px 280px at 60% -5%,  #C040E0 0%, transparent 50%),
+        radial-gradient(ellipse 280px 260px at 5%  10%,  #8040D0 0%, transparent 52%),
+        radial-gradient(ellipse 320px 340px at 45%  48%, #4060E8 0%, transparent 58%),
+        radial-gradient(ellipse 300px 260px at 15%  72%, #30C0C0 0%, transparent 55%),
+        radial-gradient(ellipse 240px 220px at 82%  68%, #6080E0 0%, transparent 50%),
+        radial-gradient(ellipse 200px 200px at 50%  90%, #50A8D8 0%, transparent 50%);
+      background-color: #7878C8;
+    }
+
+    /* ─── 报告主体 ─── */
+    .report-body {
+      padding: 116px 18px 24px;
+      display: block;
+      width: 100%;
+      box-sizing: border-box;
+      position: relative; z-index: 2;
+      flex: 1; overflow-y: auto;
+      padding-bottom: calc(80px + env(safe-area-inset-bottom, 20px));
+      opacity: 0; transform: translateY(20px);
+      transition: opacity 0.7s ease 0.2s, transform 0.7s ease 0.2s;
+    }
+    .report-body.visible { opacity: 1; transform: translateY(0); }
+    .report-body > * {
+      width: 100%;
+      box-sizing: border-box;
+      margin-bottom: 14px;
+    }
+    .report-body > *:last-child { margin-bottom: 0; }
+
+    /* ─── 顶栏 ─── */
+    .report-topbar {
+      position: fixed;
+      top: 0; left: 50%; transform: translateX(-50%);
+      width: 390px; z-index: 10;
+      display: flex; align-items: center; gap: 12px;
+      padding: 50px 20px 12px;
+      background: rgba(255,255,255,0.08);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255,255,255,0.12);
+    }
+    .topbar-title {
+      font-size: 18px; color: rgba(255,255,255,0.96);
+      letter-spacing: 1px; font-weight: 600;
+      flex: 1;
+    }
+    .topbar-sub {
+      font-size: 11px; color: rgba(255,255,255,0.38);
+      letter-spacing: 0.4px; margin-top: 2px;
+    }
+
+    /* ─── 报告卡通用（平铺，始终展开）─── */
+    .acc-card {
+      background: rgba(255,255,255,0.68);
+      border: 1px solid rgba(180,130,255,0.16);
+      border-radius: 20px;
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      overflow: hidden;
+      box-shadow: 0 3px 20px rgba(120,70,200,0.08), 0 1px 0 rgba(255,255,255,0.9) inset;
+    }
+
+    /* 卡片头部 */
+    .acc-header {
+      display: flex; align-items: center; gap: 13px;
+      padding: 16px 18px 0;
+    }
+    .acc-icon {
+      width: 36px; height: 36px; border-radius: 12px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 17px;
+    }
+    .ai-portrait  { background: linear-gradient(135deg, rgba(180,80,255,0.22), rgba(140,60,220,0.15)); box-shadow: 0 2px 8px rgba(160,70,220,0.18); }
+    .ai-energy    { background: linear-gradient(135deg, rgba(224,144,255,0.2), rgba(180,100,240,0.14)); box-shadow: 0 2px 8px rgba(200,100,240,0.15); }
+    .ai-gift      { background: linear-gradient(135deg, rgba(123,104,238,0.22), rgba(100,70,210,0.15)); box-shadow: 0 2px 8px rgba(120,90,220,0.16); }
+    .ai-status    { background: linear-gradient(135deg, rgba(80,200,192,0.2), rgba(50,170,160,0.14)); box-shadow: 0 2px 8px rgba(60,180,170,0.15); }
+
+    .acc-info { flex: 1; min-width: 0; }
+    .acc-title {
+      font-size: 14px; color: #140C30;
+      letter-spacing: 0.3px; line-height: 1.3;
+    }
+    .acc-sub {
+      font-size: 11px; color: rgba(50,28,105,0.80);
+      letter-spacing: 0.2px; margin-top: 3px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    /* 内容区始终可见 */
+    .acc-body { overflow: visible; }
+    .acc-body-inner {
+      padding: 14px 18px 20px;
+      border-top: 1px solid rgba(160,100,240,0.08);
+      margin-top: 14px;
+    }
+
+    /* ════════════════════════════════
+       卡片 A：性格画像（维度频谱）
+    ════════════════════════════════ */
+    .portrait-section { margin-bottom: 18px; }
+    .portrait-section:last-child { margin-bottom: 0; }
+    .portrait-section-title {
+      font-size: 12px; font-weight: 600; color: rgba(45,22,100,0.90);
+      letter-spacing: 2px; margin-bottom: 14px;
+      text-align: center;
+    }
+
+    .dim-row { margin-bottom: 14px; }
+    .dim-row:last-child { margin-bottom: 0; }
+    .dim-row-name {
+      font-size: 13px; font-weight: 500; color: rgba(15,8,50,0.92);
+      letter-spacing: 0.3px; margin-bottom: 5px;
+    }
+    .dim-row-labels { display: flex; justify-content: space-between; margin-bottom: 4px; }
+    .dim-label { font-size: 10px; color: rgba(45,25,100,0.76); letter-spacing: 0.3px; }
+    .dim-sub-row { margin-top: 8px; }
+
+    /* 5段频谱条 */
+    .dim-track {
+      height: 7px; border-radius: 4px;
+      background: rgba(160,100,220,0.08);
+      display: flex; gap: 2px;
+    }
+    .dim-seg {
+      flex: 1; height: 100%; border-radius: 2px;
+      background: rgba(160,100,220,0.05);
+    }
+    .dim-seg.act-l2,
+    .dim-seg.act-l1,
+    .dim-seg.act-mid,
+    .dim-seg.act-r1,
+    .dim-seg.act-r2 { background: rgba(110,50,210,0.88); }
+
+    /* ════════════════════════════════
+       卡片 B：高能量特质
+    ════════════════════════════════ */
+    .ebar-row {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 10px;
+    }
+    .ebar-row:last-child { margin-bottom: 0; }
+    .ebar-name {
+      font-size: 12px; color: rgba(30,15,70,0.82);
+      width: 60px; flex-shrink: 0;
+      letter-spacing: 0.2px;
+    }
+    .ebar-zones {
+      flex: 1; display: flex; gap: 3px; height: 7px;
+    }
+    .ebar-zone {
+      flex: 1; height: 100%; border-radius: 3px;
+      background: rgba(160,100,220,0.08);
+    }
+    .ebar-zone.z-low  { background: rgba(180,120,240,0.20); }
+    .ebar-zone.z-mid  { background: rgba(150,80,230,0.42); }
+    .ebar-zone.z-high { background: rgba(120,50,220,0.72); }
+    .ebar-tag {
+      font-size: 10px; width: 22px; flex-shrink: 0;
+      text-align: center; border-radius: 4px; padding: 2px 0;
+      background: rgba(160,80,240,0.1); color: rgba(100,50,185,0.82);
+      letter-spacing: 0;
+    }
+
+    /* ════════════════════════════════
+       卡片 C：TOP3 天赋
+    ════════════════════════════════ */
+    .gift-item {
+      background: rgba(255,255,255,0.55);
+      border: 1px solid rgba(160,100,240,0.14);
+      border-radius: 16px; padding: 16px 15px;
+      margin-bottom: 10px; position: relative; overflow: hidden;
+      box-shadow: 0 2px 10px rgba(120,70,200,0.06);
+    }
+    .gift-item:last-child { margin-bottom: 0; }
+    .gift-item::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(180,100,255,0.4), transparent);
+    }
+    .gift-num { font-size: 10px; color: rgba(110,55,190,0.78); letter-spacing: 2px; margin-bottom: 7px; }
+    .gift-row { display: flex; align-items: flex-start; gap: 11px; margin-bottom: 8px; }
+    .gift-icon {
+      width: 38px; height: 38px; border-radius: 12px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 18px;
+    }
+    .gi-indigo { background: linear-gradient(135deg,#7B68EE,#4B3D9C); box-shadow: 0 3px 12px rgba(123,104,238,0.35); }
+    .gi-rose   { background: linear-gradient(135deg,#E070B0,#B03080); box-shadow: 0 3px 12px rgba(224,112,176,0.35); }
+    .gi-teal   { background: linear-gradient(135deg,#50C8C0,#2E9A92); box-shadow: 0 3px 12px rgba(80,200,192,0.30); }
+    .gift-head { flex: 1; }
+    .gift-name { font-size: 14px; color: #140C30; letter-spacing: 0.3px; margin-bottom: 2px; }
+    .gift-sub  { font-size: 10px; color: rgba(90,50,175,0.82); letter-spacing: 0.5px; }
+    .gift-body { font-size: 12px; color: rgba(30,15,70,0.84); line-height: 1.8; letter-spacing: 0.2px; }
+
+    /* ════════════════════════════════
+       卡片 D：当下状态
+    ════════════════════════════════ */
+    .status-snap {
+      display: flex; justify-content: space-around; align-items: flex-start;
+      padding: 4px 0 8px;
+    }
+    .snap-item { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+    .snap-ring {
+      width: 52px; height: 52px; border-radius: 50%;
+      position: relative; display: flex; align-items: center; justify-content: center;
+    }
+    .snap-ring::after {
+      content: '';
+      position: absolute; inset: 0; border-radius: 50%;
+      background: conic-gradient(
+        from -90deg,
+        var(--clr) 0deg, var(--clr) calc(var(--seg) * 90deg - 2deg),
+        transparent calc(var(--seg) * 90deg - 2deg)
+      );
+    }
+    .snap-mask {
+      position: absolute; inset: 9px; border-radius: 50%;
+      background: #F6F2FC; z-index: 1;
+    }
+    .snap-inner {
+      position: relative; z-index: 2;
+      display: flex; flex-direction: column; align-items: center; gap: 0;
+    }
+    .snap-zone {
+      font-size: 9px; color: rgba(40,20,80,0.82);
+      letter-spacing: 0; line-height: 1.2; text-align: center;
+    }
+    .snap-label {
+      font-size: 10px; color: rgba(55,30,115,0.82);
+      letter-spacing: 0.2px; text-align: center;
+    }
+    .status-summary {
+      font-size: 12px; color: rgba(30,15,70,0.84);
+      line-height: 1.75; letter-spacing: 0.2px;
+      border-top: 1px solid rgba(160,100,220,0.08);
+      padding-top: 12px; margin-top: 4px;
+    }
+
+    /* ─── 知己头像 ─── */
+    .zhiji-svg { width: 100%; height: 100%; display: block; }
+
+    /* ─── 顶栏分享按钮 ─── */
+    .topbar-share-btn {
+      margin-left: auto; flex-shrink: 0;
+      width: 34px; height: 34px; border-radius: 50%;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.18);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; -webkit-tap-highlight-color: transparent;
+      transition: background 0.15s;
+    }
+    .topbar-share-btn:active { background: rgba(255,255,255,0.22); }
+
+    /* ─── 分享面板（底部弹出）─── */
+    .share-panel-mask {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 80;
+      backdrop-filter: blur(4px);
+    }
+    .share-panel-mask.show { display: block; }
+    .share-panel {
+      position: fixed;
+      bottom: 0; left: 50%; transform: translateX(-50%) translateY(100%);
+      width: 390px;
+      background: rgba(18,10,38,0.96);
+      backdrop-filter: blur(24px);
+      border-radius: 22px 22px 0 0;
+      border-top: 1px solid rgba(160,100,255,0.18);
+      z-index: 81;
+      padding: 0 0 env(safe-area-inset-bottom, 16px);
+      transition: transform 0.32s cubic-bezier(0.32,0.72,0,1);
+    }
+    .share-panel.show { transform: translateX(-50%) translateY(0); }
+    .share-panel-handle {
+      width: 36px; height: 4px; border-radius: 2px;
+      background: rgba(255,255,255,0.18);
+      margin: 12px auto 0;
+    }
+    .share-panel-title {
+      font-size: 13px; color: rgba(255,255,255,0.45);
+      letter-spacing: 1.5px; text-align: center;
+      padding: 14px 0 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+    .share-card-list {
+      display: flex; flex-direction: column; gap: 0;
+      padding: 8px 0;
+    }
+    .share-card-item {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 22px;
+      cursor: pointer; -webkit-tap-highlight-color: transparent;
+      transition: background 0.12s;
+      position: relative;
+    }
+    .share-card-item:active { background: rgba(160,100,255,0.08); }
+    .share-card-item + .share-card-item::before {
+      content: '';
+      position: absolute; top: 0; left: 22px; right: 22px;
+      height: 1px; background: rgba(255,255,255,0.05);
+    }
+    .share-card-icon {
+      width: 42px; height: 42px; border-radius: 14px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+    }
+    .sci-portrait { background: linear-gradient(135deg, rgba(180,80,255,0.28), rgba(120,50,210,0.20)); box-shadow: 0 2px 10px rgba(160,70,220,0.22); }
+    .sci-gift     { background: linear-gradient(135deg, rgba(123,104,238,0.28), rgba(90,60,200,0.20)); box-shadow: 0 2px 10px rgba(120,90,220,0.22); }
+    .sci-status   { background: linear-gradient(135deg, rgba(80,200,192,0.28), rgba(40,160,150,0.20)); box-shadow: 0 2px 10px rgba(60,180,170,0.22); }
+    .sci-drive    { background: linear-gradient(135deg, rgba(255,180,50,0.26), rgba(220,120,30,0.18)); box-shadow: 0 2px 10px rgba(240,150,40,0.20); }
+    .share-card-info { flex: 1; }
+    .share-card-name {
+      font-size: 14px; color: rgba(255,255,255,0.88);
+      letter-spacing: 0.3px; margin-bottom: 3px;
+    }
+    .share-card-desc {
+      font-size: 11px; color: rgba(255,255,255,0.38);
+      letter-spacing: 0.2px;
+    }
+    .share-card-arrow {
+      font-size: 16px; color: rgba(255,255,255,0.22);
+    }
+    .share-panel-cancel {
+      margin: 4px 16px 8px;
+      padding: 14px;
+      text-align: center;
+      font-size: 14px; color: rgba(255,255,255,0.45);
+      cursor: pointer; -webkit-tap-highlight-color: transparent;
+      border-top: 1px solid rgba(255,255,255,0.07);
+      border-radius: 14px;
+      transition: background 0.12s;
+    }
+    .share-panel-cancel:active { background: rgba(255,255,255,0.06); }
+
+    /* ─── 海报预览全屏层 ─── */
+    .report-poster-view {
+      display: none;
+      position: fixed; inset: 0;
+      left: 50%; transform: translateX(-50%);
+      width: 390px;
+      background: #0D0918;
+      z-index: 100;
+      flex-direction: column;
+    }
+    .report-poster-view.show { display: flex; }
+    .rpv-header {
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 52px 16px 12px;
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .rpv-back {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.14);
+      color: rgba(255,255,255,0.75); font-size: 20px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; -webkit-tap-highlight-color: transparent;
+    }
+    .rpv-title {
+      font-size: 13px; color: rgba(255,255,255,0.60);
+      letter-spacing: 1px;
+    }
+    .rpv-spacer { width: 32px; }
+
+    /* 海报滚动区 */
+    .rpv-scroll {
+      flex: 1; overflow-y: auto; overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      padding: 20px 20px 0;
+    }
+    .rpv-scroll::-webkit-scrollbar { display: none; }
+
+    /* 海报本体容器 */
+    .rpv-poster-wrap {
+      position: relative; width: 100%;
+    }
+
+    /* 海报通用背景 */
+    .rpv-poster {
+      width: 100%;
+      border-radius: 16px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* 人格卡海报 */
+    .rpv-poster.poster-portrait {
+      background:
+        radial-gradient(ellipse 300px 260px at 90% 3%,  rgba(140,60,220,0.38) 0%, transparent 52%),
+        radial-gradient(ellipse 240px 280px at 5%  90%, rgba(80,50,200,0.28)  0%, transparent 50%),
+        radial-gradient(ellipse 220px 200px at 50% 50%, rgba(60,40,180,0.18)  0%, transparent 56%),
+        linear-gradient(158deg, #0C0820 0%, #160C2C 48%, #080618 100%);
+      padding: 26px 22px 22px;
+    }
+    /* 天赋卡海报 */
+    .rpv-poster.poster-gift {
+      background:
+        radial-gradient(ellipse 300px 260px at 90% 3%,  rgba(100,80,240,0.38) 0%, transparent 52%),
+        radial-gradient(ellipse 240px 280px at 5%  90%, rgba(160,60,220,0.28) 0%, transparent 50%),
+        radial-gradient(ellipse 220px 200px at 50% 50%, rgba(60,40,180,0.18)  0%, transparent 56%),
+        linear-gradient(158deg, #0A0820 0%, #140C2E 48%, #060618 100%);
+      padding: 26px 22px 22px;
+    }
+    /* 状态卡海报 */
+    .rpv-poster.poster-status {
+      background:
+        radial-gradient(ellipse 300px 260px at 90% 3%,  rgba(50,190,185,0.32) 0%, transparent 52%),
+        radial-gradient(ellipse 240px 280px at 5%  90%, rgba(80,50,200,0.22)  0%, transparent 50%),
+        radial-gradient(ellipse 200px 200px at 50% 50%, rgba(40,160,155,0.14) 0%, transparent 56%),
+        linear-gradient(158deg, #060E18 0%, #0C1624 48%, #040C14 100%);
+      padding: 26px 22px 22px;
+    }
+    /* 驱动力图谱海报 */
+    .rpv-poster.poster-drive {
+      background:
+        radial-gradient(ellipse 300px 260px at 90% 3%,  rgba(240,160,40,0.30) 0%, transparent 52%),
+        radial-gradient(ellipse 240px 280px at 5%  90%, rgba(180,80,30,0.22)  0%, transparent 50%),
+        radial-gradient(ellipse 220px 200px at 50% 50%, rgba(200,120,20,0.12) 0%, transparent 56%),
+        linear-gradient(158deg, #130A02 0%, #1E1004 48%, #0E0802 100%);
+      padding: 26px 22px 22px;
+    }
+
+    /* 驱动力海报：ebar 行（深色背景版） */
+    .rp-drive-block { margin-bottom: 18px; }
+    .rp-drive-block:last-child { margin-bottom: 0; }
+    .rp-drive-block-title {
+      font-size: 10px; color: rgba(240,170,60,0.52);
+      letter-spacing: 2px; margin-bottom: 10px;
+      text-align: center;
+      font-family: 'PingFang SC', sans-serif;
+    }
+    .rp-ebar-row {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 7px;
+    }
+    .rp-ebar-row:last-child { margin-bottom: 0; }
+    .rp-ebar-name {
+      font-size: 11px; color: rgba(240,220,180,0.78);
+      width: 52px; flex-shrink: 0; letter-spacing: 0.2px;
+    }
+    .rp-ebar-zones {
+      flex: 1; display: flex; gap: 3px; height: 5px;
+    }
+    .rp-ebar-zone {
+      flex: 1; height: 100%; border-radius: 2px;
+      background: rgba(220,140,40,0.08);
+    }
+    .rp-ebar-zone.ez-low  { background: rgba(240,170,60,0.22); }
+    .rp-ebar-zone.ez-mid  { background: rgba(240,140,30,0.50); }
+    .rp-ebar-zone.ez-high { background: rgba(240,120,20,0.85); }
+    .rp-ebar-tag {
+      font-size: 9px; width: 18px; flex-shrink: 0;
+      text-align: center; border-radius: 3px; padding: 1px 0;
+      background: rgba(240,150,40,0.12); color: rgba(240,190,80,0.72);
+      letter-spacing: 0;
+    }
+
+    /* 海报顶部光线 */
+    .rpv-poster::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent 0%, rgba(200,150,255,0.40) 50%, transparent 100%);
+    }
+
+    /* 海报内部元素 */
+    .rp-date-label {
+      font-size: 10px; color: rgba(180,140,255,0.45);
+      letter-spacing: 2.5px; margin-bottom: 16px;
+      font-family: 'PingFang SC', sans-serif;
+    }
+    .rp-accent-bar {
+      width: 24px; height: 2px; border-radius: 2px;
+      background: linear-gradient(90deg, #B060FF, #6090FF);
+      margin-bottom: 14px; opacity: 0.85;
+    }
+    .rp-section-label {
+      font-size: 9px; color: rgba(160,120,255,0.45);
+      letter-spacing: 2px; margin-bottom: 8px;
+      font-family: 'PingFang SC', sans-serif;
+    }
+    .rp-divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(160,100,255,0.12) 30%, rgba(180,120,255,0.20) 50%, rgba(160,100,255,0.12) 70%, transparent);
+      margin: 14px 0;
+    }
+    .rp-footer {
+      margin-top: 20px; padding-top: 14px;
+      border-top: 1px solid rgba(160,100,255,0.10);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .rp-brand-name {
+      font-size: 13px; font-weight: 700;
+      color: rgba(255,255,255,0.85); letter-spacing: 2.5px;
+      text-shadow: 0 1px 8px rgba(160,80,255,0.40);
+    }
+    .rp-brand-slogan {
+      font-size: 9px; color: rgba(180,140,255,0.45);
+      letter-spacing: 1.2px; margin-top: 3px;
+    }
+    .rp-qr {
+      width: 44px; height: 44px;
+      background: rgba(255,255,255,0.88);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .rp-qr svg { width: 34px; height: 34px; }
+
+    /* 人格卡：维度频谱 */
+    .rp-dim-section { margin-bottom: 16px; }
+    .rp-dim-section:last-of-type { margin-bottom: 0; }
+    .rp-dim-section-title {
+      font-size: 10px; color: rgba(160,120,255,0.50);
+      letter-spacing: 2px; margin-bottom: 10px;
+      text-align: center;
+      font-family: 'PingFang SC', sans-serif;
+    }
+    .rp-dim-row { margin-bottom: 10px; }
+    .rp-dim-row:last-child { margin-bottom: 0; }
+    .rp-dim-row-name {
+      font-size: 12px; color: rgba(230,220,255,0.80);
+      letter-spacing: 0.3px; margin-bottom: 4px;
+    }
+    .rp-dim-labels { display: flex; justify-content: space-between; margin-bottom: 3px; }
+    .rp-dim-label { font-size: 9px; color: rgba(160,130,255,0.50); letter-spacing: 0.2px; }
+    .rp-dim-track {
+      height: 5px; border-radius: 3px;
+      background: rgba(160,100,220,0.08);
+      display: flex; gap: 2px;
+    }
+    .rp-dim-seg {
+      flex: 1; height: 100%; border-radius: 1.5px;
+      background: rgba(160,100,220,0.05);
+    }
+    .rp-dim-seg.act { background: rgba(140,70,230,0.88); }
+
+    /* 维度选择 checkbox 区（选哪些维度展示）*/
+    .rp-dim-selector {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(160,100,255,0.12);
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-top: 14px;
+    }
+    .rp-dim-selector-title {
+      font-size: 11px; color: rgba(180,140,255,0.55);
+      letter-spacing: 1px; margin-bottom: 12px;
+      font-family: 'PingFang SC', sans-serif;
+    }
+    .rp-dim-check-list {
+      display: flex; flex-wrap: wrap; gap: 8px;
+    }
+    .rp-dim-check {
+      display: flex; align-items: center; gap: 6px;
+      padding: 5px 10px; border-radius: 10px;
+      border: 1px solid rgba(160,100,255,0.18);
+      background: rgba(140,80,220,0.06);
+      cursor: pointer; -webkit-tap-highlight-color: transparent;
+      transition: all 0.15s;
+      user-select: none;
+    }
+    .rp-dim-check.selected {
+      background: rgba(140,80,220,0.22);
+      border-color: rgba(160,100,255,0.48);
+    }
+    .rp-dim-check-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: rgba(160,100,255,0.30);
+      flex-shrink: 0; transition: background 0.15s;
+    }
+    .rp-dim-check.selected .rp-dim-check-dot { background: rgba(180,120,255,0.90); }
+    .rp-dim-check-text {
+      font-size: 11px; color: rgba(200,170,255,0.60);
+      letter-spacing: 0.3px; transition: color 0.15s;
+    }
+    .rp-dim-check.selected .rp-dim-check-text { color: rgba(220,190,255,0.92); }
+
+    /* 天赋卡内部 */
+    .rp-gift-item { margin-bottom: 14px; }
+    .rp-gift-item:last-child { margin-bottom: 0; }
+    .rp-gift-row { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; }
+    .rp-gift-icon {
+      width: 32px; height: 32px; border-radius: 10px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 15px;
+    }
+    .rp-gift-num { font-size: 9px; color: rgba(160,120,255,0.55); letter-spacing: 2px; margin-bottom: 2px; }
+    .rp-gift-name { font-size: 13px; color: rgba(230,215,255,0.90); letter-spacing: 0.3px; }
+    .rp-gift-sub { font-size: 10px; color: rgba(160,120,255,0.55); letter-spacing: 0.5px; margin-top: 1px; }
+    .rp-gift-body {
+      font-size: 11px; color: rgba(200,185,255,0.72);
+      line-height: 1.70; letter-spacing: 0.2px;
+      padding-left: 42px;
+    }
+
+    /* 状态卡内部 */
+    .rp-snap-row {
+      display: flex; justify-content: space-around;
+      padding: 8px 0 14px;
+    }
+    .rp-snap-item { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .rp-snap-ring {
+      width: 48px; height: 48px; border-radius: 50%;
+      position: relative; display: flex; align-items: center; justify-content: center;
+    }
+    .rp-snap-ring::after {
+      content: '';
+      position: absolute; inset: 0; border-radius: 50%;
+      background: conic-gradient(
+        from -90deg,
+        var(--clr) 0deg, var(--clr) calc(var(--seg) * 90deg - 2deg),
+        transparent calc(var(--seg) * 90deg - 2deg)
+      );
+    }
+    .rp-snap-mask {
+      position: absolute; inset: 8px; border-radius: 50%;
+      background: #0C1020; z-index: 1;
+    }
+    .rp-snap-inner {
+      position: relative; z-index: 2;
+    }
+    .rp-snap-zone {
+      font-size: 9px; color: rgba(220,210,255,0.82);
+      letter-spacing: 0; text-align: center; line-height: 1.2;
+    }
+    .rp-snap-label {
+      font-size: 10px; color: rgba(180,150,255,0.65);
+      letter-spacing: 0.2px; text-align: center;
+    }
+    .rp-status-summary {
+      font-size: 12px; color: rgba(200,185,255,0.78);
+      line-height: 1.80; letter-spacing: 0.2px;
+      border-top: 1px solid rgba(160,100,255,0.10);
+      padding-top: 12px;
+    }
+
+    /* 保存按钮 */
+    /* ── 字符级打码/高亮 span ── */
+    .rp-char { display: inline; }
+    .rp-char.redacted {
+      color: transparent;
+      background: rgba(110,60,180,0.55);
+      border-radius: 2px;
+      box-shadow: inset 0 0 0 1px rgba(160,110,255,0.28);
+    }
+    .rp-char.highlighted {
+      border-bottom: 2px solid rgba(200,150,255,0.85);
+      color: rgba(245,230,255,1);
+    }
+
+    /* ── 标注工具底栏 ── */
+    .rpv-toolbar {
+      flex-shrink: 0;
+      display: flex; flex-direction: column; align-items: stretch;
+      padding: 8px 14px calc(10px + env(safe-area-inset-bottom, 14px));
+      background: rgba(8,4,20,0.96);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border-top: 1px solid rgba(160,100,255,0.14);
+      gap: 8px;
+    }
+    /* 提示文字独占一行 */
+    .rpv-toolbar .rpt-hint {
+      font-size: 10.5px; color: rgba(190,160,255,0.65);
+      letter-spacing: 0.3px; text-align: center; line-height: 1.4;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    /* 按钮行 */
+    .rpv-toolbar .rpt-btns {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .rpv-toolbar .rpt-tool-btn {
+      flex: 0 0 auto; height: 38px; padding: 0 14px;
+      border-radius: 20px; border: 1.5px solid rgba(160,100,255,0.22);
+      background: rgba(255,255,255,0.06);
+      display: flex; align-items: center; gap: 5px;
+      font-size: 11px; font-weight: 600; color: rgba(200,170,255,0.70);
+      cursor: pointer; -webkit-tap-highlight-color: transparent;
+      transition: all 0.15s; user-select: none; white-space: nowrap;
+    }
+    .rpv-toolbar .rpt-tool-btn.active-redact {
+      background: rgba(100,40,180,0.55); border-color: rgba(180,120,255,0.60);
+      color: rgba(230,210,255,1); box-shadow: 0 2px 10px rgba(100,40,180,0.40);
+    }
+    .rpv-toolbar .rpt-tool-btn.active-highlight {
+      background: rgba(160,90,240,0.40); border-color: rgba(200,160,255,0.65);
+      color: rgba(245,230,255,1); box-shadow: 0 2px 10px rgba(160,80,240,0.35);
+    }
+    .rpv-toolbar-active .rpv-scroll { cursor: crosshair; }
+    .rpv-toolbar-active .rp-char   { cursor: crosshair; }
+
+    /* 保存按钮（工具栏内，改为小尺寸） */
+    .rpv-save-btn {
+      flex: 0 0 auto; height: 38px; padding: 0 18px;
+      border-radius: 20px; border: none;
+      background: linear-gradient(135deg, rgba(160,80,250,0.92), rgba(100,50,210,0.92));
+      color: #fff; font-size: 12px; font-weight: 600; letter-spacing: 0.8px;
+      display: flex; align-items: center; justify-content: center; gap: 5px;
+      cursor: pointer; -webkit-tap-highlight-color: transparent;
+      box-shadow: 0 3px 14px rgba(140,60,220,0.40);
+      white-space: nowrap;
+    }
+    .rpv-save-btn:active { opacity: 0.85; transform: scale(0.97); }
+
+    /* 保存成功提示 */
+    .rpv-toast {
+      position: fixed;
+      bottom: calc(80px + env(safe-area-inset-bottom, 16px));
+      left: 50%; transform: translateX(-50%);
+      background: rgba(20,12,40,0.92);
+      border: 1px solid rgba(160,100,255,0.22);
+      color: rgba(220,200,255,0.90);
+      font-size: 13px; padding: 9px 20px; border-radius: 20px;
+      backdrop-filter: blur(12px);
+      pointer-events: none; z-index: 200;
+      opacity: 0; transition: opacity 0.25s;
+    }
+    .rpv-toast.show { opacity: 1; }
+
+    /* ─── Tab Bar ─── */
+    .tab-bar {
+      position: fixed;
+      bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 390px;
+      display: flex; align-items: stretch;
+      background: rgba(255,255,255,0.08);
+      backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+      border-top: 1px solid rgba(255,255,255,0.14);
+      padding-bottom: env(safe-area-inset-bottom, 20px);
+      z-index: 60;
+    }
+    .tab-item {
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 4px; padding: 14px 0 10px;
+      cursor: pointer; -webkit-tap-highlight-color: transparent;
+      transition: opacity 0.15s; position: relative;
+    }
+    .tab-item:active { opacity: 0.65; }
+    .tab-icon { font-size: 22px; line-height: 1; }
+    .tab-label {
+      font-size: 10px; color: rgba(255,255,255,0.50);
+      letter-spacing: 0.5px; transition: color 0.15s;
+    }
+    .tab-item.active .tab-label { color: rgba(255,255,255,0.95); font-weight: 500; }
+    .tab-item.active::after {
+      content: '';
+      position: absolute;
+      bottom: calc(env(safe-area-inset-bottom, 20px) + 3px);
+      width: 4px; height: 4px; border-radius: 50%;
+      background: rgba(255,255,255,0.90);
+    }
+
+    /* ─── 无测评状态 ─── */
+    .no-assess-state {
+      position: relative; z-index: 2;
+      flex: 1;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 20px 28px;
+      gap: 20px;
+      padding-bottom: calc(80px + env(safe-area-inset-bottom, 20px));
+    }
+    .no-assess-avatar {
+      width: 72px; height: 72px; border-radius: 22px;
+      background: linear-gradient(135deg, #C890E8, #8B4FC8);
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+      box-shadow: 0 0 32px rgba(160,80,220,0.3), 0 8px 24px rgba(120,60,200,0.2);
+    }
+    .no-assess-text {
+      font-size: 15px; color: rgba(255,255,255,0.88);
+      letter-spacing: 0.3px; line-height: 1.8; text-align: center;
+    }
+    .no-assess-btn {
+      background: linear-gradient(135deg, #9B59D8, #7B35BE);
+      color: rgba(255,255,255,0.96);
+      border: none; border-radius: 16px; padding: 14px 32px;
+      font-size: 15px; font-family: inherit; letter-spacing: 0.5px;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(140,70,210,0.32);
+      transition: opacity 0.15s;
+    }
+    .no-assess-btn:active { opacity: 0.88; }
+
+  </style>
+</head>
+<body>
+
+<!-- 知己头像 SVG 符号定义 -->
+<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute">
+  <defs>
+    <radialGradient id="furGrad" cx="50%" cy="45%" r="55%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#EDE0F8"/>
+    </radialGradient>
+    <radialGradient id="cheekGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FAF0FF" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#E8D4F4" stop-opacity="0.6"/>
+    </radialGradient>
+    <radialGradient id="eyeGrad" cx="38%" cy="35%" r="60%">
+      <stop offset="0%" stop-color="#5C3A8A"/>
+      <stop offset="100%" stop-color="#2A1040"/>
+    </radialGradient>
+    <linearGradient id="starGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFE566"/>
+      <stop offset="100%" stop-color="#E090FF"/>
+    </linearGradient>
+    <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="1.5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <symbol id="zhiji-face" viewBox="0 0 100 100">
+      <ellipse cx="21" cy="40" rx="16" ry="20" fill="url(#furGrad)" opacity="0.9"/>
+      <ellipse cx="79" cy="40" rx="16" ry="20" fill="url(#furGrad)" opacity="0.9"/>
+      <ellipse cx="50" cy="24" rx="22" ry="16" fill="url(#furGrad)" opacity="0.85"/>
+      <ellipse cx="18" cy="62" rx="14" ry="12" fill="url(#cheekGrad)"/>
+      <ellipse cx="82" cy="62" rx="14" ry="12" fill="url(#cheekGrad)"/>
+      <circle cx="50" cy="55" r="32" fill="url(#furGrad)"/>
+      <circle cx="38" cy="50" r="6" fill="url(#eyeGrad)"/>
+      <circle cx="62" cy="50" r="6" fill="url(#eyeGrad)"/>
+      <circle cx="40.5" cy="47.5" r="2" fill="white" opacity="0.85"/>
+      <circle cx="64.5" cy="47.5" r="2" fill="white" opacity="0.85"/>
+      <ellipse cx="50" cy="61" rx="5" ry="3.5" fill="#3A1A5A"/>
+      <path d="M44 66 Q50 71 56 66" stroke="#5A3070" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+      <g filter="url(#softGlow)">
+        <path d="M50 10 L52 16 L58 16 L53 20 L55 26 L50 22 L45 26 L47 20 L42 16 L48 16 Z" fill="url(#starGrad)" opacity="0.95"/>
+      </g>
+      <circle cx="70" cy="18" r="2.2" fill="#FFE566" opacity="0.8"/>
+      <circle cx="76" cy="24" r="1.4" fill="#E090FF" opacity="0.7"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="phone-frame">
+
+  <div class="bg-glow"></div>
+
+  <!-- 顶栏 -->
+  <div class="report-topbar">
+    <div>
+      <div class="topbar-title">自我画像</div>
+      <div class="topbar-sub" id="reportDateSub"></div>
+    </div>
+    <button class="topbar-share-btn" onclick="openSharePanel()" title="分享报告">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.75)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- 报告主体（有测评数据时显示） -->
+  <div class="report-body" id="reportBody" style="display:none;">
+
+    <!-- ① 性格画像 -->
+    <div class="acc-card" id="acc-portrait">
+      <div class="acc-header">
+        <div class="acc-icon ai-portrait">🧠</div>
+        <div class="acc-info">
+          <div class="acc-title">性格画像</div>
+          <div class="acc-sub">思考 · 推动 · 社交 · 适应 · 动力，5大维度</div>
+        </div>
+      </div>
+      <div class="acc-body" id="acc-portrait-body">
+      <div class="acc-body-inner">
+
+        <!-- 一、思考与决定 -->
+        <div class="portrait-section">
+          <div class="portrait-section-title">· 思考与决定 ·</div>
+
+          <div class="dim-row">
+            <div class="dim-row-name">思考程度</div>
+            <div class="dim-row-labels">
+              <span class="dim-label">适度思考</span>
+              <span class="dim-label">深入探究</span>
+            </div>
+            <div class="dim-track">
+              <div class="dim-seg"></div><div class="dim-seg"></div><div class="dim-seg act-mid"></div><div class="dim-seg"></div><div class="dim-seg"></div>
+            </div>
+          </div>
+
+          <div class="dim-row">
+            <div class="dim-row-name">理性与直觉</div>
+            <div class="dim-row-labels">
+              <span class="dim-label">弱理性</span>
+              <span class="dim-label">强理性</span>
+            </div>
+            <div class="dim-track">
+              <div class="dim-seg"></div><div class="dim-seg"></div><div class="dim-seg"></div><div class="dim-seg act-r1"></div><div class="dim-seg act-r2"></div>
+            </div>
+            <div class="dim-sub-row" style="margin-top: 14px;">
+              <div class="dim-row-labels">
+                <span class="dim-label">不依赖直觉</span>
+                <span class="dim-label">常运用直觉</span>
+              </div>
+              <div class="dim-track">
+                <div class="dim-seg"></div><div class="dim-seg"></div><div class="dim-seg act-mid"></div><div class="dim-seg"></div><div class="dim-seg"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="dim-row">
+            <div class="dim-row-name">看远与顾近</div>
+            <div class="dim-row-labels">
+              <span class="dim-label">着眼未来</span>
+              <span class="dim-label">聚焦当下</span>
+            </div>
+            <div class="dim-track">
+              <div class="dim-seg"></div><div class="dim-seg"></div><div class="dim-seg act-mid"></div><div class="dim-seg"></div><div class="dim-seg"></div>
+            </div>
+          </div>
+
+          <div class="dim-row">
+            <div class="dim-row-name">做决定</div>
+            <div class="dim-row-labels">
+              <span class="dim-label">想清楚再决定</span>
+              <span class="dim-label">不纠结，先干</span>
+            </div>
+            <div class="dim-track">
+              <div class="dim-seg"></div><div class="dim-seg"></div><div class="dim-seg"></div><div class="dim-seg act-r1"></div><div class="dim-seg act-r2"></div>
+            </div>
+            <div class="dim-sub-row" style="margin-top: 14px;">
+              <div class="dim-row-labels">
+                <span class="dim-label">自己拿主意</span>
+                <span class="dim-label">多听意见再决定</span>
+              </div>
+              <div class="dim-track">
+                <div class="dim-seg"></div><div class="dim-seg"></div><div class="dim-seg act-mid"></div><div class="dim-seg"></div><div class="dim-seg"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 二、推动事情 -->
+        <div class="portrait-section">
+          <div class="portrait-section-title">· 推动事情 ·</div>
+
+          <div class="dim-row">
+            <div class="dim-row-name">效率</div>
+            <div class="dim-row-labels"><span class="dim-label">喜欢慢</span><span class="dim-label">喜欢快</span></div>
+            <div class="dim-track"><div class="dim-seg"></div><div class="dim-seg"></div><div class="dim-seg act-mid"></div><div class="dim-seg"></div><div class="dim-seg"></div></div>
+          </div>
+          <div class="dim-row">
+            <div class="dim-row-name">完美</div>
+            <div class="dim-row-labels"><span class="dim-label">接受不完美</span><span class="dim-label">追求极致</span></div>
+            <div class="dim-track"><div class="dim-seg"></div><div class="dim-seg"></div><div class="dim-seg act-mid"></div><div class="dim-seg"></div><div class="dim-seg"></div></div>
+          </div>
+          <div class="dim-row">
+            <div class="dim-row-name">周全</div>
+            <div class="dim-row-labels"><span class="dim-label">不贪多求全</span><span class="dim-label">全面细致周到</span></div>
+            <div class="dim-track"><div class="dim-seg"></div><div class="dim-seg"></div><div class="dim-seg act-mid"></div><div class="dim-seg"></div><div class="dim-seg"></div></div>
+          </div>
+          <div class="dim-row">
+            <div class="dim-row-name">完成</div>
+            <div class="dim-row-labels"><span class="dim-label">及时止损</span><span class="dim-label">有始有终</span></div>
+            <div class="dim-track"><div class="dim-seg"></div><div class="dim-seg"></div><div class="dim-seg act-mid"></div><div class="dim-seg"></div><div class="dim-seg"></div></div>
+          </div>
+          <div class="dim-row">
+            <div class="dim-row-name">风险</div>
+            <div class="dim-row-labels"><span class="dim-label">稳扎稳打</span><span class="dim-label">冒险尝试</span></div>
+            <div class="dim-track"><div class="dim-seg"></div><div class="dim-seg"></div><div class="dim-seg act-mid"></div><div class="dim-seg"></div><div class="dim-seg"></div></div>
+          </div>
+        </div>
+
+        <!-- 三、与人互动 -->
+        <div class="portrait-section">
+          <div class="portrait-section-title">· 与人互动 ·</div>
+
+          <div class="dim-row">
+            <div class="dim-row-name">内向与外向</div>
+            <div class="dim-row-labels"><span class="dim-label">独处充电</span><span class="dim-label">社交充能</span></div>
+            <div class="dim-track"><div class="dim-seg"></div><div class="dim-seg act-l1"></div><div class="dim-seg"></div><div class="dim-seg"></div><div class="dim-seg"></div></div>
+          </div>
+          <div class="dim-row">
+            <div class="dim-row-name">影响他人</div>
+            <div class="dim-row-labels"><span class="dim-label">尽可能影响他人</span><span class="dim-label">不强求说服</span></div>
+            <div class="dim-track"><div class="dim-seg"></div><div class="dim-seg"></div><div class="dim-seg"></div><div class="dim-seg act-r1"></div><div class="dim-seg act-r2"></div></div>
+          </div>
+          <div class="dim-row">
+            <div class="dim-row-name">人际注意力</div>
+            <div class="dim-row-labels"><span class="dim-label">关注自己</span><span class="dim-label">关注他人</span></div>
+            <div class="dim-track"><div class="dim-seg"></div><div class="dim-seg"></div><div class="dim-seg act-mid"></div><div class="dim-seg"></div><div class="dim-seg"></div></div>
+          </div>
+          <div class="dim-row">
+            <div class="dim-row-name">人际感知力</div>
+            <div class="dim-row-labels"><span class="dim-label">高度敏感</span><span class="dim-label">相对钝感</span></div>
+            <div class="dim-track"><div class="dim-seg"></div><div class="dim-seg"></div><div class="dim-seg act-mid"></div><div class="dim-seg"></div><div class="dim-seg"></div></div>
+          </div>
+        </div>
+
+        <!-- 四、适应环境 -->
+        <div class="portrait-section">
+          <div class="portrait-section-title">· 适应环境 ·</div>
+
+          <div class="dim-row">
+            <div class="dim-row-name">自信</div>
+            <div class="dim-row-labels"><span class="dim-label">自我认可</span><span class="dim-label">自我鞭策</span></div>
+            <div class="dim-track"><div class="dim-seg"></div><div class="dim-seg"></div><div class="dim-seg"></div><div class="dim-seg act-r1"></div><div class="dim-seg act-r2"></div></div>
+          </div>
+          <div class="dim-row">
+            <div class="dim-row-name">乐观与悲观</div>
+            <div class="dim-row-labels"><span class="dim-label">偏乐观</span><span class="dim-label">偏悲观</span></div>
+            <div class="dim-track"><div class="dim-seg"></div><div class="dim-seg"></div><div class="dim-seg"></div><div class="dim-seg act-r1"></div><div class="dim-seg act-r2"></div></div>
+          </div>
+          <div class="dim-row">
+            <div class="dim-row-name">情绪处理</div>
+            <div class="dim-row-labels"><span class="dim-label">向内消化</span><span class="dim-label">向外释放</span></div>
+            <div class="dim-track"><div class="dim-seg act-l2"></div><div class="dim-seg"></div><div class="dim-seg"></div><div class="dim-seg"></div><div class="dim-seg"></div></div>
+          </div>
+        </div>
+
+        <!-- 五、动力来源（动态渲染） -->
+        <div class="portrait-section" id="motivation-external">
+          <div class="portrait-section-title">· 外在动力 ·</div>
+        </div>
+        <div class="portrait-section" id="motivation-internal">
+          <div class="portrait-section-title">· 内在动力 ·</div>
+        </div>
+
+      </div>
+      </div>
+    </div>
+
+    <!-- ② TOP3 天赋 -->
+    <div class="acc-card" id="acc-gift">
+      <div class="acc-header">
+        <div class="acc-icon ai-gift">✨</div>
+        <div class="acc-info">
+          <div class="acc-title">TOP 3 天赋</div>
+          <div class="acc-sub">行动天赋 · 内驱天赋 · 稳定天赋</div>
+        </div>
+      </div>
+      <div class="acc-body" id="acc-gift-body">
+      <div class="acc-body-inner">
+        <div class="gift-item">
+          <div class="gift-num">NO.1</div>
+          <div class="gift-row">
+            <div class="gift-icon gi-indigo">⚡</div>
+            <div class="gift-head">
+              <div class="gift-name">想到了就动，而且动对了</div>
+              <div class="gift-sub">果断行动 × 理性分析 → 行动天赋</div>
+            </div>
+          </div>
+          <div class="gift-body">你同时具备快速行动和理性判断的能力，两者在你身上罕见地并存。这让你能在别人还在犹豫的时候，已经做了正确的决定。</div>
+        </div>
+        <div class="gift-item">
+          <div class="gift-num">NO.2</div>
+          <div class="gift-row">
+            <div class="gift-icon gi-rose">🎯</div>
+            <div class="gift-head">
+              <div class="gift-name">对自己有要求，而且是真的</div>
+              <div class="gift-sub">成就动力 × 内在驱动 → 内驱天赋</div>
+            </div>
+          </div>
+          <div class="gift-body">你的驱动力来自内部，不是外部的奖惩。这种内驱力是天花板最高的那种能量——因为它不会因为外界的看法而减弱。</div>
+        </div>
+        <div class="gift-item">
+          <div class="gift-num">NO.3</div>
+          <div class="gift-row">
+            <div class="gift-icon gi-teal">🌿</div>
+            <div class="gift-head">
+              <div class="gift-name">越乱的时候，你越清醒</div>
+              <div class="gift-sub">理性分析 × 稳定抗压 → 稳定天赋</div>
+            </div>
+          </div>
+          <div class="gift-body">压力来临时你不会外化爆发，而是向内处理。加上天然的分析习惯，高压下反而能保持清晰判断。周围越乱，你越是那个锚点。</div>
+        </div>
+      </div>
+      </div>
+    </div>
+
+    <!-- ③ 当下状态 -->
+    <div class="acc-card" id="acc-status">
+      <div class="acc-header">
+        <div class="acc-icon ai-status">🔋</div>
+        <div class="acc-info">
+          <div class="acc-title">当下状态</div>
+          <div class="acc-sub">开心度 · 精力 · 压力感 · 安全感 · 价值感</div>
+        </div>
+      </div>
+      <div class="acc-body" id="acc-status-body">
+      <div class="acc-body-inner">
+        <div class="status-snap">
+          <div class="snap-item">
+            <div class="snap-ring" style="--seg:3; --clr:#50C8C0">
+              <div class="snap-mask"></div>
+              <div class="snap-inner"><div class="snap-zone">不错</div></div>
+            </div>
+            <div class="snap-label">开心度</div>
+          </div>
+          <div class="snap-item">
+            <div class="snap-ring" style="--seg:2; --clr:#B06FD8">
+              <div class="snap-mask"></div>
+              <div class="snap-inner"><div class="snap-zone">够用</div></div>
+            </div>
+            <div class="snap-label">精力</div>
+          </div>
+          <div class="snap-item">
+            <div class="snap-ring" style="--seg:2; --clr:#E070B0">
+              <div class="snap-mask"></div>
+              <div class="snap-inner"><div class="snap-zone">能扛</div></div>
+            </div>
+            <div class="snap-label">压力感</div>
+          </div>
+          <div class="snap-item">
+            <div class="snap-ring" style="--seg:3; --clr:#50C8C0">
+              <div class="snap-mask"></div>
+              <div class="snap-inner"><div class="snap-zone">踏实</div></div>
+            </div>
+            <div class="snap-label">安全感</div>
+          </div>
+          <div class="snap-item">
+            <div class="snap-ring" style="--seg:1; --clr:#E070B0">
+              <div class="snap-mask"></div>
+              <div class="snap-inner"><div class="snap-zone" style="font-size:8px;">寻找中</div></div>
+            </div>
+            <div class="snap-label">价值感</div>
+          </div>
+        </div>
+        <div class="status-summary">
+          整体开心、踏实，但精力和价值感都在「够用、但不充盈」的边缘——你知道自己想要更好，只是还没找到那个感觉。
+        </div>
+      </div>
+      </div>
+    </div>
+
+  </div><!-- /report-body -->
+
+  <!-- 无测评时显示的引导状态 -->
+  <div class="no-assess-state" id="noAssessState" style="display:none;">
+    <div class="no-assess-avatar">
+      <svg class="zhiji-svg" viewBox="0 0 100 100"><use href="#zhiji-face"/></svg>
+    </div>
+    <div class="no-assess-text">
+      报告还没生成<br>完成测评后，我才能真正了解你
+    </div>
+    <button class="no-assess-btn" onclick="window.location.href='screen3-prototype.html'">
+      去做测评 →
+    </button>
+  </div>
+
+  <!-- Tab Bar -->
+  <nav class="tab-bar">
+    <div class="tab-item" onclick="window.location.href='screen6-chat.html'">
+      <span class="tab-label">聊天</span>
+    </div>
+    <div class="tab-item" onclick="window.location.href='screen8-diary.html'">
+      <span class="tab-label">日记</span>
+    </div>
+    <div class="tab-item active">
+      <span class="tab-label">报告</span>
+    </div>
+    <div class="tab-item" onclick="showTabTip('找教练')">
+      <span class="tab-label">找教练</span>
+    </div>
+  </nav>
+
+  <!-- ═══ 分享面板 ═══ -->
+  <div class="share-panel-mask" id="sharePanelMask" onclick="closeSharePanel()"></div>
+  <div class="share-panel" id="sharePanel">
+    <div class="share-panel-handle"></div>
+    <div class="share-panel-title">选择要生成的海报</div>
+    <div class="share-card-list">
+      <div class="share-card-item" onclick="openPosterView('portrait')">
+        <div class="share-card-icon sci-portrait">🧠</div>
+        <div class="share-card-info">
+          <div class="share-card-name">性格画像</div>
+          <div class="share-card-desc">选择想展示的维度，生成你的性格频谱图</div>
+        </div>
+        <div class="share-card-arrow">›</div>
+      </div>
+      <div class="share-card-item" onclick="openPosterView('gift')">
+        <div class="share-card-icon sci-gift">✨</div>
+        <div class="share-card-info">
+          <div class="share-card-name">TOP 3 天赋</div>
+          <div class="share-card-desc">展示属于你的三个独特天赋</div>
+        </div>
+        <div class="share-card-arrow">›</div>
+      </div>
+      <div class="share-card-item" onclick="openPosterView('status')">
+        <div class="share-card-icon sci-status">🔋</div>
+        <div class="share-card-info">
+          <div class="share-card-name">当下状态</div>
+          <div class="share-card-desc">五项状态快照，记录你此刻的样子</div>
+        </div>
+        <div class="share-card-arrow">›</div>
+      </div>
+      <div class="share-card-item" onclick="openPosterView('drive')">
+        <div class="share-card-icon sci-drive">⚡</div>
+        <div class="share-card-info">
+          <div class="share-card-name">驱动力图谱</div>
+          <div class="share-card-desc">内在 × 外在，18项驱动力全景展示</div>
+        </div>
+        <div class="share-card-arrow">›</div>
+      </div>
+    </div>
+    <div class="share-panel-cancel" onclick="closeSharePanel()">取消</div>
+  </div>
+
+  <!-- ═══ 海报预览全屏层 ═══ -->
+  <div class="report-poster-view" id="reportPosterView">
+    <div class="rpv-header">
+      <div class="rpv-back" onclick="closePosterView()">‹</div>
+      <div class="rpv-title">预览 · 长按可保存</div>
+      <div class="rpv-spacer"></div>
+    </div>
+
+    <div class="rpv-scroll" id="rpvScroll">
+      <!-- 人格卡：维度选择器 -->
+      <div class="rp-dim-selector" id="rpvDimSelector" style="display:none;">
+        <div class="rp-dim-selector-title">选择要展示的维度</div>
+        <div class="rp-dim-check-list" id="rpvDimChecks"></div>
+      </div>
+
+      <!-- 海报本体 -->
+      <div class="rpv-poster-wrap" style="margin-top:14px;">
+        <div class="rpv-poster" id="rpvPoster"></div>
+      </div>
+    </div>
+
+    <!-- 标注工具底栏 -->
+    <div class="rpv-toolbar" id="rpvToolbar">
+      <span class="rpt-hint" id="rptHint">选工具后划过文字即可标注</span>
+      <div class="rpt-btns">
+        <button class="rpt-tool-btn" id="rptBtnRedact"    onclick="setReportTool('redact')">▓ 打码</button>
+        <button class="rpt-tool-btn" id="rptBtnHighlight" onclick="setReportTool('highlight')">✦ 高亮</button>
+        <button class="rpv-save-btn" onclick="saveReportPoster()" style="flex:1;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          保存图片
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 保存提示 -->
+  <div class="rpv-toast" id="rpvToast">已保存到相册</div>
+
+</div><!-- /phone-frame -->
+
+<script>
+  /* ══════════════════════════════════════
+     动态报告渲染（读取 localStorage 数据）
+  ══════════════════════════════════════ */
+
+  function loadAssessment() {
+    try {
+      const raw = localStorage.getItem('zjAssessment');
+      return raw ? JSON.parse(raw) : null;
+    } catch(e) { return null; }
+  }
+
+  function buildSpectrumClasses(score, side) {
+    const segs = ['', '', '', '', ''];
+    if (side === 'computed') {
+      if (score >= 1)       segs[4] = 'act-r2';
+      else if (score <= -1) segs[0] = 'act-l2';
+      else                  segs[2] = 'act-mid';
+    }
+    return segs;
+  }
+
+  function getDimBias(r, leftKey, rightKey) {
+    const COLOR_SCORE = { s1: 3, s2: 2, s3: 0, s4: 1 };
+
+    const getScore = (spec, pole) => {
+      const [q, o] = spec.split('.');
+      const raw = r && r[q];
+      if (!raw) return 1;
+      if (raw.bias !== undefined) {
+        const b = raw.bias;
+        if (pole === 'left')  return b === -1 ? 3 : b === 0 ? 1 : 0;
+        if (pole === 'right') return b === 1  ? 3 : b === 0 ? 1 : 0;
+        return 1;
+      }
+      const c = raw[o];
+      return c ? (COLOR_SCORE[c] || 0) : 1;
+    };
+
+    const right = Array.isArray(rightKey)
+      ? rightKey.reduce((s,k) => s + getScore(k, 'right'), 0) / rightKey.length
+      : getScore(rightKey, 'right');
+    const left  = Array.isArray(leftKey)
+      ? leftKey.reduce((s,k) => s + getScore(k, 'left'), 0) / leftKey.length
+      : getScore(leftKey, 'left');
+    return right - left;
+  }
+
+  function renderDimTrack(trackEl, bias) {
+    const segs = trackEl.querySelectorAll('.dim-seg');
+    const classes = buildSpectrumClasses(bias, 'computed');
+    segs.forEach((seg, i) => {
+      seg.className = 'dim-seg';
+      if (classes[i]) seg.classList.add(classes[i]);
+    });
+  }
+
+  const STATE_MAP = {
+    mood:     { happy: {seg:3, zone:'开心', clr:'#50C8C0'}, ok: {seg:2, zone:'还好', clr:'#B06FD8'}, down: {seg:1, zone:'有点闷', clr:'#E070B0'}, unsure: {seg:2, zone:'说不准', clr:'#9B8FC0'} },
+    energy:   { full: {seg:3, zone:'充沛', clr:'#50C8C0'}, medium: {seg:2, zone:'够用', clr:'#B06FD8'}, drained: {seg:1, zone:'偏低', clr:'#E070B0'}, unsure: {seg:2, zone:'说不准', clr:'#9B8FC0'} },
+    stress:   { healthy: {seg:3, zone:'还好', clr:'#50C8C0'}, medium: {seg:2, zone:'能扛', clr:'#B06FD8'}, high: {seg:1, zone:'压大', clr:'#E070B0'}, unsure: {seg:2, zone:'说不准', clr:'#9B8FC0'} },
+    security: { stable: {seg:3, zone:'踏实', clr:'#50C8C0'}, uncertain: {seg:2, zone:'有点晃', clr:'#B06FD8'}, anxious: {seg:1, zone:'不安', clr:'#E070B0'}, unsure: {seg:2, zone:'说不准', clr:'#9B8FC0'} },
+    meaning:  { fulfilled: {seg:3, zone:'很好', clr:'#50C8C0'}, seeking: {seg:2, zone:'寻找中', clr:'#B06FD8'}, lost: {seg:1, zone:'有点迷', clr:'#E070B0'}, unsure: {seg:2, zone:'说不准', clr:'#9B8FC0'} },
+  };
+
+  function renderStateSnaps(state) {
+    const snapItems = document.querySelectorAll('.snap-item');
+    const keys = ['mood','energy','stress','security','meaning'];
+    keys.forEach((key, i) => {
+      const val = state ? (state[key] || 'unsure') : 'unsure';
+      const info = STATE_MAP[key][val] || STATE_MAP[key]['unsure'];
+      const ring = snapItems[i].querySelector('.snap-ring');
+      ring.style.setProperty('--seg', info.seg);
+      ring.style.setProperty('--clr', info.clr);
+      snapItems[i].querySelector('.snap-zone').textContent = info.zone;
+    });
+
+    const summaryEl = document.querySelector('.status-summary');
+    if (!state || !summaryEl) return;
+    summaryEl.textContent = buildStateSummary(state);
+  }
+
+  function buildStateSummary(s) {
+    const mood = s.mood, energy = s.energy, stress = s.stress, security = s.security, meaning = s.meaning;
+    const isPositive = (mood === 'happy' || mood === 'ok') && (energy === 'full' || energy === 'medium') && stress !== 'high';
+    const isStrained = stress === 'high' || energy === 'drained' || mood === 'down';
+
+    let core = '';
+    if (mood === 'happy' && energy === 'full' && stress !== 'high') {
+      core = '整体状态挺好的，心情和精力都在线';
+    } else if (mood === 'happy' && stress === 'medium') {
+      core = '心情还不错，但最近有些压着——不算喘不过气，就是能感觉到重量';
+    } else if (mood === 'happy' && energy === 'drained') {
+      core = '心里是轻松的，但身体有些透支了，精力不太够用';
+    } else if (mood === 'happy') {
+      core = '心情挺好的，整体没什么大问题';
+    } else if (mood === 'ok' && stress === 'high') {
+      core = '心情还好，但压力不小——有些事压着，身体和脑子都在超负荷运转';
+    } else if (mood === 'ok' && stress === 'medium' && energy === 'drained') {
+      core = '表面撑着，但精力和压力都在消耗——那种「还行但有点累」的感觉';
+    } else if (mood === 'ok' && stress === 'medium') {
+      core = '心情还好，有些压力，但还在承受范围内——算是紧绷但没崩';
+    } else if (mood === 'ok' && energy === 'drained') {
+      core = '心情还好，但精力不太够——有些疲惫的感觉挂在身上';
+    } else if (mood === 'ok') {
+      core = '心情还好，整体状态平稳';
+    } else if (mood === 'down' && stress === 'high') {
+      core = '最近压力很大，心情也沉——整个人处于一种比较紧绷又有点疲倦的状态';
+    } else if (mood === 'down' && energy === 'drained') {
+      core = '心情有些低落，精力也有些透支——感觉有点空空的，需要充一充电';
+    } else if (mood === 'down') {
+      core = '最近心情有些沉，有点郁闷，但也说不太清楚是什么原因';
+    } else if (mood === 'unsure' && stress === 'high') {
+      core = '心情说不太清楚，但压力是真实的——整个人处于一种有些混沌的疲惫感里';
+    } else if (mood === 'unsure' && energy === 'drained') {
+      core = '心情有些捉摸不定，精力也感觉耗得差不多了——状态有点漂';
+    } else if (mood === 'unsure') {
+      core = '心情说不太清楚是什么感觉，有点起伏，很难定义';
+    } else {
+      core = '状态说不太准，各方面都不算差，但也没特别亮';
+    }
+
+    let anchor = '';
+    if (security === 'stable' && meaning === 'fulfilled') {
+      anchor = '生活有踏实感，做的事也有价值感——底子是稳的';
+    } else if (security === 'stable' && meaning === 'seeking') {
+      anchor = '生活底子还算稳，但内心在找更清晰的方向';
+    } else if (security === 'stable' && meaning === 'lost') {
+      anchor = '生活层面还算稳定，但方向感不太清晰，有些迷茫压在心底';
+    } else if (security === 'uncertain' && meaning === 'fulfilled') {
+      anchor = '对未来有些不确定，但当下做的事让自己有价值感——两种感觉同时存在';
+    } else if (security === 'uncertain' && meaning === 'seeking') {
+      anchor = '对未来不太确定，方向感也还在找——整体有些悬在半空的感觉';
+    } else if (security === 'uncertain' && meaning === 'lost') {
+      anchor = '对未来有些不安，方向感也不太清晰——重心感偏弱';
+    } else if (security === 'anxious' && meaning === 'fulfilled') {
+      anchor = '内心对未来有些焦虑，但当下的价值感是在的，这两个感觉有些拉扯';
+    } else if (security === 'anxious') {
+      anchor = '对未来有些焦虑，不太踏实，整体缺乏重心感';
+    } else if (meaning === 'fulfilled') {
+      anchor = '价值感很充盈，知道自己在做有意义的事';
+    } else if (meaning === 'seeking') {
+      anchor = '还在找那种真正有方向感、做起来有劲的状态';
+    } else if (meaning === 'lost') {
+      anchor = '方向感不太清晰，有些迷茫的底色';
+    }
+
+    return anchor ? core + '。' + anchor + '。' : core + '。';
+  }
+
+  function buildGifts(data) {
+    if (!data) return null;
+    const r = data.raw || {};
+    const COLOR_SCORE = { s1: 3, s2: 2, s3: 0, s4: 1 };
+    const sc = (q, o) => { const c = r[q] && r[q][o]; return c ? (COLOR_SCORE[c] || 0) : 1; };
+    const scB = (q, pole) => {
+      const raw = r[q];
+      if (!raw || raw.bias === undefined) return 1;
+      const b = raw.bias;
+      return b === pole ? 3 : b === 0 ? 1 : 0;
+    };
+
+    const rational    = sc('q1', 'rational');
+    const intuitive   = sc('q1', 'intuitive');
+    const curious     = sc('q1', 'curious');
+    const future      = scB('q3', -1);
+    const present     = scB('q3', 1);
+    const decisive    = scB('q5_speed', 1);
+    const deliberate  = scB('q5_speed', -1);
+    const quality     = sc('q7', 'quality');
+    const efficiency  = sc('q7', 'efficiency');
+    const cautious    = scB('q8', -1);
+    const adventurous = scB('q8', 1);
+    const strong_inf  = scB('q12_persuade', -1);
+    const other_focus = scB('q13', 1);
+    const self_focus  = scB('q13', -1);
+    const hi_sens     = scB('q14', -1);
+    const social_ext  = scB('q_social', 1);
+    const confident   = scB('q17', -1);
+    const optimistic  = scB('q18', -1);
+
+    const m_compete    = sc('q21', 'compete');
+    const m_impact     = sc('q21', 'impact');
+    const m_power      = sc('q21', 'power');
+    const m_duty       = sc('q21', 'duty');
+    const m_commit     = sc('q21', 'commit');
+    const m_ambition   = sc('q22', 'ambition');
+    const m_outcome    = sc('q22', 'outcome');
+    const m_meaning    = sc('q22', 'meaning');
+    const m_perfection = sc('q22', 'perfection');
+    const m_autonomy   = sc('q22', 'autonomy');
+    const m_logic      = sc('q22', 'logic');
+    const m_curiosity  = sc('q22', 'curiosity');
+    const m_novelty    = sc('q22', 'novelty');
+    const m_altruism   = sc('q21', 'altruism');
+    const m_affil      = sc('q21', 'affiliation');
+    const emotion_out  = scB('q_emotion', 1);
+
+    const q21_total = m_compete + m_impact + m_power + m_duty + m_commit;
+    const q22_total = m_ambition + m_outcome + m_meaning + m_perfection + m_autonomy
+                    + m_logic + m_curiosity + m_novelty + sc('q22', 'aesthetics');
+    const inner_ratio_bonus = (q21_total > 0 && q22_total / q21_total >= 1.5) ? 1 : 0;
+
+    const colorAllVals = [
+      rational, intuitive, curious, sc('q1','acceptant'),
+      sc('q7','efficiency'), quality, sc('q7','thorough'), sc('q7','completion'), sc('q7','result_oriented'),
+      m_compete, m_impact, m_power, m_duty, m_commit,
+      m_ambition, m_outcome, m_meaning, m_perfection, m_autonomy,
+      m_logic, m_curiosity, m_novelty, sc('q22','aesthetics'),
+    ];
+    const colorAvg = colorAllVals.reduce((s, v) => s + v, 0) / colorAllVals.length;
+    const relHigh = colorAvg + 0.4;
+
+    const giftPool = [
+      { baseScore: rational + intuitive, boost: Math.max(m_logic, m_curiosity) + (social_ext <= 0 ? 1 : 0), guard: () => curious >= relHigh, icon: '🔍', color: 'gi-indigo', category: 'think', name: rational >= intuitive ? '喜欢把事情真正搞明白' : '对人对事有一种特别的直觉', sub: '洞察天赋', body: rational >= intuitive ? '你不喜欢停在表面——看到一个结论，你会忍不住往下追，直到找到真正的原因。这种刨根问底的冲动，让你经常比别人多看到一层。' : '你对事物有一种难以解释的感知力——还没有充分的信息，你已经有了判断。这不是随机的，是你在潜意识中整合了很多细节。' },
+      { baseScore: future + adventurous, boost: m_ambition, guard: null, icon: '🚀', color: 'gi-indigo', category: 'think', name: '活在前面，走在别人之前', sub: '前瞻天赋', body: '你习惯往远处想，也敢于押注不确定性。这种组合让你能更早看到机会，更敢去抓——而不是等到所有条件都成熟才行动。' },
+      { baseScore: present + decisive, boost: m_outcome, guard: null, icon: '⚙️', color: 'gi-teal', category: 'think', name: '脚踏实地，先把眼前的搞定', sub: '务实天赋', body: '你不喜欢空谈远景——什么是现在能做的，怎么快速推进，这才是你真正在意的。这种务实让你在很多人还在规划时，你已经开始走了。' },
+      { baseScore: decisive, boost: 0, guard: () => decisive >= 2 && rational >= relHigh, icon: '⚡', color: 'gi-rose', category: 'think', name: '不拖着，做了再说', sub: '决策天赋', body: '面对岔路你不会反复权衡——你清楚地知道自己要什么，做决定快，也不会事后反复后悔。这种果断在需要推进的时候，是真正的优势。' },
+      { baseScore: quality, boost: m_perfection + (m_meaning >= relHigh ? 1 : 0), guard: null, icon: '🔬', color: 'gi-indigo', category: 'drive', name: '做一件事，就要做到位', sub: '极致天赋', body: '你脑子里有个标准，差一点你就过不去自己这关。别人觉得"还好"的东西，你能看出还缺什么。这种极致感是你输出质量的来源。' },
+      { baseScore: decisive + efficiency, boost: 0, guard: null, icon: '🏃', color: 'gi-teal', category: 'drive', name: '想到了就动，而且动得快', sub: '行动力天赋', body: '你不喜欢等，不喜欢拖——有了方向就开始，执行过程中再调整。这种快速启动的能力让你在大多数人还在准备的时候，你已经有了第一版结果。' },
+      { baseScore: sc('q7', 'completion') + sc('q7', 'thorough'), boost: Math.max(m_commit, m_duty), guard: () => adventurous <= 2, icon: '🧱', color: 'gi-teal', category: 'drive', name: '说了算数，让人放心', sub: '可靠天赋', body: '你对承诺有一种近乎本能的执行力——答应了的事，你会做到，哪怕过程很难。这不是规则，是你对自己的要求。这种可靠性是极稀缺的资产。' },
+      { baseScore: sc('q7', 'result_oriented') + m_outcome, boost: Math.min(3, (m_ambition>=relHigh?1:0)+(m_meaning>=relHigh?1:0)+(m_compete>=relHigh?1:0)+(m_impact>=relHigh?1:0)+(m_perfection>=relHigh?1:0)), guard: () => sc('q7', 'result_oriented') >= relHigh && m_outcome >= relHigh, icon: '🎯', color: 'gi-rose', category: 'drive', name: '不做则已，做就要做成', sub: '成事天赋', body: '过程怎么走不是你的执念，但结果是不是真的到位，你会盯得很紧。这种目标感让你不会轻易停在"差不多"——你需要真正做成了那一刻。' },
+      { baseScore: strong_inf, boost: Math.max(m_impact, m_power), guard: null, icon: '🎙', color: 'gi-rose', category: 'social', name: '说话有重量，让人跟着走', sub: '影响天赋', body: '你不只是表达，你想让对方认同、想让事情朝你认为对的方向走。这种推动力在说服别人、凝聚人心的场景里，会自然放大你的存在感。' },
+      { baseScore: other_focus + hi_sens, boost: Math.max(m_altruism, m_affil), guard: null, icon: '🌿', color: 'gi-teal', category: 'social', name: '感知别人感知不到的', sub: '共情天赋', body: '你对他人状态的感知力超过大多数人——别人还没说，你已经感受到了。这让你在关系里自然扮演"懂人"的角色，但也要注意别把别人的情绪太当自己的。' },
+      { baseScore: social_ext + other_focus, boost: m_affil, guard: null, icon: '🔗', color: 'gi-indigo', category: 'social', name: '走到哪里都能建立连接', sub: '链接天赋', body: '你不需要刻意经营，和人建立联系对你来说是自然发生的。你关注对方，对方也感受到了。这种天然的亲近感，让你的人际网络往往比别人广得多。' },
+      { baseScore: adventurous + (3 - deliberate), boost: m_novelty, guard: null, icon: '🌊', color: 'gi-teal', category: 'adapt', name: '变化对你来说不是威胁', sub: '灵活应变天赋', body: '别人觉得乱的局面，你往往能快速找到应对方式。你不需要一切都确定才能行动，甚至有时候你更享受变化带来的新可能性。' },
+      { baseScore: confident + optimistic, boost: emotion_out, guard: null, icon: '☀️', color: 'gi-rose', category: 'adapt', name: '不管怎样，你都能站起来', sub: '挫折复原天赋', body: '你不是不会受伤，只是受伤之后能更快找回重心。自信和乐观同时高的人，遇到困难往往比别人恢复得更快。这是一种很稀缺的内在稳定性。' },
+      { baseScore: optimistic + confident, boost: m_autonomy + inner_ratio_bonus + emotion_out + (rational >= relHigh ? 1 : 0), guard: null, icon: '🧭', color: 'gi-teal', category: 'adapt', name: '不管外面多乱，你有自己的重心', sub: '内核稳定天赋', body: '你的稳定感不来自环境，而是来自内部——乐观、自信、靠自己驱动。这让你在压力下不容易被带跑，也不需要不断从外界获取确认才能前进。' },
+    ];
+
+    for (const g of giftPool) {
+      const passes = !g.guard || g.guard();
+      g.score = passes ? (g.baseScore + g.boost) : 0;
+    }
+
+    const sorted = [...giftPool].sort((a, b) => b.score - a.score);
+    const top3 = [];
+    const usedCategories = new Set();
+    for (const g of sorted) {
+      if (top3.length >= 3) break;
+      if (!usedCategories.has(g.category)) {
+        top3.push(g);
+        usedCategories.add(g.category);
+      }
+    }
+    if (top3.length < 3) {
+      for (const g of sorted) {
+        if (top3.length >= 3) break;
+        if (!top3.includes(g)) top3.push(g);
+      }
+    }
+    return top3;
+  }
+
+  function renderGifts(gifts) {
+    if (!gifts) return;
+    const items = document.querySelectorAll('.gift-item');
+    const ranks = ['NO.1', 'NO.2', 'NO.3'];
+    gifts.forEach((g, i) => {
+      if (!items[i]) return;
+      items[i].querySelector('.gift-num').textContent = ranks[i];
+      const iconEl = items[i].querySelector('.gift-icon');
+      iconEl.className = 'gift-icon ' + g.color;
+      iconEl.textContent = g.icon;
+      items[i].querySelector('.gift-name').textContent = g.name;
+      items[i].querySelector('.gift-sub').textContent = g.sub;
+      items[i].querySelector('.gift-body').textContent = g.body;
+    });
+
+    const sub = document.querySelector('#acc-gift .acc-sub');
+    if (sub && gifts[0]) sub.textContent = gifts.map(g => g.name.slice(0,6)).join(' · ');
+  }
+
+  function renderPortrait(data) {
+    if (!data) return;
+    const r = data.raw || {};
+
+    const COLOR_SCORE_Q1 = { s1: 3, s2: 2, s3: 0, s4: 1 };
+    const scQ1 = (o) => { const c = r['q1'] && r['q1'][o]; return c ? (COLOR_SCORE_Q1[c] || 0) : 0; };
+    const scQ7 = (o) => { const c = r['q7'] && r['q7'][o]; return c ? (COLOR_SCORE_Q1[c] || 0) : 0; };
+
+    const biases = {
+      'curious_vs_acceptant':    scQ1('curious') - 1.5,
+      'rational_strength':       scQ1('rational') - 1.5,
+      'intuitive_strength':      scQ1('intuitive') - 1.5,
+      'future_vs_present':       getDimBias(r, 'q3.present', 'q3.future'),
+      'decisive_vs_deliberate':  getDimBias(r, 'q5_speed.deliberate', 'q5_speed.decisive'),
+      'independent_vs_consult':  getDimBias(r, 'q5_consult.independent', 'q5_consult.consult'),
+      'speed_preference':        scQ7('efficiency') - 1.5,
+      'perfection':              scQ7('quality') - 1.5,
+      'thoroughness':            scQ7('thorough') - 1.5,
+      'completion':              scQ7('completion') - 1.5,
+      'cautious_vs_adventurous': getDimBias(r, 'q8.cautious', 'q8.adventurous'),
+      'introvert_vs_extrovert':  getDimBias(r, 'q_social.introvert', 'q_social.extrovert'),
+      'influence_strength':      getDimBias(r, 'q12_persuade.strong', 'q12_persuade.weak'),
+      'self_vs_other_focus':     getDimBias(r, 'q13.self_focus', 'q13.other_focus'),
+      'sensitivity':             getDimBias(r, 'q14.high', 'q14.low'),
+      'confident':               getDimBias(r, 'q17.insecure', 'q17.confident'),
+      'optimistic_vs_pessimistic': getDimBias(r, 'q18.pessimistic', 'q18.optimistic'),
+      'emotion_style':           getDimBias(r, 'q_emotion.inward', 'q_emotion.outward'),
+    };
+
+    const tracks = document.querySelectorAll('.dim-track');
+    const trackKeys = [
+      'curious_vs_acceptant', 'rational_strength', 'intuitive_strength',
+      'future_vs_present', 'decisive_vs_deliberate', 'independent_vs_consult',
+      'speed_preference', 'perfection', 'thoroughness', 'completion', 'cautious_vs_adventurous',
+      'introvert_vs_extrovert', 'influence_strength', 'self_vs_other_focus', 'sensitivity',
+      'confident', 'optimistic_vs_pessimistic', 'emotion_style',
+    ];
+
+    tracks.forEach((track, i) => {
+      const key = trackKeys[i];
+      if (!key) return;
+      renderDimTrack(track, biases[key] || 0);
+    });
+  }
+
+  function renderMotivation(data) {
+    if (!data) return;
+    const r = data.raw || {};
+
+    const COLOR_SCORE = { s1: 3, s2: 2, s3: 0, s4: 1 };
+    const sc = (q, o) => { const c = r[q] && r[q][o]; return c !== undefined ? (COLOR_SCORE[c] ?? 1) : 1; };
+
+    function grade(score) {
+      if (score >= 2.5) return 2;
+      if (score >= 1.2) return 1;
+      return 0;
+    }
+
+    const external = [
+      { name: '竞争',   level: grade(sc('q21', 'compete')) },
+      { name: '影响力', level: grade(sc('q21', 'impact')) },
+      { name: '权力',   level: grade(sc('q21', 'power')) },
+      { name: '责任',   level: grade(sc('q21', 'duty')) },
+      { name: '承诺',   level: grade(sc('q21', 'commit')) },
+      { name: '利他',   level: grade(sc('q21', 'altruism')) },
+      { name: '亲和',   level: grade(sc('q21', 'affiliation')) },
+      { name: '认可',   level: grade(sc('q21', 'recognition')) },
+      { name: '安全感', level: grade(sc('q21', 'crisis')) },
+    ];
+
+    const internal = [
+      { name: '抱负/愿景', level: grade(sc('q22', 'ambition')) },
+      { name: '结果导向',  level: grade(sc('q22', 'outcome')) },
+      { name: '价值感',    level: grade(sc('q22', 'meaning')) },
+      { name: '完美主义',  level: grade(sc('q22', 'perfection')) },
+      { name: '自主',      level: grade(sc('q22', 'autonomy')) },
+      { name: '理性',      level: grade(sc('q22', 'logic')) },
+      { name: '探究欲',    level: grade(sc('q22', 'curiosity')) },
+      { name: '好奇心',    level: grade(sc('q22', 'novelty')) },
+      { name: '审美',      level: grade(sc('q22', 'aesthetics')) },
+    ];
+
+    function makeEbarRow(name, level) {
+      const tagMap = { 2: '高', 1: '中', 0: '低' };
+      return `<div class="ebar-row">
+        <div class="ebar-name">${name}</div>
+        <div class="ebar-zones">
+          <div class="ebar-zone z-low"></div>
+          <div class="ebar-zone${level >= 1 ? ' z-mid' : ''}"></div>
+          <div class="ebar-zone${level >= 2 ? ' z-high' : ''}"></div>
+        </div>
+        <div class="ebar-tag">${tagMap[level]}</div>
+      </div>`;
+    }
+
+    const extEl = document.getElementById('motivation-external');
+    external.forEach(d => extEl.insertAdjacentHTML('beforeend', makeEbarRow(d.name, d.level)));
+
+    const intEl = document.getElementById('motivation-internal');
+    internal.forEach(d => intEl.insertAdjacentHTML('beforeend', makeEbarRow(d.name, d.level)));
+  }
+
+  /* ── 初始化 ── */
+  window.addEventListener('load', () => {
+    const data = loadAssessment();
+
+    // 顶栏副标题：生成日期
+    const subEl = document.getElementById('reportDateSub');
+    if (subEl) {
+      const now = new Date();
+      subEl.textContent = `${now.getFullYear()} 年 ${now.getMonth()+1} 月 ${now.getDate()} 日生成`;
+    }
+
+    if (data) {
+      document.getElementById('reportBody').style.display = 'block';
+      renderPortrait(data);
+      renderGifts(buildGifts(data));
+      renderStateSnaps(data.state);
+      renderMotivation(data);
+      setTimeout(() => {
+        document.getElementById('reportBody').classList.add('visible');
+      }, 80);
+    } else {
+      document.getElementById('noAssessState').style.display = 'flex';
+    }
+  });
+
+  /* ══════════════════════════════════════
+     报告分享 — 面板 & 海报
+  ══════════════════════════════════════ */
+
+  let _posterType = 'portrait';
+  // 人格卡：可选维度定义
+  const DIM_SECTIONS = [
+    {
+      key: 'thinking', label: '思考与决定',
+      dims: [
+        { name: '思考程度',  left: '适度思考',    right: '深入探究',    biasKey: 'curious_vs_acceptant' },
+        { name: '理性与直觉', left: '弱理性',      right: '强理性',      biasKey: 'rational_strength' },
+        { name: '做决定',    left: '想清楚再决定', right: '不纠结，先干', biasKey: 'decisive_vs_deliberate' },
+      ]
+    },
+    {
+      key: 'drive', label: '推动事情',
+      dims: [
+        { name: '效率',  left: '喜欢慢',    right: '喜欢快',    biasKey: 'speed_preference' },
+        { name: '完美',  left: '接受不完美', right: '追求极致',  biasKey: 'perfection' },
+        { name: '风险',  left: '稳扎稳打',  right: '冒险尝试',  biasKey: 'cautious_vs_adventurous' },
+      ]
+    },
+    {
+      key: 'social', label: '与人互动',
+      dims: [
+        { name: '内向与外向', left: '独处充电',      right: '社交充能',   biasKey: 'introvert_vs_extrovert' },
+        { name: '影响他人',   left: '尽可能影响他人', right: '不强求说服', biasKey: 'influence_strength' },
+        { name: '人际感知力', left: '高度敏感',       right: '相对钝感',  biasKey: 'sensitivity' },
+      ]
+    },
+    {
+      key: 'adapt', label: '适应环境',
+      dims: [
+        { name: '自信',    left: '自我认可', right: '自我鞭策', biasKey: 'confident' },
+        { name: '乐观',    left: '偏乐观',   right: '偏悲观',   biasKey: 'optimistic_vs_pessimistic' },
+        { name: '情绪处理', left: '向内消化', right: '向外释放', biasKey: 'emotion_style' },
+      ]
+    },
+  ];
+
+  // 已选维度组（默认全选）
+  let _selectedSections = new Set(DIM_SECTIONS.map(s => s.key));
+  // 缓存 biases（renderPortrait 后填）
+  let _cachedBiases = null;
+
+  function openSharePanel() {
+    document.getElementById('sharePanelMask').classList.add('show');
+    document.getElementById('sharePanel').classList.add('show');
+  }
+
+  function closeSharePanel() {
+    document.getElementById('sharePanelMask').classList.remove('show');
+    document.getElementById('sharePanel').classList.remove('show');
+  }
+
+  // 字符级 span 包装（供刷子工具标注）
+  const rpChar = (text) =>
+    Array.from(text || '').map(ch => {
+      const e = ch.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      return `<span class="rp-char">${e}</span>`;
+    }).join('');
+
+  function openPosterView(type) {
+    closeSharePanel();
+    _posterType = type;
+
+    const view = document.getElementById('reportPosterView');
+    const selector = document.getElementById('rpvDimSelector');
+
+    if (type === 'portrait') {
+      selector.style.display = 'block';
+      _buildDimSelector();
+    } else {
+      selector.style.display = 'none';
+    }
+
+    view.classList.add('show');
+    _renderPoster();
+
+    // 重置刷子状态
+    _rptTool = null;
+    _syncReportToolbar();
+    setTimeout(_bindReportBrush, 80);
+  }
+
+  function closePosterView() {
+    document.getElementById('reportPosterView').classList.remove('show');
+  }
+
+  // 构建维度选择 chip 列表
+  function _buildDimSelector() {
+    const wrap = document.getElementById('rpvDimChecks');
+    wrap.innerHTML = '';
+    DIM_SECTIONS.forEach(sec => {
+      const el = document.createElement('div');
+      el.className = 'rp-dim-check' + (_selectedSections.has(sec.key) ? ' selected' : '');
+      el.dataset.key = sec.key;
+      el.innerHTML = `<div class="rp-dim-check-dot"></div><div class="rp-dim-check-text">${sec.label}</div>`;
+      el.addEventListener('click', () => {
+        if (_selectedSections.has(sec.key)) {
+          if (_selectedSections.size <= 1) return; // 最少保留1个
+          _selectedSections.delete(sec.key);
+          el.classList.remove('selected');
+        } else {
+          _selectedSections.add(sec.key);
+          el.classList.add('selected');
+        }
+        _renderPoster();
+      });
+      wrap.appendChild(el);
+    });
+  }
+
+  // 把 bias 数值转成 5段 act class
+  function _biasToSegs(bias) {
+    const segs = ['','','','',''];
+    if (bias >= 1)       segs[4] = 'act';
+    else if (bias <= -1) segs[0] = 'act';
+    else                 segs[2] = 'act';
+    return segs;
+  }
+
+  function _makeDimTrackHtml(segs) {
+    return segs.map(s => `<div class="rp-dim-seg${s ? ' '+s : ''}"></div>`).join('');
+  }
+
+  function _makeQrSvg() {
+    return `<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+      <rect x="2" y="2" width="14" height="14" rx="2" fill="#2A1A5E" opacity="0.9"/>
+      <rect x="5" y="5" width="8" height="8" rx="1" fill="#A060FF"/>
+      <rect x="24" y="2" width="14" height="14" rx="2" fill="#2A1A5E" opacity="0.9"/>
+      <rect x="27" y="5" width="8" height="8" rx="1" fill="#A060FF"/>
+      <rect x="2" y="24" width="14" height="14" rx="2" fill="#2A1A5E" opacity="0.9"/>
+      <rect x="5" y="27" width="8" height="8" rx="1" fill="#A060FF"/>
+      <rect x="20" y="20" width="4" height="4" fill="#8040E0"/>
+      <rect x="26" y="20" width="4" height="4" fill="#8040E0"/>
+      <rect x="32" y="20" width="4" height="4" fill="#8040E0"/>
+      <rect x="20" y="26" width="4" height="4" fill="#8040E0"/>
+      <rect x="32" y="26" width="4" height="4" fill="#8040E0"/>
+      <rect x="20" y="32" width="4" height="4" fill="#8040E0"/>
+      <rect x="26" y="32" width="4" height="4" fill="#8040E0"/>
+      <rect x="32" y="32" width="4" height="4" fill="#8040E0"/>
+    </svg>`;
+  }
+
+  function _makeFooter() {
+    return `<div class="rp-footer">
+      <div>
+        <div class="rp-brand-name">知 己</div>
+        <div class="rp-brand-slogan">你身边最懂你的那个人</div>
+      </div>
+      <div class="rp-qr">${_makeQrSvg()}</div>
+    </div>`;
+  }
+
+  function _renderPoster() {
+    const data = loadAssessment();
+    const poster = document.getElementById('rpvPoster');
+    const now = new Date();
+    const dateLabel = `${now.getFullYear()} · ${now.getMonth()+1}月${now.getDate()}日`;
+
+    if (_posterType === 'portrait') {
+      poster.className = 'rpv-poster poster-portrait';
+      _renderPortraitPoster(poster, data, dateLabel);
+    } else if (_posterType === 'gift') {
+      poster.className = 'rpv-poster poster-gift';
+      _renderGiftPoster(poster, data, dateLabel);
+    } else if (_posterType === 'drive') {
+      poster.className = 'rpv-poster poster-drive';
+      _renderDrivePoster(poster, data, dateLabel);
+    } else {
+      poster.className = 'rpv-poster poster-status';
+      _renderStatusPoster(poster, data, dateLabel);
+    }
+  }
+
+  function _renderPortraitPoster(poster, data, dateLabel) {
+    // 计算 biases（复用已有逻辑）
+    const r = data ? (data.raw || {}) : {};
+    const biases = {
+      curious_vs_acceptant:       (function(){ const c = r['q1']&&r['q1']['curious']; const COLOR_SCORE={s1:3,s2:2,s3:0,s4:1}; return c?(COLOR_SCORE[c]||0):0 })() - 1.5,
+      rational_strength:          (function(){ const c = r['q1']&&r['q1']['rational']; const COLOR_SCORE={s1:3,s2:2,s3:0,s4:1}; return c?(COLOR_SCORE[c]||0):0 })() - 1.5,
+      decisive_vs_deliberate:     getDimBias(r, 'q5_speed.deliberate', 'q5_speed.decisive'),
+      speed_preference:           (function(){ const c = r['q7']&&r['q7']['efficiency']; const COLOR_SCORE={s1:3,s2:2,s3:0,s4:1}; return c?(COLOR_SCORE[c]||0):0 })() - 1.5,
+      perfection:                 (function(){ const c = r['q7']&&r['q7']['quality']; const COLOR_SCORE={s1:3,s2:2,s3:0,s4:1}; return c?(COLOR_SCORE[c]||0):0 })() - 1.5,
+      cautious_vs_adventurous:    getDimBias(r, 'q8.cautious', 'q8.adventurous'),
+      introvert_vs_extrovert:     getDimBias(r, 'q_social.introvert', 'q_social.extrovert'),
+      influence_strength:         getDimBias(r, 'q12_persuade.strong', 'q12_persuade.weak'),
+      sensitivity:                getDimBias(r, 'q14.high', 'q14.low'),
+      confident:                  getDimBias(r, 'q17.insecure', 'q17.confident'),
+      optimistic_vs_pessimistic:  getDimBias(r, 'q18.pessimistic', 'q18.optimistic'),
+      emotion_style:              getDimBias(r, 'q_emotion.inward', 'q_emotion.outward'),
+    };
+
+    let html = `<div class="rp-accent-bar"></div>`;
+    html += `<div class="rp-date-label">${dateLabel}</div>`;
+
+    const sectionsToShow = DIM_SECTIONS.filter(s => _selectedSections.has(s.key));
+    sectionsToShow.forEach((sec, si) => {
+      if (si > 0) html += `<div class="rp-divider"></div>`;
+      html += `<div class="rp-dim-section">`;
+      html += `<div class="rp-dim-section-title">· ${sec.label} ·</div>`;
+      sec.dims.forEach(dim => {
+        const segs = _biasToSegs(biases[dim.biasKey] || 0);
+        html += `<div class="rp-dim-row">
+          <div class="rp-dim-row-name">${dim.name}</div>
+          <div class="rp-dim-labels">
+            <span class="rp-dim-label">${dim.left}</span>
+            <span class="rp-dim-label">${dim.right}</span>
+          </div>
+          <div class="rp-dim-track">${_makeDimTrackHtml(segs)}</div>
+        </div>`;
+      });
+      html += `</div>`;
+    });
+
+    html += _makeFooter();
+    poster.innerHTML = html;
+  }
+
+  function _renderGiftPoster(poster, data, dateLabel) {
+    const gifts = data ? buildGifts(data) : [];
+    const colorMap = {
+      'gi-indigo': 'linear-gradient(135deg,#7B68EE,#4B3D9C)',
+      'gi-rose':   'linear-gradient(135deg,#E070B0,#B03080)',
+      'gi-teal':   'linear-gradient(135deg,#50C8C0,#2E9A92)',
+    };
+
+    let html = `<div class="rp-accent-bar"></div>`;
+    html += `<div class="rp-date-label">${dateLabel}</div>`;
+    html += `<div class="rp-section-label">TOP 3 天赋</div>`;
+
+    (gifts || []).forEach((g, i) => {
+      const bg = colorMap[g.color] || colorMap['gi-indigo'];
+      html += `<div class="rp-gift-item">
+        <div class="rp-gift-row">
+          <div class="rp-gift-icon" style="background:${bg};">${g.icon}</div>
+          <div>
+            <div class="rp-gift-num">NO.${i+1}</div>
+            <div class="rp-gift-name">${rpChar(g.name)}</div>
+            <div class="rp-gift-sub">${rpChar(g.sub)}</div>
+          </div>
+        </div>
+        <div class="rp-gift-body">${rpChar(g.body)}</div>
+      </div>`;
+      if (i < (gifts.length - 1)) html += `<div class="rp-divider"></div>`;
+    });
+
+    html += _makeFooter();
+    poster.innerHTML = html;
+  }
+
+  function _renderStatusPoster(poster, data, dateLabel) {
+    const state = data ? (data.state || {}) : {};
+    const STATE_LABELS = {
+      mood:     '开心度',
+      energy:   '精力',
+      stress:   '压力感',
+      security: '安全感',
+      meaning:  '价值感',
+    };
+    const keys = ['mood','energy','stress','security','meaning'];
+
+    let html = `<div class="rp-accent-bar"></div>`;
+    html += `<div class="rp-date-label">${dateLabel}</div>`;
+    html += `<div class="rp-section-label">当下状态快照</div>`;
+    html += `<div class="rp-snap-row">`;
+
+    keys.forEach(key => {
+      const val = state[key] || 'unsure';
+      const info = STATE_MAP[key][val] || STATE_MAP[key]['unsure'];
+      html += `<div class="rp-snap-item">
+        <div class="rp-snap-ring" style="--seg:${info.seg}; --clr:${info.clr}">
+          <div class="rp-snap-mask"></div>
+          <div class="rp-snap-inner"><div class="rp-snap-zone">${info.zone}</div></div>
+        </div>
+        <div class="rp-snap-label">${rpChar(STATE_LABELS[key])}</div>
+      </div>`;
+    });
+
+    html += `</div>`;
+
+    if (data && data.state) {
+      html += `<div class="rp-divider"></div>`;
+      html += `<div class="rp-status-summary">${rpChar(buildStateSummary(data.state))}</div>`;
+    }
+
+    html += _makeFooter();
+    poster.innerHTML = html;
+  }
+
+  function _renderDrivePoster(poster, data, dateLabel) {
+    const r = data ? (data.raw || {}) : {};
+    const COLOR_SCORE = { s1: 3, s2: 2, s3: 0, s4: 1 };
+    const sc = (q, o) => { const c = r[q] && r[q][o]; return c !== undefined ? (COLOR_SCORE[c] ?? 1) : 1; };
+    function grade(score) {
+      if (score >= 2.5) return 2;
+      if (score >= 1.2) return 1;
+      return 0;
+    }
+
+    const external = [
+      { name: '竞争',   level: grade(sc('q21', 'compete')) },
+      { name: '影响力', level: grade(sc('q21', 'impact')) },
+      { name: '权力',   level: grade(sc('q21', 'power')) },
+      { name: '责任',   level: grade(sc('q21', 'duty')) },
+      { name: '承诺',   level: grade(sc('q21', 'commit')) },
+      { name: '利他',   level: grade(sc('q21', 'altruism')) },
+      { name: '亲和',   level: grade(sc('q21', 'affiliation')) },
+      { name: '认可',   level: grade(sc('q21', 'recognition')) },
+      { name: '安全感', level: grade(sc('q21', 'crisis')) },
+    ];
+    const internal = [
+      { name: '抱负',   level: grade(sc('q22', 'ambition')) },
+      { name: '结果感', level: grade(sc('q22', 'outcome')) },
+      { name: '价值感', level: grade(sc('q22', 'meaning')) },
+      { name: '极致',   level: grade(sc('q22', 'perfection')) },
+      { name: '自主',   level: grade(sc('q22', 'autonomy')) },
+      { name: '理性',   level: grade(sc('q22', 'logic')) },
+      { name: '探究欲', level: grade(sc('q22', 'curiosity')) },
+      { name: '好奇心', level: grade(sc('q22', 'novelty')) },
+      { name: '审美',   level: grade(sc('q22', 'aesthetics')) },
+    ];
+
+    function makeEbar(d) {
+      const tagMap = { 2: '高', 1: '中', 0: '低' };
+      return `<div class="rp-ebar-row">
+        <div class="rp-ebar-name">${rpChar(d.name)}</div>
+        <div class="rp-ebar-zones">
+          <div class="rp-ebar-zone ez-low"></div>
+          <div class="rp-ebar-zone${d.level >= 1 ? ' ez-mid' : ''}"></div>
+          <div class="rp-ebar-zone${d.level >= 2 ? ' ez-high' : ''}"></div>
+        </div>
+        <div class="rp-ebar-tag">${tagMap[d.level]}</div>
+      </div>`;
+    }
+
+    let html = `<div class="rp-accent-bar"></div>`;
+    html += `<div class="rp-date-label">${dateLabel}</div>`;
+
+    html += `<div class="rp-drive-block">`;
+    html += `<div class="rp-drive-block-title">· 外在动力 ·</div>`;
+    external.forEach(d => { html += makeEbar(d); });
+    html += `</div>`;
+
+    html += `<div class="rp-divider"></div>`;
+
+    html += `<div class="rp-drive-block">`;
+    html += `<div class="rp-drive-block-title">· 内在动力 ·</div>`;
+    internal.forEach(d => { html += makeEbar(d); });
+    html += `</div>`;
+
+    html += _makeFooter();
+    poster.innerHTML = html;
+  }
+
+  /* ══════════════════════════════════════════
+     字符级刷子标注系统（报告）
+  ══════════════════════════════════════════ */
+  let _rptTool = null;
+  let _rptPainting = false;
+  let _rptPaintMode = '';
+
+  function setReportTool(tool) {
+    _rptTool = (_rptTool === tool) ? null : tool;
+    _syncReportToolbar();
+  }
+
+  function _syncReportToolbar() {
+    const btnR = document.getElementById('rptBtnRedact');
+    const btnH = document.getElementById('rptBtnHighlight');
+    const hint = document.getElementById('rptHint');
+    const view = document.getElementById('reportPosterView');
+    if (!btnR) return;
+    btnR.classList.toggle('active-redact',    _rptTool === 'redact');
+    btnH.classList.toggle('active-highlight', _rptTool === 'highlight');
+    view.classList.toggle('rpv-toolbar-active', !!_rptTool);
+    if (_rptTool === 'redact')        hint.textContent = '▓ 打码已激活 · 划过想隐藏的字，再划恢复';
+    else if (_rptTool === 'highlight') hint.textContent = '✦ 高亮已激活 · 划过想标记的字，再划取消';
+    else                              hint.textContent = '选工具后划过文字即可标注';
+  }
+
+  function _rpCharAtPoint(x, y) {
+    const el = document.elementFromPoint(x, y);
+    return (el && el.classList.contains('rp-char')) ? el : null;
+  }
+
+  function _paintRpChar(span) {
+    if (!span || !_rptTool) return;
+    const cls = _rptTool === 'redact' ? 'redacted' : 'highlighted';
+    if (_rptPaintMode === 'erase') span.classList.remove(cls);
+    else                           span.classList.add(cls);
+  }
+
+  function _bindReportBrush() {
+    const scroll = document.getElementById('rpvScroll');
+    if (!scroll || scroll._brushBound) return;
+    scroll._brushBound = true;
+
+    function startR(x, y) {
+      if (!_rptTool) return;
+      const span = _rpCharAtPoint(x, y);
+      const cls = _rptTool === 'redact' ? 'redacted' : 'highlighted';
+      _rptPaintMode = (span && span.classList.contains(cls)) ? 'erase' : 'paint';
+      _rptPainting = true;
+      _paintRpChar(span);
+    }
+    function moveR(x, y) {
+      if (!_rptPainting || !_rptTool) return;
+      _paintRpChar(_rpCharAtPoint(x, y));
+    }
+    function endR() { _rptPainting = false; _rptPaintMode = ''; }
+
+    // 触摸
+    scroll.addEventListener('touchstart', e => {
+      if (!_rptTool) return;
+      startR(e.touches[0].clientX, e.touches[0].clientY);
+      e.preventDefault();
+    }, { passive: false });
+    scroll.addEventListener('touchmove', e => {
+      moveR(e.touches[0].clientX, e.touches[0].clientY);
+      e.preventDefault();
+    }, { passive: false });
+    scroll.addEventListener('touchend', endR);
+
+    // 鼠标
+    const onMM = e => moveR(e.clientX, e.clientY);
+    const onMU = () => { endR(); document.removeEventListener('mousemove', onMM); };
+    scroll.addEventListener('mousedown', e => {
+      if (!_rptTool) return;
+      startR(e.clientX, e.clientY);
+      e.preventDefault();
+      document.addEventListener('mousemove', onMM);
+      document.addEventListener('mouseup', onMU, { once: true });
+    });
+    scroll.addEventListener('dragstart', e => e.preventDefault());
+    scroll.style.userSelect = 'none';
+    scroll.style.webkitUserSelect = 'none';
+  }
+
+  function saveReportPoster() {
+    const toast = document.getElementById('rpvToast');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2000);
+  }
+
+  function showTabTip(name) {
+    const existing = document.getElementById('tabTip');
+    if (existing) existing.remove();
+    const tip = document.createElement('div');
+    tip.id = 'tabTip';
+    tip.textContent = (name || '该页面') + '即将上线';
+    tip.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(30,20,50,0.92);color:rgba(255,255,255,0.85);font-size:13px;padding:8px 18px;border-radius:20px;pointer-events:none;z-index:9999;backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.12);';
+    document.body.appendChild(tip);
+    setTimeout(() => tip.remove(), 1800);
+  }
+</script>
+</body>
+</html>

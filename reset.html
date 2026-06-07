@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>知己 · 重置</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #8040D0, #4060E8);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      font-family: -apple-system, 'PingFang SC', sans-serif;
+      color: #fff;
+    }
+    .icon { font-size: 48px; margin-bottom: 20px; }
+    .title { font-size: 20px; font-weight: 600; margin-bottom: 8px; }
+    .sub { font-size: 14px; color: rgba(255,255,255,0.6); margin-bottom: 36px; }
+    .btn {
+      background: rgba(255,255,255,0.2);
+      border: 1.5px solid rgba(255,255,255,0.4);
+      border-radius: 24px; padding: 14px 40px;
+      font-size: 16px; color: #fff; cursor: pointer;
+      letter-spacing: 0.5px;
+    }
+    .btn:active { background: rgba(255,255,255,0.3); }
+  </style>
+</head>
+<body>
+  <div class="icon">🔄</div>
+  <div class="title">准备好开始了吗？</div>
+  <div class="sub">点击下方按钮，以全新用户身份体验知己</div>
+  <button class="btn" onclick="reset()">开始全新体验</button>
+
+  <script>
+    function reset() {
+      localStorage.clear();
+      window.location.href = 'screen1-launch.html';
+    }
+    // 也可以直接自动跳，不需要点按钮（注释掉按钮，取消注释下面这行）
+    // localStorage.clear(); window.location.href = 'screen1-launch.html';
+  </script>
+</body>
+</html>
