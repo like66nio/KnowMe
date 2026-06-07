@@ -3384,6 +3384,39 @@ ${stateSummary}
   </div>
 </div>
 
+<!-- 表情选择器底部弹出层（知己专属，复用 screen6 结构，浅色主题） -->
+<div class="emoji-sheet-overlay4" id="emojiSheetOverlay4" onclick="onEmojiSheetOverlayClick4(event)">
+  <div class="emoji-sheet4" id="emojiSheet4">
+    <div id="emojiSheetHandle4" style="display:flex;align-items:center;justify-content:center;padding:10px 0 6px;cursor:pointer">
+      <div style="width:36px;height:4px;border-radius:2px;background:rgba(160,100,240,0.22)"></div>
+    </div>
+    <div class="emoji-grid-wrap4">
+      <div class="emoji-grid4" id="emojiGrid4"></div>
+    </div>
+    <div class="emoji-sheet-toolbar4">
+      <button id="emojiCloseBtn4" title="收起" style="margin-right:auto;background:none;border:none;padding:4px 8px;cursor:pointer;color:rgba(80,50,140,0.45);font-size:18px;line-height:1;-webkit-tap-highlight-color:transparent">︿</button>
+      <button class="emoji-delete-btn4" id="emojiDeleteBtn4" title="删除">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/>
+          <line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast 提示 -->
+<div id="s4Toast" style="
+  position:fixed; bottom:100px; left:50%; transform:translateX(-50%) scale(0.85);
+  background:rgba(30,20,64,0.88); color:#fff;
+  padding:9px 18px; border-radius:20px; font-size:13px; letter-spacing:0.3px;
+  white-space:nowrap; z-index:9999; pointer-events:none;
+  opacity:0; transition:opacity 0.2s, transform 0.2s;
+"></div>
+<style>
+  #s4Toast.show { opacity:1; transform:translateX(-50%) scale(1); }
+</style>
+
 <script>
   // 长按菜单逻辑
   var _ctxTarget = null;
@@ -3783,39 +3816,6 @@ ${stateSummary}
     }
   })();
 </script>
-
-<!-- Toast 提示 -->
-<div id="s4Toast" style="
-  position:fixed; bottom:100px; left:50%; transform:translateX(-50%) scale(0.85);
-  background:rgba(30,20,64,0.88); color:#fff;
-  padding:9px 18px; border-radius:20px; font-size:13px; letter-spacing:0.3px;
-  white-space:nowrap; z-index:9999; pointer-events:none;
-  opacity:0; transition:opacity 0.2s, transform 0.2s;
-"></div>
-<style>
-  #s4Toast.show { opacity:1; transform:translateX(-50%) scale(1); }
-</style>
-
-<!-- 表情选择器底部弹出层（知己专属，复用 screen6 结构，浅色主题） -->
-<div class="emoji-sheet-overlay4" id="emojiSheetOverlay4" onclick="onEmojiSheetOverlayClick4(event)">
-  <div class="emoji-sheet4" id="emojiSheet4">
-    <div id="emojiSheetHandle4" style="display:flex;align-items:center;justify-content:center;padding:10px 0 6px;cursor:pointer">
-      <div style="width:36px;height:4px;border-radius:2px;background:rgba(160,100,240,0.22)"></div>
-    </div>
-    <div class="emoji-grid-wrap4">
-      <div class="emoji-grid4" id="emojiGrid4"></div>
-    </div>
-    <div class="emoji-sheet-toolbar4">
-      <button id="emojiCloseBtn4" title="收起" style="margin-right:auto;background:none;border:none;padding:4px 8px;cursor:pointer;color:rgba(80,50,140,0.45);font-size:18px;line-height:1;-webkit-tap-highlight-color:transparent">︿</button>
-      <button class="emoji-delete-btn4" id="emojiDeleteBtn4" title="删除">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/>
-          <line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/>
-        </svg>
-      </button>
-    </div>
-  </div>
-</div>
 
 </body>
 </html>
