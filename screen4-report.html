@@ -647,6 +647,126 @@
     .chat-send-btn4:active { transform: scale(0.92); }
     .chat-send-btn4 svg { width: 18px; height: 18px; stroke: white; }
 
+    /* 语音录制按钮（语音模式时替代输入框） */
+    .voice-record-btn4 {
+      flex: 1; height: 36px;
+      background: rgba(255,255,255,0.88);
+      border: 1.5px solid rgba(160,100,240,0.18);
+      border-radius: 18px;
+      font-size: 14px; color: rgba(80,50,140,0.70);
+      cursor: pointer; display: none; align-items: center; justify-content: center;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .voice-record-btn4.active {
+      background: rgba(200,150,240,0.30);
+      border-color: rgba(160,80,240,0.55);
+      color: #7030C0;
+    }
+    .chat-bar.voice-mode .chat-input-wrap4 { display: none; }
+    .chat-bar.voice-mode .voice-record-btn4 { display: flex; }
+
+    /* 附件展开面板 */
+    .attach-panel4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px 6px;
+      padding: 0 8px;
+      margin-top: 0;
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      transition: max-height 0.28s cubic-bezier(0.4,0,0.2,1),
+                  opacity 0.22s, margin-top 0.22s, padding 0.22s;
+    }
+    .attach-panel4.open {
+      max-height: 220px;
+      opacity: 1;
+      padding: 14px 8px 16px;
+      border-top: 1px solid rgba(160,100,240,0.12);
+      margin-top: 8px;
+    }
+    .attach-cell4 {
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      cursor: pointer; -webkit-tap-highlight-color: transparent;
+    }
+    .attach-cell4:active .attach-icon-wrap4 { transform: scale(0.92); opacity: 0.75; }
+    .attach-icon-wrap4 {
+      width: 52px; height: 52px; border-radius: 16px;
+      background: rgba(160,100,240,0.10);
+      border: 1px solid rgba(160,100,240,0.18);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; line-height: 1;
+      transition: transform 0.12s, opacity 0.12s;
+    }
+    .attach-cell-label4 {
+      font-size: 11px; color: rgba(80,50,140,0.60); letter-spacing: 0.4px;
+    }
+
+    /* 表情选择器（复用 screen6 结构，浅色主题） */
+    .emoji-sheet-overlay4 {
+      position: fixed; inset: 0;
+      z-index: 300;
+      background: transparent;
+      pointer-events: none;
+      transition: background 0.22s;
+    }
+    .emoji-sheet-overlay4.open {
+      background: rgba(0,0,0,0.18);
+      pointer-events: auto;
+    }
+    .emoji-sheet4 {
+      position: absolute;
+      left: 50%; transform: translateX(-50%) translateY(100%);
+      bottom: 0;
+      width: min(390px, 100vw);
+      background: rgba(244,240,252,0.98);
+      backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
+      border-radius: 20px 20px 0 0;
+      box-shadow: 0 -4px 32px rgba(120,70,200,0.16);
+      transition: transform 0.3s cubic-bezier(0.32,0.72,0,1);
+      pointer-events: auto;
+    }
+    .emoji-sheet-overlay4.open .emoji-sheet4 {
+      transform: translateX(-50%) translateY(0);
+    }
+    .emoji-sheet4 .emoji-grid-wrap4 {
+      overflow-y: auto; -webkit-overflow-scrolling: touch;
+      padding: 16px 16px 4px; max-height: 220px;
+    }
+    .emoji-sheet4 .emoji-grid4 {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px 0;
+    }
+    .emoji-sheet4 .emoji-grid-btn4 {
+      display: flex; flex-direction: column; align-items: center;
+      padding: 10px 4px 8px;
+      border: none; background: none; cursor: pointer;
+      border-radius: 10px;
+      transition: background 0.12s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .emoji-sheet4 .emoji-grid-btn4:active { background: rgba(160,100,240,0.12); }
+    .emoji-sheet4 .emoji-grid-btn4 .eg-icon4 { font-size: 30px; line-height: 1; }
+    .emoji-sheet4 .emoji-grid-btn4 .eg-label4 {
+      font-size: 11px; color: rgba(80,50,140,0.55);
+      margin-top: 5px; letter-spacing: 0.3px; line-height: 1;
+    }
+    .emoji-sheet4 .emoji-grid-btn4.eg-negative4 .eg-label4 { color: rgba(180,80,80,0.50); }
+    .emoji-sheet4 .emoji-sheet-toolbar4 {
+      display: flex; align-items: center; justify-content: flex-end;
+      padding: 8px 14px 16px;
+      border-top: 1px solid rgba(160,100,240,0.10);
+    }
+    .emoji-sheet4 .emoji-delete-btn4 {
+      width: 38px; height: 32px; border-radius: 8px;
+      background: rgba(160,100,240,0.10); border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: rgba(80,50,140,0.60);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .emoji-sheet4 .emoji-delete-btn4:active { background: rgba(160,100,240,0.22); }
+    .emoji-sheet4 .emoji-delete-btn4 svg { width: 18px; height: 18px; }
+
     /* 底部安全间距撑开 */
     .bottom-spacer { height: 16px; }
 
@@ -1343,24 +1463,29 @@
     </div>
     <!-- 输入行 -->
     <div class="chat-input-row">
-      <!-- 语音切换 -->
-      <button class="chat-voice-btn4" onclick="voiceBtnClick4()" title="语音输入">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <!-- 语音切换（点击在麦克风/键盘之间切换） -->
+      <button class="chat-voice-btn4" id="voiceToggleBtn4" onclick="toggleVoiceMode4()" title="语音输入">
+        <svg id="voiceToggleIcon4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <rect x="9" y="2" width="6" height="12" rx="3"/>
           <path d="M5 10a7 7 0 0 0 14 0"/>
           <line x1="12" y1="19" x2="12" y2="22"/>
           <line x1="9" y1="22" x2="15" y2="22"/>
         </svg>
       </button>
-      <!-- 输入框 -->
-      <div class="chat-input-wrap4">
+      <!-- 文字输入框 -->
+      <div class="chat-input-wrap4" id="chatInputWrap4">
         <textarea class="chat-input" id="chatInput" placeholder="跟知己说说你的感受……" rows="1"
           oninput="autoResize(this); updateSendBtn4();"
           onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();handleSend();}"
         ></textarea>
       </div>
+      <!-- 语音录制按钮（语音模式时替代输入框） -->
+      <button class="voice-record-btn4" id="voiceRecordBtn4"
+        onpointerdown="startVoiceRecord4()" onpointerup="stopVoiceRecord4()" onpointerleave="stopVoiceRecord4()">
+        按住 说话
+      </button>
       <!-- 表情 -->
-      <button class="chat-toolbar-btn4" onclick="toggleEmojiPanel4()" title="表情">
+      <button class="chat-toolbar-btn4" id="emojiBtn4" onclick="toggleEmojiSheet4()" title="表情">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="10"/>
           <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
@@ -1369,7 +1494,7 @@
         </svg>
       </button>
       <!-- + 按钮 / 发送按钮（互斥） -->
-      <button class="chat-toolbar-btn4" id="plusBtn4" onclick="plusBtnClick4()" title="更多">
+      <button class="chat-toolbar-btn4" id="plusBtn4" onclick="toggleAttachPanel4()" title="更多">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <line x1="12" y1="5" x2="12" y2="19"/>
           <line x1="5" y1="12" x2="19" y2="12"/>
@@ -1381,6 +1506,29 @@
           <polyline points="5,9 10,4 15,9"/>
         </svg>
       </button>
+    </div>
+    <!-- 附件展开面板 -->
+    <div class="attach-panel4" id="attachPanel4">
+      <div class="attach-cell4" onclick="attachAction4('photo')">
+        <div class="attach-icon-wrap4">🖼️</div>
+        <span class="attach-cell-label4">图片</span>
+      </div>
+      <div class="attach-cell4" onclick="attachAction4('camera')">
+        <div class="attach-icon-wrap4">📷</div>
+        <span class="attach-cell-label4">拍摄</span>
+      </div>
+      <div class="attach-cell4" onclick="attachAction4('file')">
+        <div class="attach-icon-wrap4">📄</div>
+        <span class="attach-cell-label4">文件</span>
+      </div>
+      <div class="attach-cell4" onclick="attachAction4('voice-msg')">
+        <div class="attach-icon-wrap4">🎙️</div>
+        <span class="attach-cell-label4">语音消息</span>
+      </div>
+      <div class="attach-cell4" onclick="attachAction4('register')">
+        <div class="attach-icon-wrap4">✨</div>
+        <span class="attach-cell-label4">生成海报</span>
+      </div>
     </div>
   </div>
 
@@ -3322,22 +3470,19 @@ ${stateSummary}
   }
 
   function ctxCopy() {
+    var t = _ctxText; // 先保存，closeCtxMenu 会清空 _ctxText
     closeCtxMenu();
-    if (!_ctxText) return;
-    var t = _ctxText;
+    if (!t) return;
+    function fallback() {
+      var ta = document.createElement('textarea');
+      ta.value = t; ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); showToast('已复制 ✓'); } catch(e) { showToast('复制失败，请手动长按'); }
+      document.body.removeChild(ta);
+    }
     if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(t).then(function() { showToast('已复制'); }).catch(function() { fallbackCopy(t); });
-    } else { fallbackCopy(t); }
-  }
-
-  function fallbackCopy(text) {
-    var ta = document.createElement('textarea');
-    ta.value = text;
-    ta.style.position = 'fixed'; ta.style.opacity = '0';
-    document.body.appendChild(ta);
-    ta.select();
-    try { document.execCommand('copy'); showToast('已复制'); } catch(e) { showToast('复制失败，请手动长按选择'); }
-    document.body.removeChild(ta);
+      navigator.clipboard.writeText(t).then(function() { showToast('已复制 ✓'); }).catch(fallback);
+    } else { fallback(); }
   }
 
   // 引用回复
@@ -3384,61 +3529,259 @@ ${stateSummary}
   }
 
   /* ══════════════════════════════════
-     表情面板
+     语音模式切换 + SpeechRecognition
   ══════════════════════════════════ */
-  var EMOJIS_4 = [
-    '😊','😂','🥹','😭','😅','🤣','🥰','😍','🤔','😮',
-    '😢','😩','😤','😡','🥲','😌','😔','🤗','😎','🫠',
-    '❤️','🔥','👍','🙏','💪','✨','🌈','🎉','💯','👀',
-    '😴','🤯','😱','🫣','🫡','🥳','😏','🙄','😬','🫶'
-  ];
+  var _voiceMode4 = false;
 
-  function toggleEmojiPanel4() {
-    var panel = document.getElementById('emojiPanel4');
-    var overlay = document.getElementById('emojiOverlay4');
-    if (!panel) return;
-    var isOpen = panel.classList.toggle('open');
-    if (overlay) overlay.style.display = isOpen ? 'block' : 'none';
-    if (isOpen && !panel.dataset.built) {
-      panel.dataset.built = '1';
-      EMOJIS_4.forEach(function(em) {
-        var btn = document.createElement('button');
-        btn.className = 'ep4-btn';
-        btn.textContent = em;
-        btn.addEventListener('click', function() {
-          var inp = document.getElementById('chatInput');
-          if (inp) {
-            var pos = inp.selectionStart || inp.value.length;
-            inp.value = inp.value.slice(0, pos) + em + inp.value.slice(pos);
-            inp.selectionStart = inp.selectionEnd = pos + em.length;
-            inp.focus();
-            updateSendBtn4();
-            autoResize(inp);
-          }
-          closeEmojiPanel4();
-        });
-        panel.appendChild(btn);
-      });
+  var MIC_SVG4  = '<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="9" y1="22" x2="15" y2="22"/>';
+  var KBD_SVG4  = '<rect x="2" y="5" width="20" height="14" rx="3"/><path d="M6 9h.01M10 9h.01M14 9h.01M18 9h.01M8 13h8M6 13h.01M18 13h.01"/>';
+
+  function toggleVoiceMode4() {
+    _voiceMode4 = !_voiceMode4;
+    var bar  = document.getElementById('chatBar');
+    var icon = document.getElementById('voiceToggleIcon4');
+    var inp  = document.getElementById('chatInput');
+    if (_voiceMode4) {
+      if (bar)  bar.classList.add('voice-mode');
+      if (icon) icon.innerHTML = KBD_SVG4;
+      if (_attachOpen4) closeAttachPanel4();
+    } else {
+      if (bar)  bar.classList.remove('voice-mode');
+      if (icon) icon.innerHTML = MIC_SVG4;
+      setTimeout(function() { if (inp) inp.focus(); }, 60);
     }
   }
 
-  function closeEmojiPanel4() {
-    var panel = document.getElementById('emojiPanel4');
-    var overlay = document.getElementById('emojiOverlay4');
-    if (panel) panel.classList.remove('open');
-    if (overlay) overlay.style.display = 'none';
+  /* SpeechRecognition */
+  var SpeechRecognition4 = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var _rec4 = null, _recording4 = false, _baseText4 = '';
+
+  if (SpeechRecognition4) {
+    _rec4 = new SpeechRecognition4();
+    _rec4.lang = 'zh-CN'; _rec4.continuous = false; _rec4.interimResults = true;
+
+    _rec4.onresult = function(e) {
+      var interim = '';
+      for (var i = e.resultIndex; i < e.results.length; i++) {
+        var t = e.results[i][0].transcript;
+        if (e.results[i].isFinal) { _baseText4 += t; }
+        else { interim = t; }
+      }
+      var inp = document.getElementById('chatInput');
+      if (inp) {
+        inp.value = _baseText4 + interim;
+        autoResize(inp);
+        updateSendBtn4();
+      }
+    };
+    _rec4.onend = _rec4.onerror = function() {
+      _recording4 = false;
+      var btn = document.getElementById('voiceRecordBtn4');
+      if (btn) { btn.classList.remove('active'); btn.textContent = '按住 说话'; }
+      var bar  = document.getElementById('chatBar');
+      var icon = document.getElementById('voiceToggleIcon4');
+      if (bar)  bar.classList.remove('voice-mode');
+      if (icon) icon.innerHTML = MIC_SVG4;
+      _voiceMode4 = false;
+      var inp = document.getElementById('chatInput');
+      if (inp && inp.value.trim()) updateSendBtn4();
+    };
+  }
+
+  function startVoiceRecord4() {
+    if (!_rec4) return;
+    _baseText4 = '';
+    _recording4 = true;
+    var btn = document.getElementById('voiceRecordBtn4');
+    if (btn) { btn.classList.add('active'); btn.textContent = '松开 结束'; }
+    try { _rec4.start(); } catch(e) {}
+  }
+
+  function stopVoiceRecord4() {
+    if (!_recording4) return;
+    try { _rec4.stop(); } catch(e) {}
   }
 
   /* ══════════════════════════════════
-     语音 / + 号占位
+     附件面板
   ══════════════════════════════════ */
-  function voiceBtnClick4() {
-    showToast('语音输入即将上线 🎙️');
+  var _attachOpen4 = false;
+
+  function closeAttachPanel4() {
+    _attachOpen4 = false;
+    var panel = document.getElementById('attachPanel4');
+    var btn   = document.getElementById('plusBtn4');
+    if (panel) panel.classList.remove('open');
+    if (btn)   btn.classList.remove('plus-active');
   }
 
-  function plusBtnClick4() {
-    showToast('更多功能即将上线 ✨');
+  function toggleAttachPanel4() {
+    _attachOpen4 = !_attachOpen4;
+    var panel = document.getElementById('attachPanel4');
+    var btn   = document.getElementById('plusBtn4');
+    var inp   = document.getElementById('chatInput');
+    if (_attachOpen4) {
+      if (panel) panel.classList.add('open');
+      if (btn)   btn.classList.add('plus-active');
+      if (inp)   inp.blur();
+    } else {
+      closeAttachPanel4();
+    }
   }
+
+  function attachAction4(type) {
+    closeAttachPanel4();
+    if (type === 'register') {
+      showToast('注册后即可使用此功能 ✨');
+    } else {
+      showToast('功能开发中');
+    }
+  }
+
+  /* ══════════════════════════════════
+     表情选择器（知己专属，复用 screen6）
+  ══════════════════════════════════ */
+  (function initEmojiSheet4() {
+    var ZJ_EMOJIS4 = [
+      ['🎯','戳到了', false],
+      ['🥹','感动',   false],
+      ['💡','没想过', false],
+      ['🫶','懂我',   false],
+      ['🤗','爱你',   false],
+      ['😊','开心',   false],
+      ['🔮','被发现了',false],
+      ['🫠','没懂',   true],
+      ['🙈','跳过',   true],
+      ['😶','无聊',   true],
+      ['🪞','跑题了', true],
+      ['😤','生气了', true],
+      ['👊','想打你', true],
+    ];
+
+    var overlay4 = document.getElementById('emojiSheetOverlay4');
+    var gridEl4  = document.getElementById('emojiGrid4');
+    var inputEl4 = document.getElementById('chatInput');
+    var _open4   = false;
+    var _built4  = false;
+
+    function buildSheet4() {
+      if (_built4) return;
+      _built4 = true;
+      ZJ_EMOJIS4.forEach(function(item) {
+        var emoji = item[0], label = item[1], isNeg = item[2];
+        var btn = document.createElement('button');
+        btn.className = 'emoji-grid-btn4' + (isNeg ? ' eg-negative4' : '');
+        btn.innerHTML = '<span class="eg-icon4">' + emoji + '</span><span class="eg-label4">' + label + '</span>';
+        btn.onclick = function() { insertEmoji4(emoji); };
+        gridEl4.appendChild(btn);
+      });
+    }
+
+    function insertEmoji4(emoji) {
+      var ta = inputEl4;
+      if (!ta) return;
+      var start = ta.selectionStart, end = ta.selectionEnd, val = ta.value;
+      ta.value = val.slice(0, start) + emoji + val.slice(end);
+      var pos = start + emoji.length;
+      ta.setSelectionRange(pos, pos);
+      if (window.autoResize) autoResize(ta);
+      if (window.updateSendBtn4) updateSendBtn4();
+    }
+
+    window.emojiDelete4 = function() {
+      var ta = inputEl4;
+      if (!ta) return;
+      var start = ta.selectionStart, end = ta.selectionEnd;
+      if (start !== end) {
+        ta.value = ta.value.slice(0, start) + ta.value.slice(end);
+        ta.setSelectionRange(start, start);
+      } else if (start > 0) {
+        var before = ta.value.slice(0, start);
+        var removeLen = 1;
+        if (typeof Intl !== 'undefined' && Intl.Segmenter) {
+          var seg = new Intl.Segmenter();
+          var segs = Array.from(seg.segment(before));
+          if (segs.length > 0) removeLen = segs[segs.length - 1].segment.length;
+        }
+        ta.value = before.slice(0, before.length - removeLen) + ta.value.slice(start);
+        var pos2 = start - removeLen;
+        ta.setSelectionRange(pos2, pos2);
+      }
+      if (window.autoResize) autoResize(ta);
+      if (window.updateSendBtn4) updateSendBtn4();
+    };
+
+    /* 删除按钮：长按连续删 */
+    var deleteBtn4 = document.getElementById('emojiDeleteBtn4');
+    if (deleteBtn4) {
+      var _delTimer4 = null, _delInterval4 = null;
+      function startRepeat4(e) {
+        e.stopPropagation();
+        window.emojiDelete4();
+        _delTimer4 = setTimeout(function() {
+          _delInterval4 = setInterval(function() { window.emojiDelete4(); }, 80);
+        }, 400);
+      }
+      function stopRepeat4() {
+        clearTimeout(_delTimer4); clearInterval(_delInterval4);
+        _delTimer4 = null; _delInterval4 = null;
+      }
+      deleteBtn4.addEventListener('mousedown', startRepeat4);
+      deleteBtn4.addEventListener('touchstart', function(e) { e.preventDefault(); startRepeat4(e); }, { passive: false });
+      deleteBtn4.addEventListener('mouseup', stopRepeat4);
+      deleteBtn4.addEventListener('mouseleave', stopRepeat4);
+      deleteBtn4.addEventListener('touchend', stopRepeat4);
+      deleteBtn4.addEventListener('touchcancel', stopRepeat4);
+    }
+
+    var _frame4 = document.querySelector('.phone-frame');
+
+    function doClose4() {
+      _open4 = false;
+      if (overlay4) overlay4.classList.remove('open');
+      if (_frame4) _frame4.style.paddingBottom = '';
+      var eb = document.getElementById('emojiBtn4');
+      if (eb) eb.classList.remove('plus-active');
+    }
+
+    window.toggleEmojiSheet4 = function() {
+      if (_attachOpen4) closeAttachPanel4();
+      var inp = document.getElementById('chatInput');
+      if (inp) inp.blur();
+      if (_open4) { doClose4(); return; }
+      buildSheet4();
+      _open4 = true;
+      if (overlay4) overlay4.classList.add('open');
+      requestAnimationFrame(function() {
+        var sheet = document.getElementById('emojiSheet4');
+        if (_frame4 && sheet) _frame4.style.paddingBottom = sheet.offsetHeight + 'px';
+      });
+      var eb = document.getElementById('emojiBtn4');
+      if (eb) eb.classList.add('plus-active');
+    };
+
+    window.closeEmojiSheet4 = doClose4;
+
+    /* 顶部横条点击收起 */
+    var handleEl4 = document.getElementById('emojiSheetHandle4');
+    if (handleEl4) handleEl4.addEventListener('click', function(e) { e.stopPropagation(); doClose4(); });
+
+    /* 左下角收起按钮 */
+    var closeBtn4 = document.getElementById('emojiCloseBtn4');
+    if (closeBtn4) closeBtn4.addEventListener('click', function(e) { e.stopPropagation(); doClose4(); });
+
+    window.onEmojiSheetOverlayClick4 = function(e) {
+      var sheet = document.getElementById('emojiSheet4');
+      if (sheet && !sheet.contains(e.target)) doClose4();
+    };
+
+    /* 输入框获焦时关闭 sheet */
+    if (inputEl4) {
+      inputEl4.addEventListener('focus', function() {
+        if (_open4) doClose4();
+      });
+    }
+  })();
 </script>
 
 <!-- Toast 提示 -->
@@ -3453,39 +3796,26 @@ ${stateSummary}
   #s4Toast.show { opacity:1; transform:translateX(-50%) scale(1); }
 </style>
 
-<!-- 表情面板遮罩 -->
-<div id="emojiOverlay4" onclick="closeEmojiPanel4()" style="
-  display:none; position:fixed; inset:0; z-index:499; background:transparent;
-"></div>
-
-<!-- 表情面板 -->
-<div id="emojiPanel4" style="
-  display:none;
-  position:fixed; bottom:0; left:50%; transform:translateX(-50%);
-  width:min(390px,100vw);
-  background:rgba(244,240,250,0.98);
-  backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px);
-  border-top:1px solid rgba(160,100,240,0.15);
-  padding:12px 8px 20px;
-  z-index:500;
-  flex-wrap:wrap; gap:4px; justify-content:flex-start;
-  transition:opacity 0.18s;
-  opacity:0;
-">
+<!-- 表情选择器底部弹出层（知己专属，复用 screen6 结构，浅色主题） -->
+<div class="emoji-sheet-overlay4" id="emojiSheetOverlay4" onclick="onEmojiSheetOverlayClick4(event)">
+  <div class="emoji-sheet4" id="emojiSheet4">
+    <div id="emojiSheetHandle4" style="display:flex;align-items:center;justify-content:center;padding:10px 0 6px;cursor:pointer">
+      <div style="width:36px;height:4px;border-radius:2px;background:rgba(160,100,240,0.22)"></div>
+    </div>
+    <div class="emoji-grid-wrap4">
+      <div class="emoji-grid4" id="emojiGrid4"></div>
+    </div>
+    <div class="emoji-sheet-toolbar4">
+      <button id="emojiCloseBtn4" title="收起" style="margin-right:auto;background:none;border:none;padding:4px 8px;cursor:pointer;color:rgba(80,50,140,0.45);font-size:18px;line-height:1;-webkit-tap-highlight-color:transparent">︿</button>
+      <button class="emoji-delete-btn4" id="emojiDeleteBtn4" title="删除">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/>
+          <line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/>
+        </svg>
+      </button>
+    </div>
+  </div>
 </div>
-<style>
-  #emojiPanel4.open { display:flex; opacity:1; }
-  .ep4-btn {
-    width: calc(10% - 4px);
-    aspect-ratio: 1;
-    background: none; border: none; cursor: pointer;
-    font-size: 22px; line-height: 1;
-    display: flex; align-items: center; justify-content: center;
-    border-radius: 8px;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .ep4-btn:active { background: rgba(160,100,240,0.15); transform: scale(0.88); }
-</style>
 
 </body>
 </html>
