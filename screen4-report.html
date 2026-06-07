@@ -14,6 +14,12 @@
     /* 防止 iOS 键盘弹起时 body 整体上移 */
     html { height: 100%; }
 
+    /* chatMode 时禁止 body 滚动，防止整体上移 */
+    body.is-chat-mode {
+      overflow: hidden;
+      height: 100%;
+    }
+
     body {
       background: #7878C8;
       font-family: 'ZCOOL XiaoWei', -apple-system, 'PingFang SC', 'Helvetica Neue', sans-serif;
@@ -375,10 +381,24 @@
       padding-bottom: 100px; /* 确保快捷按钮不被底部输入框遮住 */
     }
 
-    /* 消息列表 */
+    /* 消息列表（report模式：正常流；chatMode：fixed定位由JS控制） */
     .msg-list {
       padding: 12px 18px 0;
       display: flex; flex-direction: column; gap: 14px;
+    }
+
+    /* chatMode 激活时：msg-list 变为 fixed */
+    body.is-chat-mode .msg-list {
+      position: fixed;
+      top: 116px; /* 由 JS 动态调整 */
+      bottom: 120px; /* 由 JS 动态调整 */
+      left: 50%; transform: translateX(-50%);
+      width: min(390px, 100vw);
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 12px 18px 12px;
+      display: flex; flex-direction: column; gap: 14px;
+      box-sizing: border-box;
     }
 
     /* 知己消息行 */
@@ -825,13 +845,16 @@
 
     /* ─── chatMode 顶栏 ─── */
     .chat-mode-header {
-      position: sticky; top: 0; z-index: 10;
-      flex-shrink: 0;
+      position: fixed;
+      top: 0; left: 50%; transform: translateX(-50%);
+      width: min(390px, 100vw);
+      z-index: 100;
       display: flex; align-items: center;
       padding: 52px 20px 12px;
       background: rgba(255,255,255,0.08);
       backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
       border-bottom: 1px solid rgba(255,255,255,0.12);
+      pointer-events: auto;
     }
     .chat-mode-back {
       font-size: 13px; color: rgba(255,255,255,0.55);
@@ -905,6 +928,13 @@
       top: 0; left: 50%; transform: translateX(-50%);
       width: 28px; height: 2px; border-radius: 0 0 2px 2px;
       background: rgba(255,255,255,0.85);
+    }
+
+    /* 键盘弹起时隐藏 tab-bar */
+    .tab-bar.keyboard-up {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
     }
 
   </style>
@@ -1441,7 +1471,7 @@
       <button class="chat-mode-reg-pill" id="chatModeRegPill" onclick="localStorage.setItem('zjRegSource','no_assess'); window.location.href='screen5-register.html'">注册</button>
     </div>
 
-    <div class="msg-list" id="msgList">
+    <div class="msg-list" id="msgList" style="display:none;">
 
       <!-- 知己第一条话（初始展示，由 JS 动态填入） -->
       <div class="msg-zhiji" id="msg-init">
@@ -2213,6 +2243,8 @@
       if (initMsg) initMsg.style.display = 'none';
       document.getElementById('chatArea').style.display = 'block';
       document.getElementById('chatBar').style.display = 'block';
+      document.getElementById('msgList').style.display = 'flex';
+      document.body.classList.add('is-chat-mode');
 
       // 显示 chatMode 顶栏，按注册状态决定是否展示注册胶囊
       const header = document.getElementById('chatModeHeader');
@@ -2317,6 +2349,7 @@
         loading.style.display = 'none';
         document.getElementById('chatArea').style.display = 'block';
         document.getElementById('chatBar').style.display = 'block';
+        document.getElementById('msgList').style.display = 'flex';
 
         // 恢复历史聊天记录
         const savedLog = loadChatLog();
@@ -3324,7 +3357,10 @@ ${assessSection}
   }
 
   function scrollBottom() {
-    setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 50);
+    setTimeout(() => {
+      const list = document.getElementById('msgList');
+      if (list) list.scrollTop = list.scrollHeight;
+    }, 50);
   }
 
   function autoResize(el) {
@@ -3853,87 +3889,86 @@ ${assessSection}
     }
   })();
 
-  /* ──── 键盘弹起修复（screen4 专用）────
-   * chat-bar 是 position:fixed，iOS 键盘弹起时它会上移，
-   * 但 chat-area 内容区没有跟着收缩，导致消息被键盘遮住。
-   * 修法：监听可视区域高度变化，动态给 chat-area 加 padding-bottom
-   * 等于键盘高度，同时滚到最新消息。
+  /* ──── 键盘弹起修复（screen4 chatMode 专用，全fixed布局方案）────
+   * chat-mode-header、msg-list、chat-bar 均为 position:fixed
+   * 键盘弹起时动态调整 msg-list 的 bottom 和 chat-bar 的 bottom
    */
   (function initKeyboardFix4() {
-    const chatArea = document.getElementById('chatArea');
+    // 只在 chatMode 下运行
+    if (new URLSearchParams(window.location.search).get('mode') !== 'chat') return;
+
+    const chatBar  = document.getElementById('chatBar');
+    const msgList  = document.getElementById('msgList');
+    const tabBar   = document.getElementById('tabBar');
     const input    = document.getElementById('chatInput');
-    if (!chatArea || !input) return;
+    if (!chatBar || !msgList || !input) return;
 
-    // chat-bar 本身高度（约 60px），加上 safe-area
-    const BAR_H = 64;
-    let baseH = 0;
-    let kbOpen = false;
+    let headerH    = 116; // chat-mode-header 高度，load后重新测量
+    let chatBarH   = 64;  // chat-bar 高度
+    let tabBarH    = 60;  // tab-bar 高度
+    let baseWinH   = 0;
 
-    function getViewH() {
-      return window.visualViewport ? window.visualViewport.height : window.innerHeight;
-    }
-
-    function recordBase() {
-      baseH = getViewH();
-    }
-
-    function scrollToBottom() {
-      const list = document.getElementById('msgList');
-      if (list) {
-        const last = list.lastElementChild;
-        if (last) last.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    function measure() {
+      const hdr = document.getElementById('chatModeHeader');
+      const bar = document.getElementById('chatBar');
+      const tab = document.getElementById('tabBar');
+      if (hdr && hdr.offsetParent !== null) {
+        headerH = hdr.getBoundingClientRect().height;
       }
-      // 同时滚动整个页面到底部
-      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+      if (bar) chatBarH = bar.getBoundingClientRect().height;
+      if (tab && tab.offsetParent !== null) tabBarH = tab.getBoundingClientRect().height;
+      baseWinH = window.innerHeight;
+      applyLayout(0);
     }
 
-    function onViewChange() {
-      const vh = getViewH();
-      if (!baseH) { baseH = vh; return; }
-      const kbH = Math.max(0, baseH - vh - 10); // 10px 容差
-      kbOpen = kbH > 80;
+    function applyLayout(keyboardHeight) {
+      const kbOpen = keyboardHeight > 80;
+      const effectiveTabH = (tabBar && tabBar.offsetParent !== null && !tabBar.classList.contains('keyboard-up'))
+        ? tabBarH : 0;
+
       if (kbOpen) {
-        // 键盘弹起：给内容区加 padding 等于键盘高度，让内容不被遮挡
-        chatArea.style.paddingBottom = (kbH + BAR_H) + 'px';
-        // 延迟等布局完成再滚
-        setTimeout(scrollToBottom, 150);
-        setTimeout(scrollToBottom, 350);
+        chatBar.style.bottom  = keyboardHeight + 'px';
+        msgList.style.bottom  = (keyboardHeight + chatBarH) + 'px';
+        msgList.style.top     = headerH + 'px';
+        if (tabBar) tabBar.classList.add('keyboard-up');
       } else {
-        // 键盘收起：恢复原来的 padding
-        chatArea.style.paddingBottom = '';
+        chatBar.style.bottom  = effectiveTabH + 'px';
+        msgList.style.bottom  = (effectiveTabH + chatBarH) + 'px';
+        msgList.style.top     = headerH + 'px';
+        if (tabBar) tabBar.classList.remove('keyboard-up');
+      }
+
+      if (kbOpen) {
+        setTimeout(() => { msgList.scrollTop = msgList.scrollHeight; }, 100);
+        setTimeout(() => { msgList.scrollTop = msgList.scrollHeight; }, 350);
       }
     }
 
     // ① visualViewport（iOS Safari / 新版微信）
     if (window.visualViewport) {
-      window.addEventListener('load', function() {
-        recordBase();
-        window.visualViewport.addEventListener('resize', onViewChange);
-        window.visualViewport.addEventListener('scroll', onViewChange);
+      window.visualViewport.addEventListener('resize', function() {
+        const kb = Math.max(0, baseWinH - window.visualViewport.height);
+        applyLayout(kb);
       });
     }
 
-    // ② window.resize 兜底（安卓/旧微信）
-    window.addEventListener('resize', onViewChange);
-
-    // ③ focus/blur 最后保险
-    input.addEventListener('focus', function() {
-      setTimeout(scrollToBottom, 350);
+    // ② window.resize 兜底
+    window.addEventListener('resize', function() {
+      const h = window.innerHeight;
+      if (!baseWinH || h > baseWinH + 50) { baseWinH = h; applyLayout(0); return; }
+      applyLayout(Math.max(0, baseWinH - h));
     });
+
+    // ③ blur 收起时强制复位
     input.addEventListener('blur', function() {
-      setTimeout(function() {
-        if (kbOpen) {
-          kbOpen = false;
-          chatArea.style.paddingBottom = '';
-        }
-      }, 100);
+      setTimeout(() => applyLayout(0), 150);
     });
 
-    // 初始记录基准高度
+    // 初始测量（必须等 DOM 完整渲染后）
     if (document.readyState === 'complete') {
-      recordBase();
+      setTimeout(measure, 50);
     } else {
-      window.addEventListener('load', recordBase);
+      window.addEventListener('load', () => setTimeout(measure, 50));
     }
   })();
 </script>
