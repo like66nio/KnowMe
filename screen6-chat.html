@@ -15,7 +15,9 @@
       display: flex;
       justify-content: center;
       align-items: flex-start;
+      /* dvh = dynamic viewport height，键盘弹起时自动收缩；旧浏览器 fallback 到 100vh */
       min-height: 100vh;
+      min-height: 100dvh;
       width: 100%;
     }
 
@@ -23,6 +25,7 @@
       width: 390px;
       flex-shrink: 0;
       height: 100vh;
+      height: 100dvh;
       background: transparent;
       position: relative;
       display: flex;
@@ -3684,15 +3687,39 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
       // 'chat' tab 就留在当前页
     }
 
-    /* ──── 键盘弹起时隐藏 Tab Bar ──── */
-    if (window.visualViewport) {
+    /* ──── 键盘弹起：同步 phone-frame 高度 + 隐藏 Tab Bar ──── */
+    (function initViewportFix() {
+      const frame  = document.querySelector('.phone-frame');
       const tabBar = document.getElementById('tabBar');
-      let baseHeight = window.visualViewport.height;
-      window.visualViewport.addEventListener('resize', () => {
-        const shrunk = window.visualViewport.height < baseHeight - 80;
-        tabBar.classList.toggle('keyboard-up', shrunk);
-      });
-    }
+      if (!window.visualViewport || !frame) return;
+
+      let baseH = window.visualViewport.height;
+
+      function onVpResize() {
+        const vh = window.visualViewport.height;
+        // 直接把 phone-frame 高度锁死到可视区域高度
+        // 这样键盘弹起时 msg-list (flex:1) 自动压缩，bottom-bar 始终可见
+        frame.style.height = vh + 'px';
+
+        const shrunk = vh < baseH - 80;
+        if (tabBar) tabBar.classList.toggle('keyboard-up', shrunk);
+
+        // 键盘弹起时滚到最新消息
+        if (shrunk) {
+          requestAnimationFrame(() => {
+            const list = document.getElementById('msgList');
+            if (list) list.scrollTop = list.scrollHeight;
+          });
+        } else {
+          // 键盘收起，恢复自然高度（dvh 接管）
+          frame.style.height = '';
+        }
+      }
+
+      window.visualViewport.addEventListener('resize', onVpResize);
+      // 部分 iOS 需要监听 scroll 事件才能捕捉键盘变化
+      window.visualViewport.addEventListener('scroll', onVpResize);
+    })();
 
     /* ──── Enter 发送（Shift+Enter 换行） ──── */
     document.getElementById('chatInput').addEventListener('keydown', function(e) {
