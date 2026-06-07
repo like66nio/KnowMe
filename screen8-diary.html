@@ -1685,9 +1685,9 @@ ${dialogText}
 请根据以上对话，生成一篇简短的情感日记，用 JSON 格式返回，字段如下：
 - mood：情绪类型，只能是 "positive"（积极）/"mixed"（复杂）/"low"（低落）/"intense"（激烈/焦虑）之一
 - chips：情绪标签数组，2-3个词，每个词不超过4字，如 ["焦虑","迷茫"] 或 ["感动","释然","满足"]
-- extract：知己视角的今日一句话总结，25字以内，以"今天"或具体细节开头，像一个旁观者记录这一天，不要用第一人称，不要用"用户"这个词，直接用对方的昵称${diaryUserName}
-- userSaid：${diaryUserName}今天说过的最触动人心的一句话或一段话原文（直接从对话里摘录，保持原话），50字以内
-- insight：知己对${diaryUserName}的一句洞察或回应，直接从对话里摘录知己说过的最有价值的话，50字以内
+- extract：知己视角的今日叙述，60-80字，要包含：发生了什么事（背景和原委）、${diaryUserName}的状态或感受、事情的转折或结果。像一个真正了解这个人的朋友在记录这一天，不用第一人称，不用"用户"，直接用昵称${diaryUserName}，语言自然流畅，不要流水账，要有温度
+- userSaid：${diaryUserName}今天说过的最真实、最有重量的一句话或一段话，直接从对话里原文摘录，保持原话不改动，选那种"说出了真正在意的事"的句子，80字以内
+- insight：知己今天说过的最有价值的一句洞察或回应，原文摘录，选那种真正击中问题核心、或者让${diaryUserName}感到被看见的话，80字以内
 
 只返回 JSON，不要任何其他文字。示例格式：
 {"mood":"mixed","chips":["纠结","疲惫"],"extract":"今天${diaryUserName}在职场关系里兜兜转转，说了很多，却不确定说清楚了没有。","userSaid":"我就是不想让他觉得我软弱，但其实我已经很累了。","insight":"累了不是软弱，是你一直在用力。"}`;
@@ -1702,7 +1702,7 @@ ${dialogText}
       model: DIARY_LLM.model,
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.7,
-      max_tokens: 400,
+      max_tokens: 700,
       thinking: { type: 'disabled' },
     }),
   })
@@ -1819,9 +1819,9 @@ ${dialogText}
 请根据以上对话，生成一篇简短的情感日记，用 JSON 格式返回，字段如下：
 - mood：情绪类型，只能是 "positive"（积极）/"mixed"（复杂）/"low"（低落）/"intense"（激烈/焦虑）之一
 - chips：情绪标签数组，2-3个词，每个词不超过4字，如 ["焦虑","迷茫"] 或 ["感动","释然","满足"]
-- extract：知己视角的今日一句话总结，25字以内，以"今天"或具体细节开头，像一个旁观者记录这一天，不要用第一人称，不要用"用户"这个词，直接用对方的昵称${diaryUserName}
-- userSaid：${diaryUserName}今天说过的最触动人心的一句话或一段话原文（直接从对话里摘录，保持原话），50字以内
-- insight：知己对${diaryUserName}的一句洞察或回应，直接从对话里摘录知己说过的最有价值的话，50字以内
+- extract：知己视角的今日叙述，60-80字，要包含：发生了什么事（背景和原委）、${diaryUserName}的状态或感受、事情的转折或结果。像一个真正了解这个人的朋友在记录这一天，不用第一人称，不用"用户"，直接用昵称${diaryUserName}，语言自然流畅，不要流水账，要有温度
+- userSaid：${diaryUserName}今天说过的最真实、最有重量的一句话或一段话，直接从对话里原文摘录，保持原话不改动，选那种"说出了真正在意的事"的句子，80字以内
+- insight：知己今天说过的最有价值的一句洞察或回应，原文摘录，选那种真正击中问题核心、或者让${diaryUserName}感到被看见的话，80字以内
 
 只返回 JSON，不要任何其他文字。示例格式：
 {"mood":"mixed","chips":["纠结","疲惫"],"extract":"今天${diaryUserName}在职场关系里兜兜转转，说了很多，却不确定说清楚了没有。","userSaid":"我就是不想让他觉得我软弱，但其实我已经很累了。","insight":"累了不是软弱，是你一直在用力。"}`;
@@ -1836,7 +1836,7 @@ ${dialogText}
       model: DIARY_LLM.model,
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.7,
-      max_tokens: 400,
+      max_tokens: 700,
       thinking: { type: 'disabled' },
     }),
   })
