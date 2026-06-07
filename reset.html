@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>知己 · 重置</title>
+  <title>知己 · 开发者重置</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -13,33 +13,115 @@
       align-items: center; justify-content: center;
       font-family: -apple-system, 'PingFang SC', sans-serif;
       color: #fff;
+      padding: 24px;
     }
     .icon { font-size: 48px; margin-bottom: 20px; }
     .title { font-size: 20px; font-weight: 600; margin-bottom: 8px; }
-    .sub { font-size: 14px; color: rgba(255,255,255,0.6); margin-bottom: 36px; }
-    .btn {
-      background: rgba(255,255,255,0.2);
-      border: 1.5px solid rgba(255,255,255,0.4);
-      border-radius: 24px; padding: 14px 40px;
-      font-size: 16px; color: #fff; cursor: pointer;
-      letter-spacing: 0.5px;
+    .sub { font-size: 14px; color: rgba(255,255,255,0.6); margin-bottom: 36px; text-align: center; }
+
+    .card {
+      background: rgba(255,255,255,0.12);
+      border: 1.5px solid rgba(255,255,255,0.25);
+      border-radius: 20px;
+      padding: 28px 24px;
+      width: 100%; max-width: 320px;
+      display: flex; flex-direction: column; gap: 16px;
     }
-    .btn:active { background: rgba(255,255,255,0.3); }
+    .pwd-input {
+      background: rgba(255,255,255,0.15);
+      border: 1.5px solid rgba(255,255,255,0.3);
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 18px; color: #fff;
+      letter-spacing: 4px;
+      text-align: center;
+      outline: none;
+      width: 100%;
+    }
+    .pwd-input::placeholder { color: rgba(255,255,255,0.35); letter-spacing: 1px; font-size: 14px; }
+    .pwd-input:focus { border-color: rgba(255,255,255,0.6); }
+
+    .btn-reset {
+      background: rgba(255,255,255,0.9);
+      border: none; border-radius: 14px;
+      padding: 14px; font-size: 16px;
+      color: #6030B0; font-weight: 600;
+      cursor: pointer; width: 100%;
+    }
+    .btn-reset:active { opacity: 0.8; }
+
+    .err {
+      font-size: 13px; color: rgba(255,160,160,0.9);
+      text-align: center; min-height: 18px;
+    }
+
+    .divider {
+      border: none; border-top: 1px solid rgba(255,255,255,0.15);
+      margin: 4px 0;
+    }
+
+    .hint {
+      font-size: 12px; color: rgba(255,255,255,0.35);
+      text-align: center;
+    }
+
+    /* 成功状态 */
+    .success-overlay {
+      display: none;
+      flex-direction: column; align-items: center; gap: 12px;
+    }
+    .success-overlay .ok-icon { font-size: 52px; }
+    .success-overlay .ok-text { font-size: 16px; font-weight: 600; }
+    .success-overlay .ok-sub { font-size: 13px; color: rgba(255,255,255,0.6); }
   </style>
 </head>
 <body>
-  <div class="icon">🔄</div>
-  <div class="title">准备好开始了吗？</div>
-  <div class="sub">点击下方按钮，以全新用户身份体验知己</div>
-  <button class="btn" onclick="reset()">开始全新体验</button>
+
+  <div id="main">
+    <div class="icon">🔧</div>
+    <div class="title">开发者重置</div>
+    <div class="sub">输入密码以清空本地数据<br>重新以全新用户身份体验</div>
+
+    <div class="card">
+      <input class="pwd-input" id="pwd" type="password"
+        placeholder="输入密码" maxlength="20"
+        onkeydown="if(event.key==='Enter') doReset()"
+        oninput="document.getElementById('err').textContent=''">
+      <button class="btn-reset" onclick="doReset()">清空数据，重新开始</button>
+      <div class="err" id="err"></div>
+      <hr class="divider">
+      <div class="hint">仅限开发测试使用</div>
+    </div>
+  </div>
+
+  <div class="success-overlay" id="success">
+    <div class="ok-icon">✅</div>
+    <div class="ok-text">已清空，跳转中…</div>
+    <div class="ok-sub">正在回到首页</div>
+  </div>
 
   <script>
-    function reset() {
+    const PWD = 'zhiji2026';   // ← 密码在这里改
+
+    function doReset() {
+      const val = document.getElementById('pwd').value.trim();
+      if (val !== PWD) {
+        document.getElementById('err').textContent = '密码不对，再想想 👀';
+        document.getElementById('pwd').value = '';
+        document.getElementById('pwd').focus();
+        return;
+      }
+      // 密码正确 → 清空 + 跳转
       localStorage.clear();
-      window.location.href = 'screen1-launch.html';
+      document.getElementById('main').style.display = 'none';
+      document.getElementById('success').style.display = 'flex';
+      setTimeout(() => {
+        window.location.href = 'screen1-launch.html';
+      }, 1200);
     }
-    // 也可以直接自动跳，不需要点按钮（注释掉按钮，取消注释下面这行）
-    // localStorage.clear(); window.location.href = 'screen1-launch.html';
+
+    // 自动聚焦
+    window.onload = () => document.getElementById('pwd').focus();
   </script>
 </body>
 </html>
