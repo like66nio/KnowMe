@@ -106,7 +106,19 @@
   .month-nav {
     display: flex; align-items: center; justify-content: center;
     gap: 16px; padding: 4px 20px 12px;
+    position: relative;
   }
+  .cal-share-btn {
+    position: absolute; right: 20px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: rgba(255,255,255,0.7); font-size: 13px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.15s;
+  }
+  .cal-share-btn:active { background: rgba(255,255,255,0.28); }
   .month-arrow {
     width: 22px; height: 22px; border-radius: 50%;
     background: rgba(255,255,255,0.18);
@@ -1122,6 +1134,7 @@
         <button class="month-arrow" onclick="changeMonth(-1)">‹</button>
         <div class="month-label" id="monthLabel">2026年6月</div>
         <button class="month-arrow" onclick="changeMonth(1)">›</button>
+        <button class="cal-share-btn" onclick="shareCalendar()" title="分享情绪日历">↗</button>
       </div>
 
       <!-- 情绪日历 -->
@@ -1898,6 +1911,153 @@ function goChat() {
 function goReport() {
   window.location.href = 'screen7-report.html';
 }
+
+// ══════════════════════════════════════════
+// 情绪日历海报分享
+// ══════════════════════════════════════════
+
+function shareCalendar() {
+  // 构建离屏海报 DOM
+  const MOOD_META = {
+    positive: { color: '#4CAF7D', label: '积极' },
+    mixed:    { color: '#9B7FD4', label: '复杂' },
+    low:      { color: '#5B8FD4', label: '低落' },
+    intense:  { color: '#E07060', label: '激烈' },
+  };
+
+  const year = currentYear;
+  const month = currentMonth; // 1-based
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const firstDay = new Date(year, month - 1, 1).getDay(); // 0=Sun
+
+  // 收集当月每天情绪
+  const cells = [];
+  for (let i = 0; i < firstDay; i++) cells.push(null); // 空格
+  for (let d = 1; d <= daysInMonth; d++) {
+    const key = year + '-' + String(month).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+    cells.push({ day: d, data: DIARY_DATA[key] || null });
+  }
+
+  // 统计情绪分布
+  const moodCount = { positive: 0, mixed: 0, low: 0, intense: 0 };
+  let recordDays = 0;
+  for (let d = 1; d <= daysInMonth; d++) {
+    const key = year + '-' + String(month).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+    const entry = DIARY_DATA[key];
+    if (entry && entry.mood) { moodCount[entry.mood]++; recordDays++; }
+  }
+
+  // 情绪摘要文字
+  let summaryText = '';
+  if (recordDays === 0) {
+    summaryText = '这个月还没有记录，从今天开始吧。';
+  } else {
+    const dominant = Object.entries(moodCount).sort((a,b) => b[1]-a[1])[0];
+    const meta = MOOD_META[dominant[0]];
+    summaryText = `${month}月记录了 ${recordDays} 天，情绪以${meta.label}为主。`;
+  }
+
+  // 生成日历格子 HTML
+  const weekdays = ['日','一','二','三','四','五','六'];
+  const weekHtml = weekdays.map(w => `<div style="font-size:9px;color:rgba(255,255,255,0.4);text-align:center;padding-bottom:4px;">${w}</div>`).join('');
+
+  const cellHtml = cells.map(c => {
+    if (!c) return `<div></div>`;
+    const meta = c.data ? MOOD_META[c.data.mood] : null;
+    const bg = meta ? meta.color : 'rgba(255,255,255,0.08)';
+    const opacity = meta ? '1' : '0.5';
+    const textColor = meta ? '#fff' : 'rgba(255,255,255,0.3)';
+    return `<div style="aspect-ratio:1;border-radius:6px;background:${bg};opacity:${opacity};display:flex;align-items:center;justify-content:center;font-size:10px;color:${textColor};font-weight:${meta?'600':'400'};">${c.day}</div>`;
+  }).join('');
+
+  // 图例
+  const legendHtml = Object.entries(MOOD_META).map(([k,v]) =>
+    `<div style="display:flex;align-items:center;gap:4px;">
+      <div style="width:8px;height:8px;border-radius:2px;background:${v.color};"></div>
+      <span style="font-size:10px;color:rgba(255,255,255,0.55);">${v.label}</span>
+    </div>`
+  ).join('');
+
+  // 完整海报 HTML（离屏渲染用）
+  const posterHtml = `
+    <div id="calPosterOffscreen" style="
+      position:fixed; left:-9999px; top:0;
+      width:320px; padding:28px 24px 24px;
+      background:linear-gradient(160deg,#2A1A5E 0%,#1A1040 60%,#0D0828 100%);
+      border-radius:20px; box-sizing:border-box;
+      font-family:-apple-system,'PingFang SC',sans-serif;
+    ">
+      <div style="font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:1px;margin-bottom:4px;">情绪日历</div>
+      <div style="font-size:22px;font-weight:700;color:#fff;margin-bottom:4px;">${year}年${month}月</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:20px;">${summaryText}</div>
+
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:16px;">
+        ${weekHtml}
+        ${cellHtml}
+      </div>
+
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px;">${legendHtml}</div>
+
+      <div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:14px;display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-size:13px;font-weight:700;color:rgba(255,255,255,0.9);">知己</div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.35);">你的专属情绪伙伴</div>
+        </div>
+        <div style="width:36px;height:36px;border-radius:8px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font-size:20px;">🔮</div>
+      </div>
+    </div>`;
+
+  // 插入 DOM
+  document.body.insertAdjacentHTML('beforeend', posterHtml);
+  const el = document.getElementById('calPosterOffscreen');
+
+  // 用 html2canvas 截图
+  showDiaryToast('正在生成日历海报…');
+
+  if (typeof html2canvas === 'undefined') {
+    showDiaryToast('截图组件未加载，请稍后重试');
+    el.remove();
+    return;
+  }
+
+  html2canvas(el, { scale: 2, useCORS: true, backgroundColor: null })
+    .then(canvas => {
+      el.remove();
+      // 复用现有 posterView 展示
+      const posterBody = document.getElementById('posterBody');
+      posterBody.innerHTML = '';
+      const img = document.createElement('img');
+      img.src = canvas.toDataURL('image/png');
+      img.style.cssText = 'width:100%;border-radius:16px;display:block;';
+      posterBody.appendChild(img);
+      posterBody.className = 'poster-body'; // 清除 style-a/b 类
+
+      // 隐藏切换风格按钮（日历海报不需要）
+      document.getElementById('styleBtnA').style.display = 'none';
+      document.getElementById('styleBtnB').style.display = 'none';
+
+      document.getElementById('posterView').classList.add('open');
+      _calendarPosterMode = true;
+    })
+    .catch(err => {
+      el.remove();
+      showDiaryToast('生成失败，请稍后重试');
+      console.error('cal poster error', err);
+    });
+}
+
+let _calendarPosterMode = false;
+
+// 关闭海报时恢复风格切换按钮
+const _origClosePosterView = window.closePosterView;
+window.closePosterView = function() {
+  document.getElementById('posterView').classList.remove('open');
+  if (_calendarPosterMode) {
+    document.getElementById('styleBtnA').style.display = '';
+    document.getElementById('styleBtnB').style.display = '';
+    _calendarPosterMode = false;
+  }
+};
 
 // ══════════════════════════════════════════
 // 分享面板
