@@ -1344,7 +1344,7 @@
     <!-- 输入行 -->
     <div class="chat-input-row">
       <!-- 语音切换 -->
-      <button class="chat-voice-btn4" onclick="/* 语音功能后续接入 */" title="语音输入">
+      <button class="chat-voice-btn4" onclick="voiceBtnClick4()" title="语音输入">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <rect x="9" y="2" width="6" height="12" rx="3"/>
           <path d="M5 10a7 7 0 0 0 14 0"/>
@@ -1359,8 +1359,8 @@
           onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();handleSend();}"
         ></textarea>
       </div>
-      <!-- 表情（暂时占位） -->
-      <button class="chat-toolbar-btn4" onclick="/* 表情后续接入 */" title="表情">
+      <!-- 表情 -->
+      <button class="chat-toolbar-btn4" onclick="toggleEmojiPanel4()" title="表情">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="10"/>
           <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
@@ -1369,7 +1369,7 @@
         </svg>
       </button>
       <!-- + 按钮 / 发送按钮（互斥） -->
-      <button class="chat-toolbar-btn4" id="plusBtn4" title="更多">
+      <button class="chat-toolbar-btn4" id="plusBtn4" onclick="plusBtnClick4()" title="更多">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <line x1="12" y1="5" x2="12" y2="19"/>
           <line x1="5" y1="12" x2="19" y2="12"/>
@@ -3364,11 +3364,128 @@ ${stateSummary}
     if (bar) bar.style.display = 'none';
   }
 
-  // 生成分享卡片（跳转到分享卡片功能；此处简化为 Toast 提示注册引导）
+  // 生成分享卡片
   function ctxShareCard() {
     closeCtxMenu();
     showToast('注册后即可生成分享卡片 ✨');
   }
+
+  /* ══════════════════════════════════
+     Toast 提示
+  ══════════════════════════════════ */
+  var _toastTimer = null;
+  function showToast(msg) {
+    var t = document.getElementById('s4Toast');
+    if (!t) return;
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(_toastTimer);
+    _toastTimer = setTimeout(function() { t.classList.remove('show'); }, 2000);
+  }
+
+  /* ══════════════════════════════════
+     表情面板
+  ══════════════════════════════════ */
+  var EMOJIS_4 = [
+    '😊','😂','🥹','😭','😅','🤣','🥰','😍','🤔','😮',
+    '😢','😩','😤','😡','🥲','😌','😔','🤗','😎','🫠',
+    '❤️','🔥','👍','🙏','💪','✨','🌈','🎉','💯','👀',
+    '😴','🤯','😱','🫣','🫡','🥳','😏','🙄','😬','🫶'
+  ];
+
+  function toggleEmojiPanel4() {
+    var panel = document.getElementById('emojiPanel4');
+    var overlay = document.getElementById('emojiOverlay4');
+    if (!panel) return;
+    var isOpen = panel.classList.toggle('open');
+    if (overlay) overlay.style.display = isOpen ? 'block' : 'none';
+    if (isOpen && !panel.dataset.built) {
+      panel.dataset.built = '1';
+      EMOJIS_4.forEach(function(em) {
+        var btn = document.createElement('button');
+        btn.className = 'ep4-btn';
+        btn.textContent = em;
+        btn.addEventListener('click', function() {
+          var inp = document.getElementById('chatInput');
+          if (inp) {
+            var pos = inp.selectionStart || inp.value.length;
+            inp.value = inp.value.slice(0, pos) + em + inp.value.slice(pos);
+            inp.selectionStart = inp.selectionEnd = pos + em.length;
+            inp.focus();
+            updateSendBtn4();
+            autoResize(inp);
+          }
+          closeEmojiPanel4();
+        });
+        panel.appendChild(btn);
+      });
+    }
+  }
+
+  function closeEmojiPanel4() {
+    var panel = document.getElementById('emojiPanel4');
+    var overlay = document.getElementById('emojiOverlay4');
+    if (panel) panel.classList.remove('open');
+    if (overlay) overlay.style.display = 'none';
+  }
+
+  /* ══════════════════════════════════
+     语音 / + 号占位
+  ══════════════════════════════════ */
+  function voiceBtnClick4() {
+    showToast('语音输入即将上线 🎙️');
+  }
+
+  function plusBtnClick4() {
+    showToast('更多功能即将上线 ✨');
+  }
 </script>
+
+<!-- Toast 提示 -->
+<div id="s4Toast" style="
+  position:fixed; bottom:100px; left:50%; transform:translateX(-50%) scale(0.85);
+  background:rgba(30,20,64,0.88); color:#fff;
+  padding:9px 18px; border-radius:20px; font-size:13px; letter-spacing:0.3px;
+  white-space:nowrap; z-index:9999; pointer-events:none;
+  opacity:0; transition:opacity 0.2s, transform 0.2s;
+"></div>
+<style>
+  #s4Toast.show { opacity:1; transform:translateX(-50%) scale(1); }
+</style>
+
+<!-- 表情面板遮罩 -->
+<div id="emojiOverlay4" onclick="closeEmojiPanel4()" style="
+  display:none; position:fixed; inset:0; z-index:499; background:transparent;
+"></div>
+
+<!-- 表情面板 -->
+<div id="emojiPanel4" style="
+  display:none;
+  position:fixed; bottom:0; left:50%; transform:translateX(-50%);
+  width:min(390px,100vw);
+  background:rgba(244,240,250,0.98);
+  backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px);
+  border-top:1px solid rgba(160,100,240,0.15);
+  padding:12px 8px 20px;
+  z-index:500;
+  flex-wrap:wrap; gap:4px; justify-content:flex-start;
+  transition:opacity 0.18s;
+  opacity:0;
+">
+</div>
+<style>
+  #emojiPanel4.open { display:flex; opacity:1; }
+  .ep4-btn {
+    width: calc(10% - 4px);
+    aspect-ratio: 1;
+    background: none; border: none; cursor: pointer;
+    font-size: 22px; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 8px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .ep4-btn:active { background: rgba(160,100,240,0.15); transform: scale(0.88); }
+</style>
+
 </body>
 </html>
