@@ -4613,21 +4613,23 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
         _ready = true;
         // layout 确定后滚底，用 fonts.ready 保证字体高度已计算
         // scrollDone 防止 fonts.ready 和 setTimeout 双触发
-        var scrollDone = false;
-        function doScroll() {
-          if (scrollDone) return; scrollDone = true;
+        function doScroll(showNow) {
           // 连续两帧确保字体高度已稳定再滚底
           requestAnimationFrame(function() {
             requestAnimationFrame(function() {
               msgList.scrollTop = msgList.scrollHeight;
-              msgList.style.visibility = 'visible'; // 滚底就位后再显示，用户看到的直接是最终状态
+              if (showNow) msgList.style.visibility = 'visible';
             });
           });
         }
+        // fonts.ready 触发时先显示（早则早，避免用户等太久白屏）
         if (document.fonts && document.fonts.ready) {
-          document.fonts.ready.then(doScroll);
+          document.fonts.ready.then(function() { doScroll(true); });
         }
-        setTimeout(doScroll, 800); // 800ms 保底，比 fonts.ready 晚一点没关系
+        // 800ms 保底：无论字体状态如何，始终再滚一次（修正字体渲染后高度变化）
+        setTimeout(function() {
+          doScroll(true); // 确保 visibility 打开且滚到真正底部
+        }, 800);
       }
 
       function applyLayout(kbOpen) {
