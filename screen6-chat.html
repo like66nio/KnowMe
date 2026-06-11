@@ -3242,6 +3242,7 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
       }, { passive: false });
 
       scroll.addEventListener('touchmove', e => {
+        if (!_cpvTool) return; // 没选工具时不拦截，让滚动正常工作
         const t = e.touches[0];
         _movePaint(t.clientX, t.clientY);
         e.preventDefault();
