@@ -1605,6 +1605,24 @@
     }
     .no-assess-btn:active { opacity: 0.88; }
 
+    /* ─── 人格主句 ─── */
+    .portrait-summary {
+      padding: 14px 16px 18px;
+      border-bottom: 1px solid rgba(140,80,220,0.10);
+      margin-bottom: 4px;
+    }
+    .portrait-summary-text {
+      font-size: 15px;
+      line-height: 1.75;
+      color: rgba(60,30,90,0.82);
+      letter-spacing: 0.2px;
+    }
+    .portrait-summary-text.loading {
+      color: rgba(140,80,220,0.45);
+      font-size: 13px;
+    }
+    .portrait-summary:empty { display: none; }
+
     /* ─── 重温测评入口 ─── */
     .review-assess-wrap {
       display: flex; justify-content: center;
@@ -1710,6 +1728,11 @@
       </div>
       <div class="acc-body" id="acc-portrait-body">
       <div class="acc-body-inner">
+
+        <!-- 人格主句 -->
+        <div class="portrait-summary" id="portraitSummary">
+          <div class="portrait-summary-text" id="portraitSummaryText"></div>
+        </div>
 
         <!-- 一、思考与决定 -->
         <div class="portrait-section">
@@ -2494,6 +2517,8 @@
       setTimeout(() => {
         document.getElementById('reportBody').classList.add('visible');
       }, 80);
+      // 生成人格主句（有缓存直接用，没有才调 LLM）
+      generatePortraitSummary(data);
     } else {
       document.getElementById('noAssessState').style.display = 'flex';
     }
@@ -3145,6 +3170,90 @@
     document.body.appendChild(tip);
     setTimeout(() => tip.remove(), 1800);
   }
+
+  /* ══════════════════════════════════════
+     人格主句：LLM 动态生成
+  ══════════════════════════════════════ */
+
+  const PORTRAIT_LLM = {
+    apiKey: 'sk-REDACTED',
+    model: 'deepseek-v4-pro',
+    endpoint: 'https://api.deepseek.com/v1/chat/completions',
+  };
+
+  async function generatePortraitSummary(data) {
+    const el = document.getElementById('portraitSummaryText');
+    if (!el) return;
+
+    // 有缓存直接展示
+    const cached = localStorage.getItem('zjPortraitSummary');
+    if (cached) {
+      el.textContent = cached;
+      return;
+    }
+
+    // 没有缓存，调 LLM
+    el.className = 'portrait-summary-text loading';
+    el.textContent = '知己正在认识你……';
+
+    // 把维度数据整理成可读文本
+    const d = data;
+    const dimText = [
+      d.thinking  ? `思考方式：${d.thinking.top}（得分分布：${JSON.stringify(d.thinking.scores)}）`   : '',
+      d.driving   ? `推动风格：${d.driving.top}（得分分布：${JSON.stringify(d.driving.scores)}）`     : '',
+      d.social    ? `社交风格：${d.social.top}（得分分布：${JSON.stringify(d.social.scores)}）`       : '',
+      d.adaptation? `适应方式：${d.adaptation.top}（得分分布：${JSON.stringify(d.adaptation.scores)}）` : '',
+      d.state     ? `当下状态：心情=${d.state.mood}，精力=${d.state.energy}，压力=${d.state.stress}，安全感=${d.state.security}，价值感=${d.state.meaning}` : '',
+    ].filter(Boolean).join('\n');
+
+    const prompt = `你是知己，正在根据用户的性格测评结果，写一段对这个人的观察。
+
+测评数据：
+${dimText}
+
+要求：
+- 定位：你是朋友视角的观察者，不是裁判，不是权威
+- 1-3句，由数据清晰度决定——特质鲜明就写满，数据模糊或大量居中就少写
+- 核心是描述"TA是什么样的人"；不提"擅长做什么"
+- 不用"你是一个……的人"开头，而是从朋友观察的角度出发，用"我发现""我看到""有没有留意到"这类表达开头
+- 中立事实，不夸奖，不评判，聚焦最鲜明的特质，不面面俱到
+- 朋友语气，口语化，不用书面语
+- 如果数据不清晰、维度之间矛盾或大量居中，不要强行下结论——用好奇观察的方式写，比如"你是不是正处在……的阶段"或"我没法一下看清楚你，但我注意到……"
+
+只输出那段观察，不加任何前缀或解释。`;
+
+    try {
+      const resp = await fetch(PORTRAIT_LLM.endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${PORTRAIT_LLM.apiKey}`,
+        },
+        body: JSON.stringify({
+          model: PORTRAIT_LLM.model,
+          messages: [{ role: 'user', content: prompt }],
+          max_tokens: 200,
+          temperature: 0.8,
+          stream: false,
+        }),
+      });
+
+      if (!resp.ok) throw new Error('API error');
+      const json = await resp.json();
+      const text = json.choices?.[0]?.message?.content?.trim() || '';
+
+      if (text) {
+        el.className = 'portrait-summary-text';
+        el.textContent = text;
+        localStorage.setItem('zjPortraitSummary', text);
+      } else {
+        el.closest('.portrait-summary').style.display = 'none';
+      }
+    } catch(e) {
+      el.closest('.portrait-summary').style.display = 'none';
+    }
+  }
+
 </script>
 </body>
 </html>

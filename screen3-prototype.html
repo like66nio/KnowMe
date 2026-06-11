@@ -1621,6 +1621,7 @@
     // 存入 localStorage
     localStorage.setItem('zjAssessment', JSON.stringify(result));
     localStorage.setItem('zjRegSource', 'done_assess');
+    localStorage.removeItem('zjPortraitSummary'); // 答案更新时清除人格主句缓存
 
     // 重温测评时跳回报告页；首次测评跳转聊天页
     const isReview = new URLSearchParams(window.location.search).get('review');
