@@ -1098,20 +1098,59 @@
       font-size: 11px; color: rgba(255,255,255,0.38);
       letter-spacing: 0.2px;
     }
-    .share-card-arrow {
-      font-size: 16px; color: rgba(255,255,255,0.22);
+    .share-card-check {
+      width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0;
+      border: 2px solid rgba(160,100,255,0.30);
+      background: transparent;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s;
+    }
+    .share-card-item.selected .share-card-check {
+      background: rgba(160,100,255,0.90);
+      border-color: rgba(180,120,255,0.90);
+    }
+    .share-card-item.selected .share-card-check::after {
+      content: '';
+      display: block;
+      width: 5px; height: 9px;
+      border-right: 2px solid #fff;
+      border-bottom: 2px solid #fff;
+      transform: rotate(40deg) translate(-1px, -1px);
+    }
+    .share-card-item.selected {
+      background: rgba(160,100,255,0.07);
+    }
+    /* 底部按钮区 */
+    .share-panel-actions {
+      display: flex; gap: 10px;
+      padding: 8px 16px 8px;
+      border-top: 1px solid rgba(255,255,255,0.07);
     }
     .share-panel-cancel {
-      margin: 4px 16px 8px;
-      padding: 14px;
+      flex: 1;
+      padding: 13px;
       text-align: center;
       font-size: 14px; color: rgba(255,255,255,0.45);
       cursor: pointer; -webkit-tap-highlight-color: transparent;
-      border-top: 1px solid rgba(255,255,255,0.07);
       border-radius: 14px;
       transition: background 0.12s;
+      background: rgba(255,255,255,0.04);
     }
-    .share-panel-cancel:active { background: rgba(255,255,255,0.06); }
+    .share-panel-cancel:active { background: rgba(255,255,255,0.09); }
+    .share-panel-confirm {
+      flex: 2;
+      padding: 13px;
+      text-align: center;
+      font-size: 14px; color: rgba(255,255,255,0.92); font-weight: 500;
+      cursor: pointer; -webkit-tap-highlight-color: transparent;
+      border-radius: 14px;
+      background: rgba(140,80,220,0.75);
+      transition: background 0.12s;
+    }
+    .share-panel-confirm:active { background: rgba(140,80,220,0.95); }
+    .share-panel-confirm.disabled {
+      opacity: 0.35; pointer-events: none;
+    }
 
     /* ─── 海报预览全屏层 ─── */
     .report-poster-view {
@@ -1949,40 +1988,43 @@
   <div class="share-panel-handle"></div>
   <div class="share-panel-title">选择要生成的海报</div>
   <div class="share-card-list">
-    <div class="share-card-item" onclick="openPosterView('portrait')">
+    <div class="share-card-item" data-type="portrait" onclick="toggleShareCard(this)">
       <div class="share-card-icon sci-portrait">🧠</div>
       <div class="share-card-info">
         <div class="share-card-name">性格画像</div>
         <div class="share-card-desc">选择想展示的维度，生成你的性格频谱图</div>
       </div>
-      <div class="share-card-arrow">›</div>
+      <div class="share-card-check"></div>
     </div>
-    <div class="share-card-item" onclick="openPosterView('gift')">
+    <div class="share-card-item" data-type="gift" onclick="toggleShareCard(this)">
       <div class="share-card-icon sci-gift">✨</div>
       <div class="share-card-info">
         <div class="share-card-name">TOP 3 天赋</div>
         <div class="share-card-desc">展示属于你的三个独特天赋</div>
       </div>
-      <div class="share-card-arrow">›</div>
+      <div class="share-card-check"></div>
     </div>
-    <div class="share-card-item" onclick="openPosterView('status')">
+    <div class="share-card-item" data-type="status" onclick="toggleShareCard(this)">
       <div class="share-card-icon sci-status">🔋</div>
       <div class="share-card-info">
         <div class="share-card-name">当下状态</div>
         <div class="share-card-desc">五项状态快照，记录你此刻的样子</div>
       </div>
-      <div class="share-card-arrow">›</div>
+      <div class="share-card-check"></div>
     </div>
-    <div class="share-card-item" onclick="openPosterView('drive')">
+    <div class="share-card-item" data-type="drive" onclick="toggleShareCard(this)">
       <div class="share-card-icon sci-drive">⚡</div>
       <div class="share-card-info">
         <div class="share-card-name">驱动力图谱</div>
         <div class="share-card-desc">内在 × 外在，18项驱动力全景展示</div>
       </div>
-      <div class="share-card-arrow">›</div>
+      <div class="share-card-check"></div>
     </div>
   </div>
-  <div class="share-panel-cancel" onclick="closeSharePanel()">取消</div>
+  <div class="share-panel-actions">
+    <div class="share-panel-cancel" onclick="closeSharePanel()">取消</div>
+    <div class="share-panel-confirm disabled" id="sharePanelConfirm" onclick="confirmShareCards()">预览海报</div>
+  </div>
 </div>
 
 <!-- ═══ 海报预览全屏层（移到 phone-frame 外）═══ -->
@@ -2473,6 +2515,57 @@
   // 缓存 biases（renderPortrait 后填）
   let _cachedBiases = null;
 
+  // 多选状态
+  let _selectedShareTypes = new Set();
+
+  function toggleShareCard(el) {
+    const type = el.dataset.type;
+    if (_selectedShareTypes.has(type)) {
+      _selectedShareTypes.delete(type);
+      el.classList.remove('selected');
+    } else {
+      _selectedShareTypes.add(type);
+      el.classList.add('selected');
+    }
+    const btn = document.getElementById('sharePanelConfirm');
+    if (_selectedShareTypes.size > 0) {
+      btn.classList.remove('disabled');
+      btn.textContent = _selectedShareTypes.size > 1 ? `预览海报（${_selectedShareTypes.size}张）` : '预览海报';
+    } else {
+      btn.classList.add('disabled');
+      btn.textContent = '预览海报';
+    }
+  }
+
+  // 多张海报的队列，逐个预览
+  let _posterQueue = [];
+
+  function confirmShareCards() {
+    if (_selectedShareTypes.size === 0) return;
+    _posterQueue = Array.from(_selectedShareTypes);
+    closeSharePanel();
+    // 重置选中状态，方便下次打开
+    _selectedShareTypes.clear();
+    document.querySelectorAll('.share-card-item.selected').forEach(el => el.classList.remove('selected'));
+    document.getElementById('sharePanelConfirm').classList.add('disabled');
+    document.getElementById('sharePanelConfirm').textContent = '预览海报';
+    // 打开第一张
+    _openNextPoster();
+  }
+
+  function _openNextPoster() {
+    if (_posterQueue.length === 0) return;
+    const type = _posterQueue.shift();
+    openPosterView(type);
+    // 如果还有更多，在海报预览头部加"下一张"按钮提示
+    const headerEl = document.querySelector('.rpv-header .rpv-title');
+    if (_posterQueue.length > 0 && headerEl) {
+      headerEl.textContent = `预览 · 长按可保存（还有 ${_posterQueue.length} 张）`;
+    } else if (headerEl) {
+      headerEl.textContent = '预览 · 长按可保存';
+    }
+  }
+
   function openSharePanel() {
     // 没有真实测评数据时拦截，不让进海报
     if (!loadAssessment()) {
@@ -2521,6 +2614,10 @@
 
   function closePosterView() {
     document.getElementById('reportPosterView').classList.remove('show');
+    // 如果还有下一张，稍作延迟后打开
+    if (_posterQueue && _posterQueue.length > 0) {
+      setTimeout(_openNextPoster, 300);
+    }
   }
 
   // 构建维度选择 chip 列表

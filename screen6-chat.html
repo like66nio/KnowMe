@@ -3083,9 +3083,28 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
     }
 
     /* ──── 滚到底部 ──── */
-    function scrollBottom() {
+    function scrollBottom(smooth) {
       const list = document.getElementById('msgList');
-      list.scrollTo({ top: list.scrollHeight, behavior: 'smooth' });
+      const behavior = smooth ? 'smooth' : 'instant';
+      list.scrollTo({ top: list.scrollHeight, behavior });
+    }
+
+    // 页面初始化时用：等字体 + 两帧渲染完再滚底，确保 scrollHeight 准确
+    function scrollBottomAfterRender() {
+      const doScroll = () => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            const list = document.getElementById('msgList');
+            list.scrollTo({ top: list.scrollHeight, behavior: 'instant' });
+          });
+        });
+      };
+      // 等字体加载完（字体会撑高气泡，影响 scrollHeight）
+      if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(doScroll);
+      } else {
+        setTimeout(doScroll, 300);
+      }
     }
 
     /* ──── 发送用户消息 ──── */
@@ -4947,7 +4966,8 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
       renderStateSnaps(_assessData.state);
       renderMotivation(_assessData);
       // 无历史时直接显示在顶部（有历史时由 restoreChatLog 决定位置并显示）
-      if (loadChatLog().length === 0) {
+      // 已看过（zjReportPreviewSeen）则不再显示
+      if (loadChatLog().length === 0 && !localStorage.getItem('zjReportPreviewSeen')) {
         document.getElementById('reportPreviewWrap').style.display = 'block';
       }
     })();
@@ -4984,7 +5004,7 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
       const savedLog = loadChatLog();
       if (savedLog.length === 0) {
         // 无历史：显示示例内容，绑定静态气泡
-        scrollBottom();
+        scrollBottomAfterRender();
         initStaticBubbles();
         return;
       }
@@ -5026,12 +5046,15 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
       if (regNudgeEl) list.insertBefore(regNudgeEl, list.firstChild);
 
       // 有聊天记录时：折叠条追加在最后一条消息下面
-      if (rpWrap && _assessData) {
+      // 只在第一次（zjReportPreviewSeen 未设置时）显示，之后不再重复出现
+      const reportSeen = localStorage.getItem('zjReportPreviewSeen');
+      if (rpWrap && _assessData && !reportSeen) {
         list.appendChild(rpWrap);
         rpWrap.style.display = 'block';
       }
 
-      scrollBottom();
+      // 等两帧渲染完再滚底，确保字体/图片高度已计算
+      scrollBottomAfterRender();
     })();
 
     /* ── 测评完成后首次进入：知己基于报告发起开场白 ── */
@@ -5092,6 +5115,8 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
       if (rpWrap && _assessData) {
         list.appendChild(rpWrap);
         rpWrap.style.display = 'block';
+        // 标记已展示过，之后进入聊天页不再重复显示
+        localStorage.setItem('zjReportPreviewSeen', '1');
       }
 
       // 渲染开场白气泡（折叠卡之后）
@@ -5112,8 +5137,12 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
       chatHistory = [{ role: 'system', content: sysPrompt }];
       chatHistory.push({ role: 'assistant', content: reply });
 
-      // 滚到折叠卡位置，让用户看到报告，下方是开场白
-      rpWrap ? rpWrap.scrollIntoView({ behavior: 'smooth', block: 'start' }) : scrollBottom();
+      // 滚到折叠卡位置，让用户看到报告，下方是开场白（等两帧渲染后再滚）
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          rpWrap ? rpWrap.scrollIntoView({ behavior: 'smooth', block: 'start' }) : scrollBottom();
+        });
+      });
     })();
 
     /* ── 底部工具栏逻辑 ── */
