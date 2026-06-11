@@ -920,6 +920,7 @@
       padding: 16px 18px;
       display: flex; flex-direction: column; gap: 14px;
       scrollbar-width: none; -ms-overflow-style: none;
+      visibility: hidden; /* JS重建内容+滚底完成后再显示，避免加载过程内容跳动 */
     }
     /* 多选时 padding-left 腾出勾选框空间 */
     .msg-list.select-mode { padding-left: 42px; }
@@ -4601,6 +4602,7 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
           if (scrollDone) return; scrollDone = true;
           requestAnimationFrame(function() {
             msgList.scrollTop = msgList.scrollHeight;
+            msgList.style.visibility = 'visible'; // 滚底就位后再显示，用户看到的直接是最终状态
           });
         }
         if (document.fonts && document.fonts.ready) {
@@ -5028,7 +5030,7 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
       const savedLog = loadChatLog();
       if (savedLog.length === 0) {
         // 无历史：显示示例内容，绑定静态气泡
-        // 滚底由 measure()（window.load 后）统一处理，避免与 layout 竞态
+        // visibility 由 measure() 里的 doScroll 统一恢复
         initStaticBubbles();
         return;
       }
