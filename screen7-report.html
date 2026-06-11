@@ -1607,19 +1607,46 @@
 
     /* ─── 人格主句 ─── */
     .portrait-summary {
-      padding: 14px 16px 18px;
-      border-bottom: 1px solid rgba(140,80,220,0.10);
-      margin-bottom: 4px;
+      position: relative;
+      background: rgba(255,255,255,0.55);
+      border: 1px solid rgba(160,100,240,0.14);
+      border-radius: 14px;
+      padding: 18px 18px 18px 22px;
+      margin: 2px 0 16px;
+      box-shadow: 0 2px 10px rgba(120,70,200,0.06);
+      overflow: hidden;
+    }
+    /* 顶部彩色装饰线（同 gift-item::before） */
+    .portrait-summary::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(180,100,255,0.45), transparent);
+    }
+    /* 左侧竖线 */
+    .portrait-summary::after {
+      content: '';
+      position: absolute; top: 16px; bottom: 16px; left: 0; width: 3px;
+      background: linear-gradient(180deg, rgba(160,90,255,0.55), rgba(120,60,220,0.25));
+      border-radius: 0 2px 2px 0;
+    }
+    .portrait-summary-label {
+      font-size: 10px;
+      color: rgba(130,70,210,0.72);
+      letter-spacing: 2px;
+      margin-bottom: 8px;
+      font-family: 'ZCOOL XiaoWei', sans-serif;
     }
     .portrait-summary-text {
-      font-size: 15px;
-      line-height: 1.75;
-      color: rgba(60,30,90,0.82);
-      letter-spacing: 0.2px;
+      font-size: 14px;
+      line-height: 1.85;
+      color: rgba(40,18,80,0.86);
+      letter-spacing: 0.3px;
+      font-family: 'ZCOOL XiaoWei', sans-serif;
     }
     .portrait-summary-text.loading {
-      color: rgba(140,80,220,0.45);
+      color: rgba(140,80,220,0.40);
       font-size: 13px;
+      letter-spacing: 0.2px;
     }
     .portrait-summary:empty { display: none; }
 
@@ -1731,6 +1758,7 @@
 
         <!-- 人格主句 -->
         <div class="portrait-summary" id="portraitSummary">
+          <div class="portrait-summary-label">知己说</div>
           <div class="portrait-summary-text" id="portraitSummaryText"></div>
         </div>
 
