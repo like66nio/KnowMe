@@ -531,7 +531,7 @@
       // 如果带 ?dev=1 参数则跳过自动跳转，方便测试
       const isDev = new URLSearchParams(location.search).get('dev') === '1';
       if (!isDev && localStorage.getItem('zjIsRegistered')) {
-        window.location.replace('screen6-chat.html');
+        window.location.replace('screen6-chat.html?v=' + Date.now());
         return;
       }
 
@@ -554,7 +554,7 @@
     function goAssess() { localStorage.removeItem('zjChatLog'); window.location.href = 'screen3-prototype.html'; }
     function goChat()   {
       if (localStorage.getItem('zjIsRegistered')) {
-        window.location.href = 'screen6-chat.html';
+        window.location.href = 'screen6-chat.html?v=' + Date.now();
       } else {
         localStorage.removeItem('zjChatLog');
         window.location.href = 'screen4-report.html?mode=chat';

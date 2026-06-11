@@ -4541,9 +4541,9 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
       el.classList.add('active');
 
       if (tab === 'report') {
-        window.location.href = 'screen7-report.html';
+        window.location.href = 'screen7-report.html?v=' + Date.now();
       } else if (tab === 'diary') {
-        window.location.href = 'screen8-diary.html';
+        window.location.href = 'screen8-diary.html?v=' + Date.now();
       } else if (tab === 'coach') {
         showTabTip('找教练');
       }
