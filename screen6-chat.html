@@ -756,8 +756,6 @@
       height: 100%; width: 100%;
       overflow: hidden;
       background: #7878C8;
-      opacity: 0; /* 初始不可见，等 layout+scroll 就绪后淡入，避免跳屏 */
-      transition: opacity 0.15s ease;
     }
 
     body {
@@ -4579,10 +4577,8 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
       let topBarBottom = 116;  // top-bar 底边距视口顶部，load 后修正
       let bottomBarH   = 60;   // bottom-bar 高度
       let tabBarH      = 60;   // tab-bar 高度
-      let _layoutReady = false; // measure() 完成前屏蔽 viewport resize
 
       function measure() {
-        _layoutReady = false;
         const tb  = document.querySelector('.top-bar');
         const bb  = document.querySelector('.bottom-bar');
         const tab = document.getElementById('tabBar');
@@ -4590,24 +4586,10 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
         if (bb)  bottomBarH   = bb.getBoundingClientRect().height;
         if (tab) tabBarH      = tab.getBoundingClientRect().height;
         applyLayout(false);
-        _layoutReady = true;
-        // layout 确定后，等字体就绪再滚底（字体高度影响 scrollHeight）
-        // 设好 scrollTop 之后再显示 msgList，用户看不到任何跳动过程
-        var scrollDone = false;
-        var doScroll = function() {
-          if (scrollDone) return;
-          scrollDone = true;
-          requestAnimationFrame(function() {
-            requestAnimationFrame(function() {
-              msgList.scrollTop = msgList.scrollHeight;
-              document.body.style.opacity = '1'; // scroll 就位后整页淡入
-            });
-          });
-        };
-        if (document.fonts && document.fonts.ready) {
-          document.fonts.ready.then(doScroll);
-        }
-        setTimeout(doScroll, 800); // 兜底：最多等 800ms
+        // msgList 尺寸确定后，强制滚到底（这是最可靠的时机）
+        requestAnimationFrame(() => {
+          msgList.scrollTop = msgList.scrollHeight;
+        });
       }
 
       function applyLayout(kbOpen) {
@@ -4632,11 +4614,9 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
       }
 
       // 监听 visualViewport 高度变化判断键盘开关
-      // _layoutReady 为 false 时忽略，避免初始化阶段的抖动干扰滚底
       if (window.visualViewport) {
         var lastVph = window.visualViewport.height;
         window.visualViewport.addEventListener('resize', function() {
-          if (!_layoutReady) return;
           var vph = window.visualViewport.height;
           var kbOpen = vph < lastVph - 80;
           // 只在明显变化时更新 lastVph，避免抖动
@@ -4647,7 +4627,6 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
         // 降级：window.resize
         var baseH = 0;
         window.addEventListener('resize', function() {
-          if (!_layoutReady) return;
           var h = window.innerHeight;
           if (!baseH || h > baseH + 50) { baseH = h; applyLayout(false); return; }
           applyLayout(baseH - h > 80);
@@ -5031,7 +5010,7 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
       const savedLog = loadChatLog();
       if (savedLog.length === 0) {
         // 无历史：显示示例内容，绑定静态气泡
-        // 滚底由 measure()（window.load 时触发）负责
+        scrollBottomAfterRender();
         initStaticBubbles();
         return;
       }
@@ -5080,7 +5059,9 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
         localStorage.setItem('zjReportPreviewSeen', '1');
       }
       // 卡片不再插入 list，彻底不显示
-      // 滚底由 measure()（window.load 时触发）负责，那时 layout + 字体都已就绪
+
+      // 等两帧渲染完再滚底，确保字体/图片高度已计算
+      scrollBottomAfterRender();
     })();
 
     /* ── 测评完成后首次进入：知己基于报告发起开场白 ── */
