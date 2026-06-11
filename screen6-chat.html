@@ -4577,8 +4577,10 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
       let topBarBottom = 116;  // top-bar 底边距视口顶部，load 后修正
       let bottomBarH   = 60;   // bottom-bar 高度
       let tabBarH      = 60;   // tab-bar 高度
+      let _layoutReady = false; // measure() 完成前屏蔽 viewport resize
 
       function measure() {
+        _layoutReady = false;
         const tb  = document.querySelector('.top-bar');
         const bb  = document.querySelector('.bottom-bar');
         const tab = document.getElementById('tabBar');
@@ -4586,19 +4588,23 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
         if (bb)  bottomBarH   = bb.getBoundingClientRect().height;
         if (tab) tabBarH      = tab.getBoundingClientRect().height;
         applyLayout(false);
+        _layoutReady = true;
         // layout 确定后，等字体就绪再滚底（字体高度影响 scrollHeight）
-        const doScroll = () => {
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
+        // 用 Promise.race 防止字体加载超时卡住
+        var scrollDone = false;
+        var doScroll = function() {
+          if (scrollDone) return;
+          scrollDone = true;
+          requestAnimationFrame(function() {
+            requestAnimationFrame(function() {
               msgList.scrollTop = msgList.scrollHeight;
             });
           });
         };
         if (document.fonts && document.fonts.ready) {
           document.fonts.ready.then(doScroll);
-        } else {
-          setTimeout(doScroll, 300);
         }
+        setTimeout(doScroll, 800); // 兜底：最多等 800ms
       }
 
       function applyLayout(kbOpen) {
@@ -4623,9 +4629,11 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
       }
 
       // 监听 visualViewport 高度变化判断键盘开关
+      // _layoutReady 为 false 时忽略，避免初始化阶段的抖动干扰滚底
       if (window.visualViewport) {
         var lastVph = window.visualViewport.height;
         window.visualViewport.addEventListener('resize', function() {
+          if (!_layoutReady) return;
           var vph = window.visualViewport.height;
           var kbOpen = vph < lastVph - 80;
           // 只在明显变化时更新 lastVph，避免抖动
@@ -4636,6 +4644,7 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
         // 降级：window.resize
         var baseH = 0;
         window.addEventListener('resize', function() {
+          if (!_layoutReady) return;
           var h = window.innerHeight;
           if (!baseH || h > baseH + 50) { baseH = h; applyLayout(false); return; }
           applyLayout(baseH - h > 80);
