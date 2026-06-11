@@ -6,14 +6,23 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <!-- 强制绕过微信缓存：URL 没有 v= 参数时自动加上时间戳跳转，确保每次加载都是新版本 -->
+  <!-- 强制绕过微信缓存：每次加载都刷新 v= 时间戳，确保微信每次加载的 URL 都不同 -->
   <script>
     (function() {
       var url = window.location.href;
-      if (url.indexOf('v=') === -1) {
+      var now = Date.now();
+      // 防死循环：取 URL 里现有的 v= 值，如果和 now 在同一秒内（差距<2000ms），说明刚刚跳过了，不再跳
+      var match = url.match(/[?&]v=(\d+)/);
+      if (match && now - parseInt(match[1], 10) < 2000) return;
+      // 每次都换新时间戳（刷新也会换，微信无法复用缓存）
+      var newUrl;
+      if (match) {
+        newUrl = url.replace(/v=\d+/, 'v=' + now);
+      } else {
         var sep = url.indexOf('?') === -1 ? '?' : '&';
-        window.location.replace(url + sep + 'v=' + Date.now());
+        newUrl = url + sep + 'v=' + now;
       }
+      window.location.replace(newUrl);
     })();
     window.addEventListener('pageshow', function(e) {
       if (e.persisted) { window.location.reload(); }
@@ -4607,15 +4616,18 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
         var scrollDone = false;
         function doScroll() {
           if (scrollDone) return; scrollDone = true;
+          // 连续两帧确保字体高度已稳定再滚底
           requestAnimationFrame(function() {
-            msgList.scrollTop = msgList.scrollHeight;
-            msgList.style.visibility = 'visible'; // 滚底就位后再显示，用户看到的直接是最终状态
+            requestAnimationFrame(function() {
+              msgList.scrollTop = msgList.scrollHeight;
+              msgList.style.visibility = 'visible'; // 滚底就位后再显示，用户看到的直接是最终状态
+            });
           });
         }
         if (document.fonts && document.fonts.ready) {
           document.fonts.ready.then(doScroll);
         }
-        setTimeout(doScroll, 600);
+        setTimeout(doScroll, 800); // 800ms 保底，比 fonts.ready 晚一点没关系
       }
 
       function applyLayout(kbOpen) {
