@@ -3095,16 +3095,18 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
             const list = document.getElementById('msgList');
-            list.scrollTo({ top: list.scrollHeight, behavior: 'instant' });
+            if (list) list.scrollTop = list.scrollHeight;
           });
         });
       };
       // 等字体加载完（字体会撑高气泡，影响 scrollHeight）
+      // 用 race：字体 ready 或 500ms 超时，先到先得，防止微信浏览器 fonts.ready 不触发
+      let done = false;
+      const run = () => { if (!done) { done = true; doScroll(); } };
       if (document.fonts && document.fonts.ready) {
-        document.fonts.ready.then(doScroll);
-      } else {
-        setTimeout(doScroll, 300);
+        document.fonts.ready.then(run);
       }
+      setTimeout(run, 500); // 兜底，500ms 后强制执行
     }
 
     /* ──── 发送用户消息 ──── */
@@ -5045,13 +5047,14 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
       // 注册引导条插回到 list 顶部
       if (regNudgeEl) list.insertBefore(regNudgeEl, list.firstChild);
 
-      // 有聊天记录时：折叠条追加在最后一条消息下面
-      // 只在第一次（zjReportPreviewSeen 未设置时）显示，之后不再重复出现
+      // 有聊天记录时：折叠条只在第一次（zjReportPreviewSeen 未设置时）显示
+      // 如果已有聊天记录但标记还没写（老用户升级场景），直接视为已看过，不再显示
       const reportSeen = localStorage.getItem('zjReportPreviewSeen');
-      if (rpWrap && _assessData && !reportSeen) {
-        list.appendChild(rpWrap);
-        rpWrap.style.display = 'block';
+      if (!reportSeen && _assessData) {
+        // 已有聊天记录，说明测评卡片早就展示过了，直接标记为已读，不再显示
+        localStorage.setItem('zjReportPreviewSeen', '1');
       }
+      // 卡片不再插入 list，彻底不显示
 
       // 等两帧渲染完再滚底，确保字体/图片高度已计算
       scrollBottomAfterRender();
