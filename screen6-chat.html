@@ -3240,35 +3240,50 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
       const saveBtn = document.getElementById('cpvSaveBtn');
       if (saveBtn) { saveBtn.textContent = '生成中…'; saveBtn.disabled = true; }
 
+      // 截取完整高度：临时展开海报，截图后恢复
+      const origOverflow = poster.style.overflow;
+      const origMaxHeight = poster.style.maxHeight;
+      poster.style.overflow = 'visible';
+      poster.style.maxHeight = 'none';
+      const fullHeight = poster.scrollHeight;
+      poster.style.overflow = origOverflow;
+      poster.style.maxHeight = origMaxHeight;
+
       html2canvas(poster, {
         backgroundColor: null,
         scale: window.devicePixelRatio || 2,
         useCORS: true,
         allowTaint: true,
-        logging: false
+        logging: false,
+        height: fullHeight,
+        windowHeight: fullHeight + 200
       }).then(canvas => {
         if (saveBtn) { saveBtn.textContent = '保存图片'; saveBtn.disabled = false; }
 
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
         if (isMobile) {
-          // 移动端：弹出全屏图片层，提示长按保存
+          // 移动端：弹出全屏可滚动图片层，支持长图
           const overlay = document.createElement('div');
           overlay.style.cssText = `
             position:fixed;inset:0;z-index:9999;
             background:rgba(0,0,0,0.92);
             display:flex;flex-direction:column;
-            align-items:center;justify-content:center;
+            align-items:center;
+            overflow-y:auto;
+            -webkit-overflow-scrolling:touch;
+            padding:20px 0 32px;
             gap:16px;
           `;
           const img = document.createElement('img');
           img.src = canvas.toDataURL('image/png');
-          img.style.cssText = 'max-width:90vw;max-height:75vh;border-radius:12px;box-shadow:0 4px 32px rgba(0,0,0,0.6);';
+          img.style.cssText = 'width:90vw;height:auto;border-radius:12px;box-shadow:0 4px 32px rgba(0,0,0,0.6);flex-shrink:0;';
           const tip = document.createElement('div');
           tip.textContent = '长按图片 → 存储到相册 📷';
-          tip.style.cssText = 'color:rgba(255,255,255,0.75);font-size:14px;letter-spacing:0.5px;';
+          tip.style.cssText = 'color:rgba(255,255,255,0.75);font-size:14px;letter-spacing:0.5px;flex-shrink:0;';
           const closeBtn = document.createElement('div');
           closeBtn.textContent = '关闭';
           closeBtn.style.cssText = `
+            flex-shrink:0;
             margin-top:4px;padding:10px 36px;
             background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);
             border-radius:24px;color:#fff;font-size:15px;cursor:pointer;
