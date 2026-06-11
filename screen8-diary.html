@@ -944,6 +944,19 @@
   /* 激烈：深红橙 */
   .mood-intense  { background: linear-gradient(135deg, #E05030, #F07040); box-shadow: 0 2px 8px rgba(224,80,48,0.55); }
 
+  /* 情绪图例 */
+  .mood-legend {
+    display: flex; align-items: center; justify-content: center;
+    gap: 16px; padding: 10px 0 4px;
+  }
+  .mood-legend-item {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 11px; color: rgba(255,255,255,0.55);
+  }
+  .mood-legend-dot {
+    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+  }
+
   /* ─── 展开面板（日历下方情绪词+日记入口）─── */
   .day-panel {
     margin: 0 16px 16px;
@@ -1001,8 +1014,8 @@
     margin-bottom: 10px;
   }
   .preview-insight .zj-tag {
-    font-size: 11px; color: rgba(120,60,200,0.80);
-    background: rgba(120,60,200,0.10);
+    font-size: 11px; color: rgba(255,255,255,0.90);
+    background: rgba(120,60,200,0.55);
     border-radius: 4px; padding: 1px 6px;
     margin-right: 6px; vertical-align: middle;
   }
@@ -1899,6 +1912,14 @@
         <div class="cal-grid" id="calGrid"></div>
       </div>
 
+      <!-- 情绪颜色图例 -->
+      <div class="mood-legend">
+        <div class="mood-legend-item"><span class="mood-legend-dot" style="background:#3DBE82;"></span>积极</div>
+        <div class="mood-legend-item"><span class="mood-legend-dot" style="background:#A47FD8;"></span>复杂</div>
+        <div class="mood-legend-item"><span class="mood-legend-dot" style="background:#4090D8;"></span>低落</div>
+        <div class="mood-legend-item"><span class="mood-legend-dot" style="background:#E05030;"></span>激烈</div>
+      </div>
+
       <!-- 展开面板（点击日历格子后显示）-->
       <div class="day-panel" id="dayPanel">
         <div class="day-panel-inner" id="dayPanelInner">
@@ -2272,7 +2293,7 @@ function openDayPanel(dateStr) {
 
   // 情绪词
   const chipsHtml = data.chips.map(c =>
-    `<span class="mood-chip" style="background:${meta.color}33;color:${meta.color}">${c}</span>`
+    `<span class="mood-chip" style="background:${meta.color}BB;color:#fff">${c}</span>`
   ).join('');
 
   // 有/无日记内容
