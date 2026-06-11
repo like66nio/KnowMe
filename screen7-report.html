@@ -2479,25 +2479,31 @@
     {
       key: 'thinking', label: '思考与决定',
       dims: [
-        { name: '思考程度',  left: '适度思考',    right: '深入探究',    biasKey: 'curious_vs_acceptant' },
-        { name: '理性与直觉', left: '弱理性',      right: '强理性',      biasKey: 'rational_strength' },
-        { name: '做决定',    left: '想清楚再决定', right: '不纠结，先干', biasKey: 'decisive_vs_deliberate' },
+        { name: '思考程度',   left: '适度思考',    right: '深入探究',      biasKey: 'curious_vs_acceptant' },
+        { name: '理性与直觉', left: '弱理性',      right: '强理性',        biasKey: 'rational_strength' },
+        { name: '直觉',       left: '弱直觉',      right: '强直觉',        biasKey: 'intuitive_strength' },
+        { name: '看远与顾近', left: '着眼未来',    right: '聚焦当下',      biasKey: 'future_vs_present' },
+        { name: '做决定',     left: '想清楚再决定', right: '不纠结，先干', biasKey: 'decisive_vs_deliberate' },
+        { name: '听取意见',   left: '自己拿主意',  right: '多听意见再决定', biasKey: 'independent_vs_consult' },
       ]
     },
     {
       key: 'drive', label: '推动事情',
       dims: [
-        { name: '效率',  left: '喜欢慢',    right: '喜欢快',    biasKey: 'speed_preference' },
-        { name: '完美',  left: '接受不完美', right: '追求极致',  biasKey: 'perfection' },
-        { name: '风险',  left: '稳扎稳打',  right: '冒险尝试',  biasKey: 'cautious_vs_adventurous' },
+        { name: '效率',  left: '喜欢慢',    right: '喜欢快',       biasKey: 'speed_preference' },
+        { name: '完美',  left: '接受不完美', right: '追求极致',     biasKey: 'perfection' },
+        { name: '周全',  left: '不贪多求全', right: '全面细致周到', biasKey: 'thoroughness' },
+        { name: '完成',  left: '及时止损',  right: '有始有终',      biasKey: 'completion' },
+        { name: '风险',  left: '稳扎稳打',  right: '冒险尝试',      biasKey: 'cautious_vs_adventurous' },
       ]
     },
     {
       key: 'social', label: '与人互动',
       dims: [
-        { name: '内向与外向', left: '独处充电',      right: '社交充能',   biasKey: 'introvert_vs_extrovert' },
-        { name: '影响他人',   left: '尽可能影响他人', right: '不强求说服', biasKey: 'influence_strength' },
-        { name: '人际感知力', left: '高度敏感',       right: '相对钝感',  biasKey: 'sensitivity' },
+        { name: '内向与外向', left: '独处充电',      right: '社交充能',     biasKey: 'introvert_vs_extrovert' },
+        { name: '影响他人',   left: '尽可能影响他人', right: '不强求说服',  biasKey: 'influence_strength' },
+        { name: '人际注意力', left: '关注自己',       right: '关注他人',    biasKey: 'self_vs_other_focus' },
+        { name: '人际感知力', left: '高度敏感',       right: '相对钝感',    biasKey: 'sensitivity' },
       ]
     },
     {
@@ -2748,15 +2754,23 @@
 
   function _portraitPosterHtml(data) {
     const r = data ? (data.raw || {}) : {};
+    const _scQ1p = (o) => { const c = r['q1']&&r['q1'][o]; const CS={s1:3,s2:2,s3:0,s4:1}; return c?(CS[c]||0):0; };
+    const _scQ7p = (o) => { const c = r['q7']&&r['q7'][o]; const CS={s1:3,s2:2,s3:0,s4:1}; return c?(CS[c]||0):0; };
     const biases = {
-      curious_vs_acceptant:       (function(){ const c = r['q1']&&r['q1']['curious']; const COLOR_SCORE={s1:3,s2:2,s3:0,s4:1}; return c?(COLOR_SCORE[c]||0):0 })() - 1.5,
-      rational_strength:          (function(){ const c = r['q1']&&r['q1']['rational']; const COLOR_SCORE={s1:3,s2:2,s3:0,s4:1}; return c?(COLOR_SCORE[c]||0):0 })() - 1.5,
+      curious_vs_acceptant:       _scQ1p('curious') - 1.5,
+      rational_strength:          _scQ1p('rational') - 1.5,
+      intuitive_strength:         _scQ1p('intuitive') - 1.5,
+      future_vs_present:          getDimBias(r, 'q3.present', 'q3.future'),
       decisive_vs_deliberate:     getDimBias(r, 'q5_speed.deliberate', 'q5_speed.decisive'),
-      speed_preference:           (function(){ const c = r['q7']&&r['q7']['efficiency']; const COLOR_SCORE={s1:3,s2:2,s3:0,s4:1}; return c?(COLOR_SCORE[c]||0):0 })() - 1.5,
-      perfection:                 (function(){ const c = r['q7']&&r['q7']['quality']; const COLOR_SCORE={s1:3,s2:2,s3:0,s4:1}; return c?(COLOR_SCORE[c]||0):0 })() - 1.5,
+      independent_vs_consult:     getDimBias(r, 'q5_consult.independent', 'q5_consult.consult'),
+      speed_preference:           _scQ7p('efficiency') - 1.5,
+      perfection:                 _scQ7p('quality') - 1.5,
+      thoroughness:               _scQ7p('thorough') - 1.5,
+      completion:                 _scQ7p('completion') - 1.5,
       cautious_vs_adventurous:    getDimBias(r, 'q8.cautious', 'q8.adventurous'),
       introvert_vs_extrovert:     getDimBias(r, 'q_social.introvert', 'q_social.extrovert'),
       influence_strength:         getDimBias(r, 'q12_persuade.strong', 'q12_persuade.weak'),
+      self_vs_other_focus:        getDimBias(r, 'q13.self_focus', 'q13.other_focus'),
       sensitivity:                getDimBias(r, 'q14.high', 'q14.low'),
       confident:                  getDimBias(r, 'q17.insecure', 'q17.confident'),
       optimistic_vs_pessimistic:  getDimBias(r, 'q18.pessimistic', 'q18.optimistic'),
