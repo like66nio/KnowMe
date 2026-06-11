@@ -4586,10 +4586,19 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
         if (bb)  bottomBarH   = bb.getBoundingClientRect().height;
         if (tab) tabBarH      = tab.getBoundingClientRect().height;
         applyLayout(false);
-        // msgList 尺寸确定后，强制滚到底（这是最可靠的时机）
-        requestAnimationFrame(() => {
-          msgList.scrollTop = msgList.scrollHeight;
-        });
+        // layout 确定后，等字体就绪再滚底（字体高度影响 scrollHeight）
+        const doScroll = () => {
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              msgList.scrollTop = msgList.scrollHeight;
+            });
+          });
+        };
+        if (document.fonts && document.fonts.ready) {
+          document.fonts.ready.then(doScroll);
+        } else {
+          setTimeout(doScroll, 300);
+        }
       }
 
       function applyLayout(kbOpen) {
@@ -5010,7 +5019,7 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
       const savedLog = loadChatLog();
       if (savedLog.length === 0) {
         // 无历史：显示示例内容，绑定静态气泡
-        scrollBottomAfterRender();
+        // 滚底由 measure()（window.load 时触发）负责
         initStaticBubbles();
         return;
       }
@@ -5059,9 +5068,7 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
         localStorage.setItem('zjReportPreviewSeen', '1');
       }
       // 卡片不再插入 list，彻底不显示
-
-      // 等两帧渲染完再滚底，确保字体/图片高度已计算
-      scrollBottomAfterRender();
+      // 滚底由 measure()（window.load 时触发）负责，那时 layout + 字体都已就绪
     })();
 
     /* ── 测评完成后首次进入：知己基于报告发起开场白 ── */
