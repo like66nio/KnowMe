@@ -2517,6 +2517,8 @@
 
   // 多选状态
   let _selectedShareTypes = new Set();
+  // 合并海报时传入的类型列表（空数组=单张模式）
+  let _posterTypes = [];
 
   function toggleShareCard(el) {
     const type = el.dataset.type;
@@ -2530,39 +2532,32 @@
     const btn = document.getElementById('sharePanelConfirm');
     if (_selectedShareTypes.size > 0) {
       btn.classList.remove('disabled');
-      btn.textContent = _selectedShareTypes.size > 1 ? `预览海报（${_selectedShareTypes.size}张）` : '预览海报';
+      btn.textContent = _selectedShareTypes.size > 1 ? `生成长海报（${_selectedShareTypes.size}项）` : '预览海报';
     } else {
       btn.classList.add('disabled');
       btn.textContent = '预览海报';
     }
   }
 
-  // 多张海报的队列，逐个预览
-  let _posterQueue = [];
-
   function confirmShareCards() {
     if (_selectedShareTypes.size === 0) return;
-    _posterQueue = Array.from(_selectedShareTypes);
+    const types = Array.from(_selectedShareTypes);
     closeSharePanel();
-    // 重置选中状态，方便下次打开
+    // 重置选中状态
     _selectedShareTypes.clear();
     document.querySelectorAll('.share-card-item.selected').forEach(el => el.classList.remove('selected'));
     document.getElementById('sharePanelConfirm').classList.add('disabled');
     document.getElementById('sharePanelConfirm').textContent = '预览海报';
-    // 打开第一张
-    _openNextPoster();
-  }
 
-  function _openNextPoster() {
-    if (_posterQueue.length === 0) return;
-    const type = _posterQueue.shift();
-    openPosterView(type);
-    // 如果还有更多，在海报预览头部加"下一张"按钮提示
-    const headerEl = document.querySelector('.rpv-header .rpv-title');
-    if (_posterQueue.length > 0 && headerEl) {
-      headerEl.textContent = `预览 · 长按可保存（还有 ${_posterQueue.length} 张）`;
-    } else if (headerEl) {
-      headerEl.textContent = '预览 · 长按可保存';
+    if (types.length === 1) {
+      // 单选：原来的行为
+      _posterTypes = [];
+      openPosterView(types[0]);
+    } else {
+      // 多选：合并成一张长海报
+      _posterTypes = types;
+      _posterType = types[0]; // 主类型（影响维度选择器显示）
+      openPosterView('combined');
     }
   }
 
@@ -2595,7 +2590,10 @@
     const view = document.getElementById('reportPosterView');
     const selector = document.getElementById('rpvDimSelector');
 
-    if (type === 'portrait') {
+    // 维度选择器：单张 portrait 或合并模式含 portrait 时显示
+    const showSelector = (type === 'portrait') ||
+      (type === 'combined' && _posterTypes.includes('portrait'));
+    if (showSelector) {
       selector.style.display = 'block';
       _buildDimSelector();
     } else {
@@ -2614,10 +2612,7 @@
 
   function closePosterView() {
     document.getElementById('reportPosterView').classList.remove('show');
-    // 如果还有下一张，稍作延迟后打开
-    if (_posterQueue && _posterQueue.length > 0) {
-      setTimeout(_openNextPoster, 300);
-    }
+    _posterTypes = []; // 关闭时清空合并列表
   }
 
   // 构建维度选择 chip 列表
@@ -2686,29 +2681,72 @@
     </div>`;
   }
 
+  // 背景渐变配置（每种类型对应一套）
+  const POSTER_BG = {
+    portrait: `radial-gradient(ellipse 300px 260px at 90% 3%,  rgba(140,60,220,0.38) 0%, transparent 52%),
+               radial-gradient(ellipse 240px 280px at 5%  90%, rgba(80,50,200,0.28)  0%, transparent 50%),
+               radial-gradient(ellipse 220px 200px at 50% 50%, rgba(60,40,180,0.18)  0%, transparent 56%),
+               linear-gradient(158deg, #0C0820 0%, #160C2C 48%, #080618 100%)`,
+    gift:     `radial-gradient(ellipse 300px 260px at 90% 3%,  rgba(100,80,240,0.38) 0%, transparent 52%),
+               radial-gradient(ellipse 240px 280px at 5%  90%, rgba(160,60,220,0.28) 0%, transparent 50%),
+               radial-gradient(ellipse 220px 200px at 50% 50%, rgba(60,40,180,0.18)  0%, transparent 56%),
+               linear-gradient(158deg, #0A0820 0%, #140C2E 48%, #060618 100%)`,
+    status:   `radial-gradient(ellipse 300px 260px at 90% 3%,  rgba(50,190,185,0.32) 0%, transparent 52%),
+               radial-gradient(ellipse 240px 280px at 5%  90%, rgba(80,50,200,0.22)  0%, transparent 50%),
+               radial-gradient(ellipse 200px 200px at 50% 50%, rgba(40,160,155,0.14) 0%, transparent 56%),
+               linear-gradient(158deg, #060E18 0%, #0C1624 48%, #040C14 100%)`,
+    drive:    `radial-gradient(ellipse 300px 260px at 90% 3%,  rgba(240,160,40,0.30) 0%, transparent 52%),
+               radial-gradient(ellipse 240px 280px at 5%  90%, rgba(180,80,30,0.22)  0%, transparent 50%),
+               radial-gradient(ellipse 220px 200px at 50% 50%, rgba(200,120,20,0.12) 0%, transparent 56%),
+               linear-gradient(158deg, #130A02 0%, #1E1004 48%, #0E0802 100%)`,
+  };
+
   function _renderPoster() {
     const data = loadAssessment();
     const poster = document.getElementById('rpvPoster');
     const now = new Date();
     const dateLabel = `${now.getFullYear()} · ${now.getMonth()+1}月${now.getDate()}日`;
 
-    if (_posterType === 'portrait') {
-      poster.className = 'rpv-poster poster-portrait';
-      _renderPortraitPoster(poster, data, dateLabel);
-    } else if (_posterType === 'gift') {
-      poster.className = 'rpv-poster poster-gift';
-      _renderGiftPoster(poster, data, dateLabel);
-    } else if (_posterType === 'drive') {
-      poster.className = 'rpv-poster poster-drive';
-      _renderDrivePoster(poster, data, dateLabel);
+    // 多选合并模式：_posterTypes 有值时用多选列表，否则用单类型 _posterType
+    const types = (_posterTypes && _posterTypes.length > 0) ? _posterTypes : [_posterType];
+
+    if (types.length === 1) {
+      // 单张：原来的行为，每种类型有自己的背景
+      const type = types[0];
+      poster.className = 'rpv-poster poster-' + type;
+      poster.style.background = '';
+      if (type === 'portrait')     _renderPortraitPoster(poster, data, dateLabel);
+      else if (type === 'gift')    _renderGiftPoster(poster, data, dateLabel);
+      else if (type === 'drive')   _renderDrivePoster(poster, data, dateLabel);
+      else                         _renderStatusPoster(poster, data, dateLabel);
     } else {
-      poster.className = 'rpv-poster poster-status';
-      _renderStatusPoster(poster, data, dateLabel);
+      // 多选合并：深色通用背景，各模块内容垂直拼接
+      poster.className = 'rpv-poster';
+      poster.style.background = POSTER_BG.portrait;
+      poster.style.padding = '26px 22px 22px';
+
+      let html = `<div class="rp-accent-bar"></div>`;
+      html += `<div class="rp-date-label">${dateLabel}</div>`;
+
+      const ORDER = ['portrait', 'gift', 'status', 'drive'];
+      const ordered = ORDER.filter(t => types.includes(t));
+
+      ordered.forEach((type, idx) => {
+        if (idx > 0) html += `<div class="rp-divider" style="margin:20px 0; opacity:0.25;"></div>`;
+        if (type === 'portrait')   html += _portraitPosterHtml(data);
+        else if (type === 'gift')  html += _giftPosterHtml(data);
+        else if (type === 'status') html += _statusPosterHtml(data);
+        else if (type === 'drive') html += _drivePosterHtml(data);
+      });
+
+      html += _makeFooter();
+      poster.innerHTML = html;
     }
   }
 
-  function _renderPortraitPoster(poster, data, dateLabel) {
-    // 计算 biases（复用已有逻辑）
+  // ── 各模块纯 HTML 生成函数（不操作 DOM，供单张和合并模式共用）──
+
+  function _portraitPosterHtml(data) {
     const r = data ? (data.raw || {}) : {};
     const biases = {
       curious_vs_acceptant:       (function(){ const c = r['q1']&&r['q1']['curious']; const COLOR_SCORE={s1:3,s2:2,s3:0,s4:1}; return c?(COLOR_SCORE[c]||0):0 })() - 1.5,
@@ -2724,10 +2762,7 @@
       optimistic_vs_pessimistic:  getDimBias(r, 'q18.pessimistic', 'q18.optimistic'),
       emotion_style:              getDimBias(r, 'q_emotion.inward', 'q_emotion.outward'),
     };
-
-    let html = `<div class="rp-accent-bar"></div>`;
-    html += `<div class="rp-date-label">${dateLabel}</div>`;
-
+    let html = `<div class="rp-section-label">性格画像</div>`;
     const sectionsToShow = DIM_SECTIONS.filter(s => _selectedSections.has(s.key));
     sectionsToShow.forEach((sec, si) => {
       if (si > 0) html += `<div class="rp-divider"></div>`;
@@ -2746,23 +2781,17 @@
       });
       html += `</div>`;
     });
-
-    html += _makeFooter();
-    poster.innerHTML = html;
+    return html;
   }
 
-  function _renderGiftPoster(poster, data, dateLabel) {
+  function _giftPosterHtml(data) {
     const gifts = data ? buildGifts(data) : [];
     const colorMap = {
       'gi-indigo': 'linear-gradient(135deg,#7B68EE,#4B3D9C)',
       'gi-rose':   'linear-gradient(135deg,#E070B0,#B03080)',
       'gi-teal':   'linear-gradient(135deg,#50C8C0,#2E9A92)',
     };
-
-    let html = `<div class="rp-accent-bar"></div>`;
-    html += `<div class="rp-date-label">${dateLabel}</div>`;
-    html += `<div class="rp-section-label">TOP 3 天赋</div>`;
-
+    let html = `<div class="rp-section-label">TOP 3 天赋</div>`;
     (gifts || []).forEach((g, i) => {
       const bg = colorMap[g.color] || colorMap['gi-indigo'];
       html += `<div class="rp-gift-item">
@@ -2778,27 +2807,15 @@
       </div>`;
       if (i < (gifts.length - 1)) html += `<div class="rp-divider"></div>`;
     });
-
-    html += _makeFooter();
-    poster.innerHTML = html;
+    return html;
   }
 
-  function _renderStatusPoster(poster, data, dateLabel) {
+  function _statusPosterHtml(data) {
     const state = data ? (data.state || {}) : {};
-    const STATE_LABELS = {
-      mood:     '开心度',
-      energy:   '精力',
-      stress:   '压力感',
-      security: '安全感',
-      meaning:  '价值感',
-    };
+    const STATE_LABELS = { mood:'开心度', energy:'精力', stress:'压力感', security:'安全感', meaning:'价值感' };
     const keys = ['mood','energy','stress','security','meaning'];
-
-    let html = `<div class="rp-accent-bar"></div>`;
-    html += `<div class="rp-date-label">${dateLabel}</div>`;
-    html += `<div class="rp-section-label">当下状态快照</div>`;
+    let html = `<div class="rp-section-label">当下状态快照</div>`;
     html += `<div class="rp-snap-row">`;
-
     keys.forEach(key => {
       const val = state[key] || 'unsure';
       const info = STATE_MAP[key][val] || STATE_MAP[key]['unsure'];
@@ -2810,19 +2827,40 @@
         <div class="rp-snap-label">${rpChar(STATE_LABELS[key])}</div>
       </div>`;
     });
-
     html += `</div>`;
-
     if (data && data.state) {
       html += `<div class="rp-divider"></div>`;
       html += `<div class="rp-status-summary">${rpChar(buildStateSummary(data.state))}</div>`;
     }
+    return html;
+  }
 
+  // ── 单张模式的 wrapper（保持与旧代码相同的调用签名）──
+  function _renderPortraitPoster(poster, data, dateLabel) {
+    let html = `<div class="rp-accent-bar"></div>`;
+    html += `<div class="rp-date-label">${dateLabel}</div>`;
+    html += _portraitPosterHtml(data);
     html += _makeFooter();
     poster.innerHTML = html;
   }
 
-  function _renderDrivePoster(poster, data, dateLabel) {
+  function _renderGiftPoster(poster, data, dateLabel) {
+    let html = `<div class="rp-accent-bar"></div>`;
+    html += `<div class="rp-date-label">${dateLabel}</div>`;
+    html += _giftPosterHtml(data);
+    html += _makeFooter();
+    poster.innerHTML = html;
+  }
+
+  function _renderStatusPoster(poster, data, dateLabel) {
+    let html = `<div class="rp-accent-bar"></div>`;
+    html += `<div class="rp-date-label">${dateLabel}</div>`;
+    html += _statusPosterHtml(data);
+    html += _makeFooter();
+    poster.innerHTML = html;
+  }
+
+  function _drivePosterHtml(data) {
     const r = data ? (data.raw || {}) : {};
     const COLOR_SCORE = { s1: 3, s2: 2, s3: 0, s4: 1 };
     const sc = (q, o) => { const c = r[q] && r[q][o]; return c !== undefined ? (COLOR_SCORE[c] ?? 1) : 1; };
@@ -2831,7 +2869,6 @@
       if (score >= 1.2) return 1;
       return 0;
     }
-
     const external = [
       { name: '竞争',   level: grade(sc('q21', 'compete')) },
       { name: '影响力', level: grade(sc('q21', 'impact')) },
@@ -2854,7 +2891,6 @@
       { name: '好奇心', level: grade(sc('q22', 'novelty')) },
       { name: '审美',   level: grade(sc('q22', 'aesthetics')) },
     ];
-
     function makeEbar(d) {
       const tagMap = { 2: '高', 1: '中', 0: '低' };
       return `<div class="rp-ebar-row">
@@ -2867,22 +2903,23 @@
         <div class="rp-ebar-tag">${tagMap[d.level]}</div>
       </div>`;
     }
-
-    let html = `<div class="rp-accent-bar"></div>`;
-    html += `<div class="rp-date-label">${dateLabel}</div>`;
-
+    let html = `<div class="rp-section-label">驱动力图谱</div>`;
     html += `<div class="rp-drive-block">`;
     html += `<div class="rp-drive-block-title">· 外在动力 ·</div>`;
     external.forEach(d => { html += makeEbar(d); });
     html += `</div>`;
-
     html += `<div class="rp-divider"></div>`;
-
     html += `<div class="rp-drive-block">`;
     html += `<div class="rp-drive-block-title">· 内在动力 ·</div>`;
     internal.forEach(d => { html += makeEbar(d); });
     html += `</div>`;
+    return html;
+  }
 
+  function _renderDrivePoster(poster, data, dateLabel) {
+    let html = `<div class="rp-accent-bar"></div>`;
+    html += `<div class="rp-date-label">${dateLabel}</div>`;
+    html += _drivePosterHtml(data);
     html += _makeFooter();
     poster.innerHTML = html;
   }
