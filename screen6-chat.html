@@ -211,6 +211,7 @@
     .ai-bubble p {
       font-size: 14px; color: #1E1440;
       line-height: 1.78; letter-spacing: 0.2px;
+      font-family: 'PingFang SC', 'Hiragino Sans GB', -apple-system, sans-serif;
     }
     .ai-bubble .hl { color: #7030B8; font-weight: 500; }
 
@@ -250,6 +251,7 @@
     .user-bubble p {
       font-size: 14px; color: rgba(255,255,255,0.95);
       line-height: 1.75; letter-spacing: 0.2px;
+      font-family: 'PingFang SC', 'Hiragino Sans GB', -apple-system, sans-serif;
     }
 
     /* 打字动画气泡 */
@@ -863,12 +865,13 @@
     ══════════════════════════════════ */
     .chat-poster-view {
       display: none;
-      position: fixed; inset: 0;
-      left: 50%; transform: translateX(-50%);
+      position: fixed; top: 0; left: 50%; transform: translateX(-50%);
       width: min(390px, 100vw);
+      height: 100%; /* 明确高度，确保flex子元素能正确计算剩余空间 */
       background: #0A0618;
       z-index: 600; /* 高于 select-bar(500) */
       flex-direction: column;
+      overflow: hidden; /* 防止整体溢出 */
     }
     .chat-poster-view.show { display: flex; }
 
@@ -895,15 +898,18 @@
 
     /* 滚动区 */
     .cpv-scroll {
-      flex: 1; overflow-y: auto; overflow-x: hidden;
+      flex: 1;
+      min-height: 0; /* 关键！微信浏览器里flex子元素overflow-y需要这个才能生效 */
+      overflow-y: scroll; /* scroll比auto在微信浏览器里更可靠 */
+      overflow-x: hidden;
       -webkit-overflow-scrolling: touch;
-      padding: 20px 20px 0;
+      padding: 20px 20px 120px; /* 底部加padding，防止内容被底部工具栏遮住 */
     }
     .cpv-scroll::-webkit-scrollbar { display: none; }
 
     /* 海报本体 */
     .cpv-poster {
-      width: 100%; border-radius: 16px; overflow: hidden;
+      width: 100%; border-radius: 16px; overflow: visible;
       position: relative;
       background:
         radial-gradient(ellipse 280px 240px at 88% 3%,  rgba(140,60,220,0.36) 0%, transparent 52%),
@@ -952,6 +958,8 @@
       font-size: 13px; color: rgba(230,220,255,0.88);
       line-height: 1.72; letter-spacing: 0.2px;
       user-select: none; -webkit-user-select: none;
+      /* 消息文字用系统字体，避免ZCOOL XiaoWei字符集缺字导致■ */
+      font-family: 'PingFang SC', 'Hiragino Sans GB', -apple-system, sans-serif;
     }
     .cpv-msg-divider {
       height: 1px; margin: 12px 0;
