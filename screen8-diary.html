@@ -2384,6 +2384,7 @@ function _bindPosterBrush() {
     e.preventDefault();
   }, { passive: false });
   wrap.addEventListener('touchmove', e => {
+    if (!_ptTool) return; // 没选工具时不拦截，让滚动正常工作
     moveP(e.touches[0].clientX, e.touches[0].clientY);
     e.preventDefault();
   }, { passive: false });
