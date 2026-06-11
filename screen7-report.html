@@ -3196,29 +3196,54 @@
     el.className = 'portrait-summary-text loading';
     el.textContent = '知己正在认识你……';
 
-    // 把维度数据整理成可读文本
-    const d = data;
-    const dimText = [
-      d.thinking  ? `思考方式：${d.thinking.top}（得分分布：${JSON.stringify(d.thinking.scores)}）`   : '',
-      d.driving   ? `推动风格：${d.driving.top}（得分分布：${JSON.stringify(d.driving.scores)}）`     : '',
-      d.social    ? `社交风格：${d.social.top}（得分分布：${JSON.stringify(d.social.scores)}）`       : '',
-      d.adaptation? `适应方式：${d.adaptation.top}（得分分布：${JSON.stringify(d.adaptation.scores)}）` : '',
-      d.state     ? `当下状态：心情=${d.state.mood}，精力=${d.state.energy}，压力=${d.state.stress}，安全感=${d.state.security}，价值感=${d.state.meaning}` : '',
-    ].filter(Boolean).join('\n');
+    // 把维度数据整理成可读文本（和 screen6 buildSystemPrompt 保持一致）
+    const COLOR_SCORE = { s1: 3, s2: 2, s3: 0, s4: 1 };
+    const r = data.raw || {};
+    const state = data.state || {};
+    const sc = (q, o) => { const c = r[q] && r[q][o]; return c ? (COLOR_SCORE[c] || 0) : 1; };
+    const scBL = (q, pole) => {
+      const raw = r[q]; if (!raw || raw.bias === undefined) return 1;
+      return raw.bias === pole ? 3 : raw.bias === 0 ? 1 : 0;
+    };
+    const traits = [
+      { name: '理性分析', score: scBL('q1_mode', -1) },
+      { name: '直觉判断', score: scBL('q1_mode', 1) },
+      { name: '果断行动', score: scBL('q5_speed', 1) },
+      { name: '追求品质', score: sc('q7','quality') },
+      { name: '影响力驱动', score: scBL('q12_persuade', -1) },
+      { name: '共情感知', score: (scBL('q14', -1) + scBL('q13', 1)) / 2 },
+      { name: '自信稳定', score: scBL('q17', -1) },
+      { name: '乐观倾向', score: scBL('q18', -1) },
+    ].sort((a, b) => b.score - a.score);
+    const top3 = traits.slice(0, 3).map(t => t.name).join('、');
+    const stateMap = {
+      mood: { happy: '心情不错', down: '心情有些低落', neutral: '心情平稳' },
+      stress: { high: '压力较大', medium: '有一些压力', low: '压力不大' },
+      energy: { full: '精力充沛', ok: '精力还行', low: '有些疲惫' },
+      meaning: { clear: '方向感清晰', lost: '对方向有些迷茫', seeking: '正在寻找方向' },
+      security: { stable: '内心安稳', anxious: '有些不安', neutral: '状态平稳' },
+    };
+    const stateDesc = Object.entries(state)
+      .filter(([k, v]) => stateMap[k] && stateMap[k][v])
+      .map(([k, v]) => stateMap[k][v]).join('，');
+    const traitSummary = `用户最突出的特质是：${top3}。`;
+    const stateSummary = stateDesc ? `用户当前状态：${stateDesc}。` : '';
 
-    const prompt = `你是知己，正在根据用户的性格测评结果，写一段对这个人的观察。
+    const sysMsg = `你是知己，是用户最了解和最在乎的朋友，懂心理咨询和教练技能，说话像朋友，不像专家或裁判。`;
 
-测评数据：
-${dimText}
+    const userMsg = `根据以下测评数据，写一段你对这个用户的观察：
+
+${traitSummary}
+${stateSummary}
 
 要求：
-- 定位：你是朋友视角的观察者，不是裁判，不是权威
+- 定位：朋友视角的观察者，不是裁判，不是权威
 - 1-3句，由数据清晰度决定——特质鲜明就写满，数据模糊或大量居中就少写
 - 核心是描述"TA是什么样的人"；不提"擅长做什么"
-- 不用"你是一个……的人"开头，而是从朋友观察的角度出发，用"我发现""我看到""有没有留意到"这类表达开头
+- 不用"你是一个……的人"开头，从朋友观察角度出发，用"我发现""我看到""有没有留意到"这类表达开头
 - 中立事实，不夸奖，不评判，聚焦最鲜明的特质，不面面俱到
 - 朋友语气，口语化，不用书面语
-- 如果数据不清晰、维度之间矛盾或大量居中，不要强行下结论——用好奇观察的方式写，比如"你是不是正处在……的阶段"或"我没法一下看清楚你，但我注意到……"
+- 如果数据不清晰或大量居中，不强行下结论——用好奇观察的方式写，比如"你是不是正处在……的阶段"或"我没法一下看清楚你，但我注意到……"
 
 只输出那段观察，不加任何前缀或解释。`;
 
@@ -3231,7 +3256,10 @@ ${dimText}
         },
         body: JSON.stringify({
           model: PORTRAIT_LLM.model,
-          messages: [{ role: 'user', content: prompt }],
+          messages: [
+            { role: 'system', content: sysMsg },
+            { role: 'user', content: userMsg },
+          ],
           max_tokens: 200,
           temperature: 0.8,
           stream: false,
