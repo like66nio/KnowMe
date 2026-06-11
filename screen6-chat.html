@@ -1139,7 +1139,7 @@
     .pti-typewriter {
       font-size: 11px; color: rgba(230,215,255,0.88);
       line-height: 1.65; letter-spacing: 0.3px;
-      font-family: 'ZCOOL XiaoWei', serif;
+      font-family: 'ZCOOL XiaoWei', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
       word-break: break-all;
       min-height: 60px;
     }
@@ -1169,7 +1169,7 @@
     .pti-dc-title {
       font-size: 12px; color: rgba(240,228,255,0.95);
       line-height: 1.5; letter-spacing: 0.2px;
-      font-family: 'ZCOOL XiaoWei', serif;
+      font-family: 'ZCOOL XiaoWei', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
       margin-bottom: 8px;
       display: -webkit-box; -webkit-box-orient: vertical;
       -webkit-line-clamp: 4; overflow: hidden;
@@ -3240,14 +3240,12 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
       const saveBtn = document.getElementById('cpvSaveBtn');
       if (saveBtn) { saveBtn.textContent = '生成中…'; saveBtn.disabled = true; }
 
-      // 截取完整高度：临时展开海报，截图后恢复
+      // 截取完整高度：展开海报，截图完成后再恢复（必须等截图完才能恢复，否则截到的是裁剪状态）
       const origOverflow = poster.style.overflow;
       const origMaxHeight = poster.style.maxHeight;
       poster.style.overflow = 'visible';
       poster.style.maxHeight = 'none';
       const fullHeight = poster.scrollHeight;
-      poster.style.overflow = origOverflow;
-      poster.style.maxHeight = origMaxHeight;
 
       html2canvas(poster, {
         backgroundColor: null,
@@ -3258,28 +3256,39 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
         height: fullHeight,
         windowHeight: fullHeight + 200
       }).then(canvas => {
+        // 截图完成后恢复样式
+        poster.style.overflow = origOverflow;
+        poster.style.maxHeight = origMaxHeight;
         if (saveBtn) { saveBtn.textContent = '保存图片'; saveBtn.disabled = false; }
 
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
         if (isMobile) {
-          // 移动端：弹出全屏可滚动图片层，支持长图
+          // 移动端：双层结构——外层fixed遮罩（不滚动），内层绝对定位滚动容器
+          // 微信内置浏览器中 position:fixed + overflow-y:auto 经常失效，用此方案兼容
           const overlay = document.createElement('div');
           overlay.style.cssText = `
-            position:fixed;inset:0;z-index:9999;
+            position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;
             background:rgba(0,0,0,0.92);
+            overflow:hidden;
+          `;
+          // 内层可滚动容器（absolute，高度100%，overflow-y:scroll）
+          const scroller = document.createElement('div');
+          scroller.style.cssText = `
+            position:absolute;top:0;left:0;right:0;bottom:0;
+            overflow-y:scroll;
+            -webkit-overflow-scrolling:touch;
             display:flex;flex-direction:column;
             align-items:center;
-            overflow-y:auto;
-            -webkit-overflow-scrolling:touch;
-            padding:20px 0 32px;
+            padding:20px 0 48px;
             gap:16px;
+            box-sizing:border-box;
           `;
           const img = document.createElement('img');
           img.src = canvas.toDataURL('image/png');
-          img.style.cssText = 'width:90vw;height:auto;border-radius:12px;box-shadow:0 4px 32px rgba(0,0,0,0.6);flex-shrink:0;';
+          img.style.cssText = 'width:90vw;height:auto;border-radius:12px;box-shadow:0 4px 32px rgba(0,0,0,0.6);flex-shrink:0;display:block;';
           const tip = document.createElement('div');
           tip.textContent = '长按图片 → 存储到相册 📷';
-          tip.style.cssText = 'color:rgba(255,255,255,0.75);font-size:14px;letter-spacing:0.5px;flex-shrink:0;';
+          tip.style.cssText = 'color:rgba(255,255,255,0.75);font-size:14px;letter-spacing:0.5px;flex-shrink:0;text-align:center;';
           const closeBtn = document.createElement('div');
           closeBtn.textContent = '关闭';
           closeBtn.style.cssText = `
@@ -3289,9 +3298,10 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
             border-radius:24px;color:#fff;font-size:15px;cursor:pointer;
           `;
           closeBtn.onclick = () => document.body.removeChild(overlay);
-          overlay.appendChild(img);
-          overlay.appendChild(tip);
-          overlay.appendChild(closeBtn);
+          scroller.appendChild(img);
+          scroller.appendChild(tip);
+          scroller.appendChild(closeBtn);
+          overlay.appendChild(scroller);
           document.body.appendChild(overlay);
         } else {
           // 桌面端：直接下载
@@ -3303,6 +3313,8 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
           setTimeout(() => { closeChatPosterView(); exitSelectMode(); }, 1600);
         }
       }).catch(() => {
+        poster.style.overflow = origOverflow;
+        poster.style.maxHeight = origMaxHeight;
         if (saveBtn) { saveBtn.textContent = '保存图片'; saveBtn.disabled = false; }
         showToast('生成失败，请重试');
       });
