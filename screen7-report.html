@@ -1116,12 +1116,13 @@
     /* ─── 海报预览全屏层 ─── */
     .report-poster-view {
       display: none;
-      position: fixed; inset: 0;
-      left: 50%; transform: translateX(-50%);
+      position: fixed; top: 0; left: 50%; transform: translateX(-50%);
       width: min(390px, 100vw);
+      height: 100vh;
       background: #0D0918;
       z-index: 100;
       flex-direction: column;
+      overflow: hidden;
     }
     .report-poster-view.show { display: flex; }
     .rpv-header {
@@ -1147,9 +1148,12 @@
 
     /* 海报滚动区 */
     .rpv-scroll {
-      flex: 1; overflow-y: auto; overflow-x: hidden;
+      flex: 1;
+      min-height: 0;
+      overflow-y: scroll;
+      overflow-x: hidden;
       -webkit-overflow-scrolling: touch;
-      padding: 20px 20px 0;
+      padding: 20px 20px 120px;
     }
     .rpv-scroll::-webkit-scrollbar { display: none; }
 
@@ -2505,6 +2509,7 @@
       selector.style.display = 'none';
     }
 
+    view.style.height = window.innerHeight + 'px';
     view.classList.add('show');
     _renderPoster();
 
