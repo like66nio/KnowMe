@@ -9,6 +9,34 @@
   <title>知己 · 对话</title>
   <!-- ZCOOL XiaoWei 经由国内 CDN 加载（微信内置浏览器无法访问 Google Fonts） -->
   <link href="https://fonts.loli.net/css2?family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
+  <style>
+    /* ZCOOL XiaoWei 字符集不完整，用 unicode-range 把它"挖空"缺字区间
+       这些码位的字（回/国/图/园/因/团/围/困/固/圆/囚/囤等封闭型汉字）
+       不让 ZCOOL XiaoWei 接管，自动 fallback 到 PingFang SC */
+    @font-face {
+      font-family: 'ZCOOL XiaoWei';
+      src: local('PingFang SC'), local('Hiragino Sans GB');
+      unicode-range:
+        U+56DE, /* 回 */
+        U+56FD, /* 国 */
+        U+56FE, /* 图 */
+        U+56ED, /* 园 */
+        U+56E0, /* 因 */
+        U+56E2, /* 团 */
+        U+56F4, /* 围 */
+        U+56F0, /* 困 */
+        U+56FA, /* 固 */
+        U+5706, /* 圆 */
+        U+56DA, /* 囚 */
+        U+56E4, /* 囤 */
+        U+56EB, /* 囫 */
+        U+56DB, /* 四 */
+        U+56E3, /* 团 */
+        U+5708, /* 圈 */
+        U+571F-U+5730, /* 土~地 区间部分 */
+        U+56C1-U+56FF; /* 囁~囿 大区间兜底 */
+    }
+  </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -20,10 +48,7 @@
     }
 
     body {
-      /* PingFang SC 放第一位：系统内置字体，字符集完整，不依赖网络加载
-         ZCOOL XiaoWei 只在成功加载时用于标题类装饰文字（通过各自类的font-family覆盖）
-         不放body全局，避免字体加载失败时封闭型汉字显示■ */
-      font-family: 'PingFang SC', 'Hiragino Sans GB', -apple-system, 'Helvetica Neue', sans-serif;
+      font-family: 'ZCOOL XiaoWei', 'PingFang SC', 'Hiragino Sans GB', -apple-system, 'Helvetica Neue', sans-serif;
     }
 
     /* phone-frame 只做背景容器，不参与布局 */
