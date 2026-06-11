@@ -6,6 +6,12 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <!-- 禁用 bfcache：微信 WebView 会缓存多个历史页面版本，pageshow persisted=true 时强制重载 -->
+  <script>
+    window.addEventListener('pageshow', function(e) {
+      if (e.persisted) { window.location.reload(); }
+    });
+  </script>
   <title>知己 · 对话</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
   <!-- ZCOOL XiaoWei 字体直接内联，绕过 googleapis.com（被墙），直接加载 gstatic.com 字体文件 -->
