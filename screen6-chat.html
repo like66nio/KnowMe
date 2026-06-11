@@ -756,6 +756,8 @@
       height: 100%; width: 100%;
       overflow: hidden;
       background: #7878C8;
+      opacity: 0; /* 初始不可见，等 layout+scroll 就绪后淡入，避免跳屏 */
+      transition: opacity 0.15s ease;
     }
 
     body {
@@ -912,7 +914,6 @@
       pointer-events: auto;
       overflow-y: auto; overflow-x: hidden;
       padding: 16px 18px;
-      visibility: hidden; /* 初始隐藏，等 layout+scrollTop 就绪后再显示，避免跳屏 */
       display: flex; flex-direction: column; gap: 14px;
       scrollbar-width: none; -ms-overflow-style: none;
     }
@@ -4599,7 +4600,7 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
           requestAnimationFrame(function() {
             requestAnimationFrame(function() {
               msgList.scrollTop = msgList.scrollHeight;
-              msgList.style.visibility = 'visible'; // scrollTop 就位后再显示
+              document.body.style.opacity = '1'; // scroll 就位后整页淡入
             });
           });
         };
