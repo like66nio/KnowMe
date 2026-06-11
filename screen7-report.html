@@ -3257,17 +3257,44 @@
     const traitSummary = `用户最突出的特质是：${top3}。`;
     const stateSummary = stateDesc ? `用户当前状态：${stateDesc}。` : '';
 
+    // 动力维度：找出最高分的2-3项
+    const motiveMap = [
+      { name: '成就感', key: 'q22', opt: 'ambition' },
+      { name: '做出结果', key: 'q22', opt: 'outcome' },
+      { name: '意义感', key: 'q22', opt: 'meaning' },
+      { name: '做到极致', key: 'q22', opt: 'perfection' },
+      { name: '自主掌控', key: 'q22', opt: 'autonomy' },
+      { name: '逻辑钻研', key: 'q22', opt: 'logic' },
+      { name: '好奇探索', key: 'q22', opt: 'curiosity' },
+      { name: '新鲜刺激', key: 'q22', opt: 'novelty' },
+      { name: '审美品位', key: 'q22', opt: 'aesthetics' },
+      { name: '影响他人', key: 'q21', opt: 'impact' },
+      { name: '掌握主导权', key: 'q21', opt: 'power' },
+      { name: '责任使命', key: 'q21', opt: 'duty' },
+      { name: '信守承诺', key: 'q21', opt: 'commit' },
+      { name: '帮助他人', key: 'q21', opt: 'altruism' },
+      { name: '归属感连接', key: 'q21', opt: 'affiliation' },
+      { name: '竞争超越', key: 'q21', opt: 'compete' },
+    ].map(m => ({ name: m.name, score: sc(m.key, m.opt) }))
+     .sort((a, b) => b.score - a.score);
+
+    const topMotives = motiveMap.filter(m => m.score >= 2).slice(0, 3).map(m => m.name);
+    const motiveSummary = topMotives.length
+      ? `用户的核心驱动力（最在乎、最让TA有劲的事）是：${topMotives.join('、')}。`
+      : '';
+
     const sysMsg = `你是知己，是用户最了解和最在乎的朋友，懂心理咨询和教练技能，说话像朋友，不像专家或裁判。`;
 
     const userMsg = `根据以下测评数据，写一段你对这个用户的观察：
 
 ${traitSummary}
+${motiveSummary}
 ${stateSummary}
 
 要求：
 - 定位：朋友视角的观察者，不是裁判，不是权威
 - 1-3句，由数据清晰度决定——特质鲜明就写满，数据模糊或大量居中就少写
-- 核心是描述"TA是什么样的人"；不提"擅长做什么"
+- 内容可以涵盖：TA是什么样的人、TA真正在乎什么/什么让TA有劲（驱动力）——后者往往是让用户感到"被看见"的加分点
 - 不用"你是一个……的人"开头，从朋友观察角度出发，用"我发现""我看到""有没有留意到"这类表达开头
 - 中立事实，不夸奖，不评判，聚焦最鲜明的特质，不面面俱到
 - 朋友语气，口语化，不用书面语
