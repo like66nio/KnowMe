@@ -4577,6 +4577,7 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
       let topBarBottom = 116;  // top-bar 底边距视口顶部，load 后修正
       let bottomBarH   = 60;   // bottom-bar 高度
       let tabBarH      = 60;   // tab-bar 高度
+      let _ready       = false; // measure() 完成前屏蔽 viewport 事件抖动
 
       function measure() {
         const tb  = document.querySelector('.top-bar');
@@ -4586,10 +4587,20 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
         if (bb)  bottomBarH   = bb.getBoundingClientRect().height;
         if (tab) tabBarH      = tab.getBoundingClientRect().height;
         applyLayout(false);
-        // msgList 尺寸确定后，强制滚到底（这是最可靠的时机）
-        requestAnimationFrame(() => {
-          msgList.scrollTop = msgList.scrollHeight;
-        });
+        _ready = true;
+        // layout 确定后滚底，用 fonts.ready 保证字体高度已计算
+        // scrollDone 防止 fonts.ready 和 setTimeout 双触发
+        var scrollDone = false;
+        function doScroll() {
+          if (scrollDone) return; scrollDone = true;
+          requestAnimationFrame(function() {
+            msgList.scrollTop = msgList.scrollHeight;
+          });
+        }
+        if (document.fonts && document.fonts.ready) {
+          document.fonts.ready.then(doScroll);
+        }
+        setTimeout(doScroll, 600);
       }
 
       function applyLayout(kbOpen) {
@@ -4617,6 +4628,7 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
       if (window.visualViewport) {
         var lastVph = window.visualViewport.height;
         window.visualViewport.addEventListener('resize', function() {
+          if (!_ready) return; // measure() 完成前忽略，避免初始化阶段抖动
           var vph = window.visualViewport.height;
           var kbOpen = vph < lastVph - 80;
           // 只在明显变化时更新 lastVph，避免抖动
@@ -5010,7 +5022,7 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
       const savedLog = loadChatLog();
       if (savedLog.length === 0) {
         // 无历史：显示示例内容，绑定静态气泡
-        scrollBottomAfterRender();
+        // 滚底由 measure()（window.load 后）统一处理，避免与 layout 竞态
         initStaticBubbles();
         return;
       }
@@ -5059,9 +5071,7 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
         localStorage.setItem('zjReportPreviewSeen', '1');
       }
       // 卡片不再插入 list，彻底不显示
-
-      // 等两帧渲染完再滚底，确保字体/图片高度已计算
-      scrollBottomAfterRender();
+      // 滚底由 measure()（window.load 后）统一处理，避免与 layout 竞态
     })();
 
     /* ── 测评完成后首次进入：知己基于报告发起开场白 ── */
