@@ -747,34 +747,6 @@
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
   </style>
-  <style>
-    /* ZCOOL XiaoWei 字符集不完整，用 unicode-range 把它"挖空"缺字区间
-       这些码位的字（回/国/图/园/因/团/围/困/固/圆/囚/囤等封闭型汉字）
-       不让 ZCOOL XiaoWei 接管，自动 fallback 到 PingFang SC */
-    @font-face {
-      font-family: 'ZCOOL XiaoWei';
-      src: local('PingFang SC'), local('Hiragino Sans GB');
-      unicode-range:
-        U+56DE, /* 回 */
-        U+56FD, /* 国 */
-        U+56FE, /* 图 */
-        U+56ED, /* 园 */
-        U+56E0, /* 因 */
-        U+56E2, /* 团 */
-        U+56F4, /* 围 */
-        U+56F0, /* 困 */
-        U+56FA, /* 固 */
-        U+5706, /* 圆 */
-        U+56DA, /* 囚 */
-        U+56E4, /* 囤 */
-        U+56EB, /* 囫 */
-        U+56DB, /* 四 */
-        U+56E3, /* 团 */
-        U+5708, /* 圈 */
-        U+571F-U+5730, /* 土~地 区间部分 */
-        U+56C1-U+56FF; /* 囁~囿 大区间兜底 */
-    }
-  </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
