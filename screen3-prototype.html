@@ -1622,8 +1622,9 @@
     localStorage.setItem('zjAssessment', JSON.stringify(result));
     localStorage.setItem('zjRegSource', 'done_assess');
 
-    // 跳转聊天页（带报告预览条）
-    window.location.href = 'screen6-chat.html';
+    // 重温测评时跳回报告页；首次测评跳转聊天页
+    const isReview = new URLSearchParams(window.location.search).get('review');
+    window.location.href = isReview ? 'screen7-report.html' : 'screen6-chat.html';
   }
 
   function getScore(qKey, optKey) {
@@ -1676,6 +1677,78 @@
       const target = document.getElementById('screen' + resumeScreen);
       if (target) target.classList.add('visible');
     }
+  })();
+
+  // ── 重温测评：从 localStorage 回填已有答案 ──
+  (function() {
+    const params = new URLSearchParams(window.location.search);
+    if (!params.get('review')) return;
+
+    const saved = localStorage.getItem('zjAssessment');
+    if (!saved) return;
+    let data;
+    try { data = JSON.parse(saved); } catch(e) { return; }
+    const raw = data.raw;
+    if (!raw) return;
+
+    // 1. 回填 answers 内存对象
+    Object.assign(answers, JSON.parse(JSON.stringify(raw)));
+
+    // 2. 还原 DOM 视觉状态
+    document.querySelectorAll('.screen').forEach(function(screenEl) {
+
+      // 四色题
+      screenEl.querySelectorAll('.option-row').forEach(function(row) {
+        const btns = row.querySelectorAll('.sel-btn');
+        btns.forEach(function(btn) {
+          // onclick 格式：select(this,'q1','rational','s1')
+          const m = (btn.getAttribute('onclick') || '').match(/select\(this,'([^']+)','([^']+)','([^']+)'\)/);
+          if (!m) return;
+          const qKey = m[1], optKey = m[2], colorKey = m[3];
+          if (raw[qKey] && raw[qKey][optKey] === colorKey) {
+            btn.classList.add('selected');
+          }
+        });
+      });
+
+      // 轴题
+      screenEl.querySelectorAll('.axis-row').forEach(function(row) {
+        row.querySelectorAll('.axis-node').forEach(function(node) {
+          // onclick 格式：selectAxis(this,'q3',-1)
+          const m = (node.getAttribute('onclick') || '').match(/selectAxis\(this,'([^']+)',(-?\d+)\)/);
+          if (!m) return;
+          const qKey = m[1], bias = parseInt(m[2]);
+          if (raw[qKey] && raw[qKey].bias === bias) {
+            node.classList.add('selected');
+            row.classList.add('axis-selected');
+          }
+        });
+      });
+
+      // 快照题
+      screenEl.querySelectorAll('.snapshot-options-wrap').forEach(function(wrap) {
+        wrap.querySelectorAll('.snapshot-option').forEach(function(opt) {
+          // onclick 格式：selectSnapshot(this,'q_mood','happy')
+          const m = (opt.getAttribute('onclick') || '').match(/selectSnapshot\(this,'([^']+)','([^']+)'\)/);
+          if (!m) return;
+          const sKey = m[1], valKey = m[2];
+          if (raw[sKey] === valKey) {
+            opt.classList.add('selected');
+          }
+        });
+      });
+
+      // 触发每道 screen 的 check，让"下一题"按钮激活
+      const hasAxis = screenEl.querySelectorAll('.axis-row').length > 0;
+      const hasOpt = screenEl.querySelectorAll('.option-row').length > 0;
+      const hasSnap = screenEl.querySelectorAll('.snapshot-options-wrap').length > 0;
+      if (hasAxis) checkAxisScreen(screenEl);
+      else if (hasSnap) checkSnapshotScreen(screenEl);
+      else if (hasOpt) {
+        const wrap = screenEl.querySelector('.options-wrap');
+        if (wrap) checkAllSelected(wrap);
+      }
+    });
   })();
 </script>
 </body>

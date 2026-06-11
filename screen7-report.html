@@ -1605,6 +1605,29 @@
     }
     .no-assess-btn:active { opacity: 0.88; }
 
+    /* ─── 重温测评入口 ─── */
+    .review-assess-wrap {
+      display: flex; justify-content: center;
+      padding: 4px 0 8px;
+    }
+    .review-assess-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(255,255,255,0.10);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 20px;
+      padding: 9px 20px;
+      font-size: 13px; font-family: inherit;
+      color: rgba(255,255,255,0.70);
+      letter-spacing: 0.4px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .review-assess-btn:active {
+      background: rgba(255,255,255,0.18);
+      color: rgba(255,255,255,0.92);
+    }
+
   </style>
 </head>
 <body>
@@ -1946,6 +1969,13 @@
         </div>
       </div>
       </div>
+    </div>
+
+    <!-- 重温测评入口 -->
+    <div class="review-assess-wrap">
+      <button class="review-assess-btn" onclick="window.location.href='screen3-prototype.html?review=1'">
+        ↩ 重温测评
+      </button>
     </div>
 
   </div><!-- /report-body -->
