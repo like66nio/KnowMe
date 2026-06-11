@@ -6,6 +6,8 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <!-- 最早隐藏 body，防止微信缓存旧版本内容闪现；measure()完成后统一显示 -->
+  <style>body { opacity: 0; transition: opacity 0.15s; }</style>
   <!-- 强制绕过微信缓存：每次加载都刷新 v= 时间戳，确保微信每次加载的 URL 都不同 -->
   <script>
     (function() {
@@ -13,7 +15,10 @@
       var now = Date.now();
       // 防死循环：取 URL 里现有的 v= 值，如果和 now 在同一秒内（差距<2000ms），说明刚刚跳过了，不再跳
       var match = url.match(/[?&]v=(\d+)/);
-      if (match && now - parseInt(match[1], 10) < 2000) return;
+      if (match && now - parseInt(match[1], 10) < 2000) {
+        // 不需要跳转，正常加载，body显示由 measure() 里 doScroll 负责
+        return;
+      }
       // 每次都换新时间戳（刷新也会换，微信无法复用缓存）
       var newUrl;
       if (match) {
@@ -23,6 +28,7 @@
         newUrl = url + sep + 'v=' + now;
       }
       window.location.replace(newUrl);
+      // 跳转中：body 保持 opacity:0，用户看不到旧内容
     })();
     window.addEventListener('pageshow', function(e) {
       if (e.persisted) { window.location.reload(); }
@@ -4618,7 +4624,10 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
           requestAnimationFrame(function() {
             requestAnimationFrame(function() {
               msgList.scrollTop = msgList.scrollHeight;
-              if (showNow) msgList.style.visibility = 'visible';
+              if (showNow) {
+                msgList.style.visibility = 'visible';
+                document.body.style.opacity = '1'; // 解除最早的 opacity:0 遮罩
+              }
             });
           });
         }
@@ -4628,7 +4637,7 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
         }
         // 800ms 保底：无论字体状态如何，始终再滚一次（修正字体渲染后高度变化）
         setTimeout(function() {
-          doScroll(true); // 确保 visibility 打开且滚到真正底部
+          doScroll(true); // 确保 visibility 打开、body显示、且滚到真正底部
         }, 800);
       }
 
