@@ -4586,6 +4586,10 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
         if (bb)  bottomBarH   = bb.getBoundingClientRect().height;
         if (tab) tabBarH      = tab.getBoundingClientRect().height;
         applyLayout(false);
+        // msgList 尺寸确定后，强制滚到底（这是最可靠的时机）
+        requestAnimationFrame(() => {
+          msgList.scrollTop = msgList.scrollHeight;
+        });
       }
 
       function applyLayout(kbOpen) {
