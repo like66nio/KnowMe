@@ -1735,7 +1735,7 @@
     }
 
     /* ── 字符级打码 span ── */
-    .cpv-char { display: inline-block; }
+    .cpv-char { display: inline-block; font-family: 'ZCOOL XiaoWei', -apple-system, 'PingFang SC', 'Hiragino Sans GB', sans-serif; }
     .cpv-char.redacted {
       color: transparent;
       background: rgba(110,60,180,0.55);
@@ -2718,10 +2718,15 @@ ${stateSummary}
 绝对不要假装知道或猜测用户的性格特质。
 如果用户问"你了解我吗"/"你记得我的测评吗"，直接告诉他/她：「你还没做测评，做完之后我就更了解你了。」`;
 
-      // 当前时间（每次构建提示词时实时生成）
+      // 当前时间（每次构建提示词时实时生成，强制使用北京时间 Asia/Shanghai，避免运行环境时区偏差）
       const _now = new Date();
+      const _tzStr = _now.toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false,
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        weekday: 'short', hour: '2-digit', minute: '2-digit' });
+      // toLocaleString 格式因浏览器实现不同，手动组装更可靠
+      const _sh = new Date(_now.toLocaleString('en-US', { timeZone: 'Asia/Shanghai' }));
       const _days = ['周日','周一','周二','周三','周四','周五','周六'];
-      const _timeStr = `${_now.getFullYear()}年${_now.getMonth()+1}月${_now.getDate()}日 ${_days[_now.getDay()]} ${String(_now.getHours()).padStart(2,'0')}:${String(_now.getMinutes()).padStart(2,'0')}`;
+      const _timeStr = `${_sh.getFullYear()}年${_sh.getMonth()+1}月${_sh.getDate()}日 ${_days[_sh.getDay()]} ${String(_sh.getHours()).padStart(2,'0')}:${String(_sh.getMinutes()).padStart(2,'0')}`;
 
       return `【知己对话能力与对话风格调教Prompt】
 
@@ -3713,6 +3718,9 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
       const list = document.getElementById('msgList');
       list.classList.add('select-mode');
 
+      // 记录当前滚动位置，DOM 操作完成后恢复，避免插入勾选框时页面跳动
+      const savedScrollTop = list.scrollTop;
+
       // 给每条 bubble-row / user-row 注入勾选框
       const rows = list.querySelectorAll('.bubble-row[data-msgid], .user-row[data-msgid]');
       rows.forEach(row => {
@@ -3730,6 +3738,9 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
         row._selectHandler = () => toggleSelectMsg(row.dataset.msgid, check, row);
         row.addEventListener('click', row._selectHandler);
       });
+
+      // DOM 插入完成后立刻恢复滚动位置，原地不动
+      list.scrollTop = savedScrollTop;
 
       // 默认选中逻辑
       if (defaultMsgId) {
@@ -3893,9 +3904,10 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
     // ── 字符级海报消息 HTML（文字逐字拆成 span，支持刷子标注）──
     function _makePosterMsgHtml(roleLabel, rawText, msgId) {
       const idAttr = msgId ? ` data-msgid="${msgId}"` : '';
-      // 把文字每个字符（含标点、空格）拆成独立 span
-      const charSpans = Array.from(rawText).map(ch => {
-        const esc = ch.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      // 把文字每个字符（含标点、空格）拆成独立 span，_normChar 处理字体分片未覆盖的弯引号等
+      const charSpans = Array.from(rawText || '').map(ch => {
+        const c = typeof _normChar === 'function' ? _normChar(ch) : ch;
+        const esc = c.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
         return `<span class="cpv-char">${esc}</span>`;
       }).join('');
       return `<div class="cpv-msg-item"${idAttr}>
@@ -4236,9 +4248,21 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
     }
 
     // 字符级 span 包装（cpv 专用）
+    // _normChar：把 ZCOOL XiaoWei 字体分片未覆盖的特殊标点换成等效可渲染字符
+    const _normChar = ch => {
+      const map = { '\u201c':'\u300c', '\u201d':'\u300d', '\u2018':'\u2018', '\u2019':'\u2019',
+                    '\u2026':'\u2026', '\u2014':'\u2014', '\u00b7':'\u00b7' };
+      // 弯引号单独处理（这几个在字体分片里缺失最严重）
+      if (ch === '\u201c') return '\u300c'; // " → 「
+      if (ch === '\u201d') return '\u300d'; // " → 」
+      if (ch === '\u2018') return '\u2018'; // ' 保持
+      if (ch === '\u2019') return '\u2019'; // ' 保持
+      return ch;
+    };
     const cpvChar = (text) =>
       Array.from(text || '').map(ch => {
-        const e = ch.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        const c = _normChar(ch);
+        const e = c.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
         return `<span class="cpv-char">${e}</span>`;
       }).join('');
 
