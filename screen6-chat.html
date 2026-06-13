@@ -3254,6 +3254,9 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
       // 构建对话历史（懒初始化 system prompt）
       if (chatHistory.length === 0) {
         chatHistory.push({ role: 'system', content: buildSystemPrompt(_assessData) });
+      } else {
+        // 每次发消息前刷新 system prompt 里的当前时间，避免跨天/跨小时时间错误
+        chatHistory[0].content = buildSystemPrompt(_assessData);
       }
       chatHistory.push({ role: 'user', content: text });
 
