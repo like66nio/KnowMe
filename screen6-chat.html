@@ -3718,8 +3718,11 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
       const list = document.getElementById('msgList');
       list.classList.add('select-mode');
 
-      // 记录当前滚动位置，DOM 操作完成后恢复，避免插入勾选框时页面跳动
-      const savedScrollTop = list.scrollTop;
+      // 锚定目标消息：记录它在视口内的相对偏移，插入勾选框后还原到同一视觉位置
+      // 优先用右键触发的那条；没有则用视口中间附近第一条可见消息
+      const anchorMsgId = defaultMsgId;
+      const anchorRow = anchorMsgId ? list.querySelector(`[data-msgid="${anchorMsgId}"]`) : null;
+      const anchorOffsetBefore = anchorRow ? anchorRow.getBoundingClientRect().top : null;
 
       // 给每条 bubble-row / user-row 注入勾选框
       const rows = list.querySelectorAll('.bubble-row[data-msgid], .user-row[data-msgid]');
@@ -3739,8 +3742,11 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
         row.addEventListener('click', row._selectHandler);
       });
 
-      // DOM 插入完成后立刻恢复滚动位置，原地不动
-      list.scrollTop = savedScrollTop;
+      // DOM 插入完成后，把锚点消息还原到插入前的视觉位置，做到原地不动
+      if (anchorRow && anchorOffsetBefore !== null) {
+        const anchorOffsetAfter = anchorRow.getBoundingClientRect().top;
+        list.scrollTop += (anchorOffsetAfter - anchorOffsetBefore);
+      }
 
       // 默认选中逻辑
       if (defaultMsgId) {
