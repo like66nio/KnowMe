@@ -4815,6 +4815,8 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
         .replace(/（[^（）]*）/g, '')
         // 去掉半角括号内容
         .replace(/\([^()]*\)/g, '')
+        // 模型有时会直接输出 <br> 或 <br/> HTML标签，转成真实换行符
+        .replace(/<br\s*\/?>/gi, '\n')
         // 清理多余空行（连续两个以上换行合并成一个）
         .replace(/\n{3,}/g, '\n\n')
         .trim();
