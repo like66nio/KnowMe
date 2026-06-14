@@ -3869,7 +3869,7 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
       selected.forEach((item, i) => {
         if (i > 0) html += `<div class="cpv-msg-divider"></div>`;
         const roleLabel = item.isUser ? '我' : '知己';
-        html += _makePosterMsgHtml(roleLabel, escHtml(item.text), item.msgId);
+        html += _makePosterMsgHtml(roleLabel, item.text, item.msgId);
       });
 
       // 品牌页脚
@@ -3905,7 +3905,9 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
     function _makePosterMsgHtml(roleLabel, rawText, msgId) {
       const idAttr = msgId ? ` data-msgid="${msgId}"` : '';
       // 把文字每个字符（含标点、空格）拆成独立 span，_normChar 处理字体分片未覆盖的弯引号等
+      // 换行符 \n 直接输出 <br> 标签，不拆成 span（否则会显示成字面 "br"）
       const charSpans = Array.from(rawText || '').map(ch => {
+        if (ch === '\n') return '<br>';
         const c = typeof _normChar === 'function' ? _normChar(ch) : ch;
         const esc = c.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
         return `<span class="cpv-char">${esc}</span>`;
