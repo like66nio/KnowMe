@@ -6,8 +6,8 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>知己 · 你的报告</title>
-  <link href="https://fonts.googleapis.com/css2?family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
+  <title>KnowMe · 你的报告</title>
+  <link href="https://fonts.googleapis.com/css2?family=ZCOOL+XiaoWei&family=Nunito:wght@700&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
@@ -415,7 +415,9 @@
       overflow: hidden;
       box-shadow: 0 2px 8px rgba(160,80,220,0.25);
     }
-    .who-name { font-size: 11px; color: rgba(55,30,115,0.80); letter-spacing: 0.5px; }
+    .who-name { font-size: 11px; color: rgba(55,30,115,0.80); letter-spacing: 0.3px;
+      font-family: 'Nunito', sans-serif; font-weight: 700; }
+    .brand { font-family: 'Nunito', sans-serif; font-weight: 700; }
 
     .bubble {
       background: rgba(255,255,255,0.72);
@@ -871,7 +873,8 @@
     .chat-mode-name-area { flex: 1; margin-left: 12px; }
     .chat-mode-ai-name {
       font-size: 16px; color: rgba(255,255,255,0.95);
-      letter-spacing: 1px; font-weight: 500;
+      letter-spacing: 0.5px;
+      font-family: 'Nunito', sans-serif; font-weight: 700;
     }
     .chat-mode-sub {
       font-size: 11px; color: rgba(255,255,255,0.42);
@@ -1464,7 +1467,7 @@
         <svg class="zhiji-svg" viewBox="0 0 100 100"><use href="#zhiji-face"/></svg>
       </div>
       <div class="chat-mode-name-area">
-        <div class="chat-mode-ai-name">知己</div>
+        <div class="chat-mode-ai-name">KnowMe</div>
         <div class="chat-mode-sub">在线 · 随时都在</div>
       </div>
       <button class="chat-mode-reg-pill" id="chatModeRegPill" onclick="localStorage.setItem('zjRegSource','no_assess'); window.location.href='screen5-register.html'">注册</button>
@@ -1476,7 +1479,7 @@
       <div class="msg-zhiji" id="msg-init">
         <div class="msg-who">
           <div class="who-avatar"><svg class="zhiji-svg" viewBox="0 0 100 100"><use href="#zhiji-face"/></svg></div>
-          <div class="who-name">知己</div>
+          <div class="who-name">KnowMe</div>
         </div>
         <div class="bubble">
           <div class="bubble-text" id="initBubbleText">
@@ -1509,7 +1512,7 @@
       </button>
       <!-- 文字输入框 -->
       <div class="chat-input-wrap4" id="chatInputWrap4">
-        <textarea class="chat-input" id="chatInput" placeholder="跟知己说说……" rows="1"
+        <textarea class="chat-input" id="chatInput" placeholder="跟 KnowMe 说说……" rows="1"
           oninput="autoResize(this); updateSendBtn4();"
           onkeydown="if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();handleSend();}"
         ></textarea>
@@ -2277,16 +2280,16 @@
       if (!aiName) {
         setTimeout(() => {
           const inp = document.getElementById('chatInput');
-          if (inp) inp.placeholder = '跟知己说说……';
+          if (inp) inp.placeholder = `跟 ${aiName} 说说……`;
         }, 100);
       }
 
-      const INIT_TEXT = 'hi，我是「知己」。今天有没有什么开心或烦心的事，跟我说说？';
+      const INIT_TEXT = 'hi，我是「KnowMe」。今天有没有什么开心或烦心的事，跟我说说？';
 
       // chatMode 冷启动：预注入 few-shot 示范，防止 LLM 第一轮过度亲密
       chatHistory = [
         { role: 'system', content: buildSystemPrompt(data) },
-        { role: 'assistant', content: 'hi，我是「知己」。今天有没有什么开心或烦心的事，跟我说说？' },
+        { role: 'assistant', content: 'hi，我是「KnowMe」。今天有没有什么开心或烦心的事，跟我说说？' },
       ];
 
       // 恢复历史聊天记录（有记录时直接渲染，无记录时播放打字动画）

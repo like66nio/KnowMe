@@ -34,8 +34,9 @@
       if (e.persisted) { window.location.reload(); }
     });
   </script>
-  <title>知己 · 对话</title>
+  <title>KnowMe · 对话</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700&display=swap" rel="stylesheet">
   <!-- ZCOOL XiaoWei 字体直接内联，绕过 googleapis.com（被墙），直接加载 gstatic.com 字体文件 -->
   <style>
 @font-face {
@@ -871,7 +872,11 @@
     }
     .ai-name {
       font-size: 16px; color: rgba(255,255,255,0.95);
-      letter-spacing: 1px; font-weight: 500;
+      letter-spacing: 0.5px;
+      font-family: 'Nunito', sans-serif; font-weight: 700;
+    }
+    .brand {
+      font-family: 'Nunito', sans-serif; font-weight: 700;
     }
     .status-dot {
       width: 7px; height: 7px; border-radius: 50%;
@@ -2196,7 +2201,7 @@
       <!-- 名称 & 状态 -->
       <div class="name-area">
         <div class="name-row">
-          <span class="ai-name">知己</span>
+          <span class="ai-name">KnowMe</span>
           <div class="status-dot"></div>
         </div>
         <div class="sub-text">随时都在 · 只属于你</div>
@@ -2217,7 +2222,7 @@
         <div class="reg-nudge-icon">🔒</div>
         <div class="reg-nudge-text">
           <strong>注册后对话永久保存</strong>
-          随时回来，知己记得你
+          随时回来，KnowMe 记得你
         </div>
         <button class="reg-nudge-btn" onclick="localStorage.setItem('zjRegSource','chat_nudge'); window.location.href='screen5-register.html'">注册</button>
         <button class="reg-nudge-close" onclick="dismissRegNudge()" aria-label="关闭">✕</button>
@@ -2453,7 +2458,7 @@
           <textarea
             class="chat-input"
             id="chatInput"
-            placeholder="跟知己说说……"
+            placeholder="跟 KnowMe 说说……"
             rows="1"
             onInput="autoResize(this); updateSendBtn();"
           ></textarea>
@@ -2638,6 +2643,57 @@
     let chatHistory = [];
     let _assessData = null;
 
+    /* ──── 网络时间校准 ────
+       页面加载时 fetch 国内时间API，算出本地时钟偏差 offset。
+       之后 buildSystemPrompt() 用 new Date(Date.now() + _timeOffset) 获取准确时间。
+       fetch 失败则 offset=0，fallback 到本地时间，并在提示词里注明可能不准。
+    ──── */
+    let _timeOffset = 0;          // 毫秒，网络时间 - 本地时间
+    let _timeCalibrated = false;  // 是否已成功校准
+
+    (async function calibrateTime() {
+      const sources = [
+        // 苏宁时间API，返回 { sysTime2: "2026-06-15 11:03:00" }
+        {
+          url: 'https://quan.suning.com/getSysTime.do',
+          parse: (d) => {
+            const s = d.sysTime2 || d.sysTime1 || '';
+            const t = new Date(s.replace(' ', 'T') + '+08:00');
+            return isNaN(t.getTime()) ? null : t.getTime();
+          }
+        },
+        // 淘宝时间API，返回 { data: { t: "1718416980000" } }
+        {
+          url: 'https://api.m.taobao.com/rest/api3.do?api=mtop.common.getTimestamp',
+          parse: (d) => {
+            const t = parseInt(d && d.data && d.data.t, 10);
+            return isNaN(t) ? null : t;
+          }
+        }
+      ];
+
+      for (const src of sources) {
+        try {
+          const localBefore = Date.now();
+          const resp = await fetch(src.url, { cache: 'no-store' });
+          const localAfter = Date.now();
+          const data = await resp.json();
+          const netTs = src.parse(data);
+          if (netTs) {
+            // 用请求往返中点作为本地时间参考，减少网络延迟影响
+            const localMid = Math.round((localBefore + localAfter) / 2);
+            _timeOffset = netTs - localMid;
+            _timeCalibrated = true;
+            console.log('[时间校准] 成功 offset=' + _timeOffset + 'ms 来源:' + src.url);
+            return;
+          }
+        } catch (e) {
+          console.warn('[时间校准] 源失败:', src.url, e.message);
+        }
+      }
+      console.warn('[时间校准] 所有源失败，fallback 到本地时间');
+    })();
+
     /* ──── 聊天记录持久化 ──── */
     function saveChatLog(role, text) {
       try {
@@ -2718,15 +2774,21 @@ ${stateSummary}
 绝对不要假装知道或猜测用户的性格特质。
 如果用户问"你了解我吗"/"你记得我的测评吗"，直接告诉他/她：「你还没做测评，做完之后我就更了解你了。」`;
 
-      // 当前时间（每次构建提示词时实时生成，强制使用北京时间 Asia/Shanghai，避免运行环境时区偏差）
-      const _now = new Date();
-      const _tzStr = _now.toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false,
+      // 当前时间：优先使用网络校准后的时间（_timeOffset），fallback 到本地时间
+      // 用 Intl.DateTimeFormat formatToParts 直接取字段，避免字符串重解析在 iOS 微信 WebView 里出错
+      const _now = new Date(Date.now() + _timeOffset);
+      const _parts = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Asia/Shanghai', hour12: false,
         year: 'numeric', month: '2-digit', day: '2-digit',
-        weekday: 'short', hour: '2-digit', minute: '2-digit' });
-      // toLocaleString 格式因浏览器实现不同，手动组装更可靠
-      const _sh = new Date(_now.toLocaleString('en-US', { timeZone: 'Asia/Shanghai' }));
-      const _days = ['周日','周一','周二','周三','周四','周五','周六'];
-      const _timeStr = `${_sh.getFullYear()}年${_sh.getMonth()+1}月${_sh.getDate()}日 ${_days[_sh.getDay()]} ${String(_sh.getHours()).padStart(2,'0')}:${String(_sh.getMinutes()).padStart(2,'0')}`;
+        weekday: 'short', hour: '2-digit', minute: '2-digit'
+      }).formatToParts(_now);
+      const _pmap = {};
+      _parts.forEach(p => { if (p.type !== 'literal') _pmap[p.type] = p.value; });
+      const _days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+      const _daysCN = ['周日','周一','周二','周三','周四','周五','周六'];
+      const _weekdayCN = _daysCN[_days.indexOf(_pmap['weekday'])];
+      const _hour = _pmap['hour'] === '24' ? '00' : _pmap['hour']; // 某些环境 hour12:false 的午夜返回24
+      const _timeStr = `${_pmap['year']}年${_pmap['month']}月${_pmap['day']}日 ${_weekdayCN} ${_hour}:${_pmap['minute']}` + (_timeCalibrated ? '' : '（本地时间，可能不准）');
 
       return `【知己对话能力与对话风格调教Prompt】
 
@@ -3874,14 +3936,14 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
 
       selected.forEach((item, i) => {
         if (i > 0) html += `<div class="cpv-msg-divider"></div>`;
-        const roleLabel = item.isUser ? '我' : '知己';
+        const roleLabel = item.isUser ? '我' : (localStorage.getItem('zjAiName') || 'KnowMe');
         html += _makePosterMsgHtml(roleLabel, item.text, item.msgId);
       });
 
       // 品牌页脚
       html += `<div class="cpv-footer">
         <div>
-          <div class="cpv-brand-name">知 己</div>
+          <div class="cpv-brand-name">KnowMe</div>
           <div class="cpv-brand-slogan">你身边最懂你的那个人</div>
         </div>
         <div class="cpv-qr">
@@ -4130,7 +4192,7 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
         } else {
           // 桌面端：直接下载
           const a = document.createElement('a');
-          a.download = '知己对话.png';
+          a.download = 'KnowMe对话.png';
           a.href = canvas.toDataURL('image/png');
           a.click();
           showToast('图片已保存 🪄');
@@ -4382,7 +4444,7 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
     function _makeCpvFooter() {
       return `<div class="cpv-footer">
         <div>
-          <div class="cpv-brand-name">知 己</div>
+          <div class="cpv-brand-name">KnowMe</div>
           <div class="cpv-brand-slogan">你身边最懂你的那个人</div>
         </div>
         <div class="cpv-qr">
@@ -5089,7 +5151,7 @@ ${localStorage.getItem('zjUserNickname') ? `用户告诉你，叫他/她「${loc
       const nameEl = document.querySelector('.ai-name');
       if (nameEl) nameEl.textContent = aiName;
       const input = document.getElementById('chatInput');
-      if (input) input.placeholder = `跟${aiName}说说……`;
+      if (input) input.placeholder = `跟 ${aiName} 说说……`;
     })();
 
     /* ── 恢复历史聊天记录 ── */

@@ -6,7 +6,8 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>知己 · 你的报告</title>
+  <title>KnowMe · 你的报告</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700&display=swap" rel="stylesheet">
   <!-- ZCOOL XiaoWei 字体直接内联，绕过 googleapis.com（被墙），直接加载 gstatic.com 字体文件 -->
   <style>
 @font-face {
@@ -1632,7 +1633,8 @@
     .portrait-summary-label {
       font-size: 10px;
       color: rgba(130,70,210,0.72);
-      letter-spacing: 2px;
+      letter-spacing: 1px;
+      font-family: 'Nunito', sans-serif; font-weight: 700;
       margin-bottom: 8px;
       font-family: 'ZCOOL XiaoWei', sans-serif;
     }
@@ -1758,7 +1760,7 @@
 
         <!-- 人格主句 -->
         <div class="portrait-summary" id="portraitSummary">
-          <div class="portrait-summary-label">知己印象</div>
+          <div class="portrait-summary-label">KnowMe 印象</div>
           <div class="portrait-summary-text" id="portraitSummaryText"></div>
         </div>
 
@@ -3171,7 +3173,7 @@
       } else {
         // 桌面端：直接下载
         const a = document.createElement('a');
-        a.download = '知己报告.png';
+        a.download = 'KnowMe报告.png';
         a.href = canvas.toDataURL('image/png');
         a.click();
         const toast = document.getElementById('rpvToast');
@@ -3222,7 +3224,7 @@
 
     // 没有缓存，调 LLM
     el.className = 'portrait-summary-text loading';
-    el.textContent = '知己正在认识你……';
+    el.textContent = 'KnowMe 正在认识你……';
 
     // 把维度数据整理成可读文本（和 screen6 buildSystemPrompt 保持一致）
     const COLOR_SCORE = { s1: 3, s2: 2, s3: 0, s4: 1 };

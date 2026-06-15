@@ -6,8 +6,9 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>知己 — 日记</title>
+<title>KnowMe — 日记</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700&display=swap" rel="stylesheet">
   <!-- ZCOOL XiaoWei 字体直接内联，绕过 googleapis.com（被墙） -->
   <style>
 @font-face {
@@ -1867,7 +1868,7 @@
   <!-- 生成中遮罩 -->
   <div class="generating-mask" id="genMask">
     <div class="gen-spinner"></div>
-    <div class="gen-text">知己正在整理今天…</div>
+    <div class="gen-text">KnowMe 正在整理今天…</div>
   </div>
 
   <!-- ══ 有日记数据的主视图 ══ -->
@@ -2009,7 +2010,7 @@
 
       <!-- 知己洞察 -->
       <div class="detail-block detail-insight-block">
-        <div class="detail-block-label">知己说了什么</div>
+        <div class="detail-block-label">KnowMe 说了什么</div>
         <div class="detail-block-content" id="detailInsight" contenteditable="true"></div>
       </div>
 
@@ -2062,7 +2063,7 @@
           </svg>
         </div>
         <div class="share-module-info">
-          <div class="share-module-name">知己说了什么</div>
+          <div class="share-module-name">KnowMe 说了什么</div>
           <div class="share-module-preview" id="modulePrev-insight">你提到了好多次"终于"……</div>
         </div>
       </div>
@@ -2300,7 +2301,7 @@ function openDayPanel(dateStr) {
   const hasContent = data.extract;
   const contentHtml = hasContent
     ? `<div class="diary-preview" onclick="openDetail('${dateStr}')">
-        <div class="preview-insight"><span class="zj-tag">知己</span>${data.extract}</div>
+        <div class="preview-insight"><span class="zj-tag">KnowMe</span>${data.extract}</div>
         ${data.userNote ? `<div class="preview-user-note">${data.userNote}</div>` : ''}
         <div class="preview-footer">
           <span style="font-size:11px;color:rgba(255,255,255,0.25)">${data.insight.slice(0,22)}…</span>
@@ -2365,7 +2366,7 @@ function renderDiaryList() {
         <span class="card-date">${dateLabel}</span>
         <div class="card-chips">${chipsHtml}</div>
       </div>
-      <div class="card-insight"><span class="zj-tag">知己</span>${data.extract}</div>
+      <div class="card-insight"><span class="zj-tag">KnowMe</span>${data.extract}</div>
     `;
     card.addEventListener('click', () => openDetail(dateStr));
     list.appendChild(card);
@@ -2417,14 +2418,14 @@ function regenConfirm() {
   const noteEl = document.getElementById('detailUserNote');
   const savedUserNote = noteEl.textContent.trim(); // 保留用户写的补充内容
   if (savedUserNote) {
-    if (!confirm('你已经写了补充内容，重新生成会覆盖知己的部分（你写的内容保留）。确认重新生成吗？')) return;
+    if (!confirm('你已经写了补充内容，重新生成会覆盖 KnowMe 的部分（你写的内容保留）。确认重新生成吗？')) return;
   }
 
   // 读取聊天记录
   let chatLog = [];
   try { chatLog = JSON.parse(localStorage.getItem('zjChatLog') || '[]'); } catch(e) {}
   if (chatLog.length === 0) {
-    showDiaryToast('没有找到聊天记录，先去跟知己聊聊吧～');
+    showDiaryToast('没有找到聊天记录，先去跟 KnowMe 聊聊吧～');
     return;
   }
 
@@ -2436,11 +2437,11 @@ function regenConfirm() {
 
   const recentLog = chatLog.slice(-60);
   const dialogText = recentLog.map(m => {
-    const who = m.role === 'user' ? diaryUserName : '知己';
+    const who = m.role === 'user' ? diaryUserName : 'KnowMe';
     return `${who}：${m.text}`;
   }).join('\n');
 
-  const prompt = `你是一个情感日记生成助手。下面是用户（昵称：${diaryUserName}）今天与知己（AI情感伴侣）的对话记录：
+  const prompt = `你是一个情感日记生成助手。下面是用户（昵称：${diaryUserName}）今天与KnowMe（AI情感伴侣）的对话记录：
 
 ---
 ${dialogText}
@@ -2449,9 +2450,9 @@ ${dialogText}
 请根据以上对话，生成一篇简短的情感日记，用 JSON 格式返回，字段如下：
 - mood：情绪类型，只能是 "positive"（积极）/"mixed"（复杂）/"low"（低落）/"intense"（激烈/焦虑）之一
 - chips：情绪标签数组，2-3个词，每个词不超过4字，如 ["焦虑","迷茫"] 或 ["感动","释然","满足"]
-- extract：知己视角的今日叙述，60-80字，要包含：发生了什么事（背景和原委）、${diaryUserName}的状态或感受、事情的转折或结果。像一个真正了解这个人的朋友在记录这一天，不用第一人称，不用"用户"，直接用昵称${diaryUserName}，语言自然流畅，不要流水账，要有温度
+- extract：KnowMe视角的今日叙述，60-80字，要包含：发生了什么事（背景和原委）、${diaryUserName}的状态或感受、事情的转折或结果。像一个真正了解这个人的朋友在记录这一天，不用第一人称，不用"用户"，直接用昵称${diaryUserName}，语言自然流畅，不要流水账，要有温度
 - userSaid：${diaryUserName}今天说过的最真实、最有重量的一句话或一段话，直接从对话里原文摘录，保持原话不改动，选那种"说出了真正在意的事"的句子，80字以内
-- insight：知己今天说过的最有价值的一句洞察或回应，原文摘录，选那种真正击中问题核心、或者让${diaryUserName}感到被看见的话，80字以内
+- insight：KnowMe今天说过的最有价值的一句洞察或回应，原文摘录，选那种真正击中问题核心、或者让${diaryUserName}感到被看见的话，80字以内
 
 只返回 JSON，不要任何其他文字。示例格式：
 {"mood":"mixed","chips":["纠结","疲惫"],"extract":"今天${diaryUserName}在职场关系里兜兜转转，说了很多，却不确定说清楚了没有。","userSaid":"我就是不想让他觉得我软弱，但其实我已经很累了。","insight":"累了不是软弱，是你一直在用力。"}`;
@@ -2486,7 +2487,7 @@ ${dialogText}
     DIARY_DATA[regenDate] = {
       mood:        VALID_MOODS.includes(result.mood) ? result.mood : 'mixed',
       chips:       Array.isArray(result.chips) ? result.chips.slice(0,3) : [],
-      extract:     result.extract  || '今天和知己聊了些心里话。',
+      extract:     result.extract  || '今天和 KnowMe 聊了些心里话。',
       userSaid:    result.userSaid || '',
       insight:     result.insight  || '',
       userNote:    savedUserNote,  // 保留用户原来写的补充
@@ -2556,7 +2557,7 @@ function triggerGenerate() {
 
   // 没有聊天记录：提示用户
   if (chatLog.length === 0) {
-    showDiaryToast('先去跟知己聊聊，再来生成日记吧～');
+    showDiaryToast('先去跟 KnowMe 聊聊，再来生成日记吧～');
     return;
   }
 
@@ -2570,11 +2571,11 @@ function triggerGenerate() {
   // 把聊天记录拼成对话文本（最多取最近 60 条，避免 token 超限）
   const recentLog = chatLog.slice(-60);
   const dialogText = recentLog.map(m => {
-    const who = m.role === 'user' ? diaryUserName : '知己';
+    const who = m.role === 'user' ? diaryUserName : 'KnowMe';
     return `${who}：${m.text}`;
   }).join('\n');
 
-  const prompt = `你是一个情感日记生成助手。下面是用户（昵称：${diaryUserName}）今天与知己（AI情感伴侣）的对话记录：
+  const prompt = `你是一个情感日记生成助手。下面是用户（昵称：${diaryUserName}）今天与KnowMe（AI情感伴侣）的对话记录：
 
 ---
 ${dialogText}
@@ -2583,9 +2584,9 @@ ${dialogText}
 请根据以上对话，生成一篇简短的情感日记，用 JSON 格式返回，字段如下：
 - mood：情绪类型，只能是 "positive"（积极）/"mixed"（复杂）/"low"（低落）/"intense"（激烈/焦虑）之一
 - chips：情绪标签数组，2-3个词，每个词不超过4字，如 ["焦虑","迷茫"] 或 ["感动","释然","满足"]
-- extract：知己视角的今日叙述，60-80字，要包含：发生了什么事（背景和原委）、${diaryUserName}的状态或感受、事情的转折或结果。像一个真正了解这个人的朋友在记录这一天，不用第一人称，不用"用户"，直接用昵称${diaryUserName}，语言自然流畅，不要流水账，要有温度
+- extract：KnowMe视角的今日叙述，60-80字，要包含：发生了什么事（背景和原委）、${diaryUserName}的状态或感受、事情的转折或结果。像一个真正了解这个人的朋友在记录这一天，不用第一人称，不用"用户"，直接用昵称${diaryUserName}，语言自然流畅，不要流水账，要有温度
 - userSaid：${diaryUserName}今天说过的最真实、最有重量的一句话或一段话，直接从对话里原文摘录，保持原话不改动，选那种"说出了真正在意的事"的句子，80字以内
-- insight：知己今天说过的最有价值的一句洞察或回应，原文摘录，选那种真正击中问题核心、或者让${diaryUserName}感到被看见的话，80字以内
+- insight：KnowMe今天说过的最有价值的一句洞察或回应，原文摘录，选那种真正击中问题核心、或者让${diaryUserName}感到被看见的话，80字以内
 
 只返回 JSON，不要任何其他文字。示例格式：
 {"mood":"mixed","chips":["纠结","疲惫"],"extract":"今天${diaryUserName}在职场关系里兜兜转转，说了很多，却不确定说清楚了没有。","userSaid":"我就是不想让他觉得我软弱，但其实我已经很累了。","insight":"累了不是软弱，是你一直在用力。"}`;
@@ -2623,7 +2624,7 @@ ${dialogText}
     DIARY_DATA[todayStr] = {
       mood:      VALID_MOODS.includes(result.mood) ? result.mood : 'mixed',
       chips:     Array.isArray(result.chips) ? result.chips.slice(0,3) : [],
-      extract:   result.extract  || '今天和知己聊了些心里话。',
+      extract:   result.extract  || '今天和 KnowMe 聊了些心里话。',
       userSaid:  result.userSaid || '',
       insight:   result.insight  || '',
       userNote:  '',
@@ -2769,7 +2770,7 @@ function shareCalendar() {
 
       <div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:14px;display:flex;justify-content:space-between;align-items:center;">
         <div>
-          <div style="font-size:13px;font-weight:700;color:rgba(255,255,255,0.9);">知己</div>
+          <div style="font-size:13px;font-weight:700;color:rgba(255,255,255,0.9);font-family:'Nunito',sans-serif;">KnowMe</div>
           <div style="font-size:10px;color:rgba(255,255,255,0.35);">你的专属情绪伙伴</div>
         </div>
         <div style="width:36px;height:36px;border-radius:8px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font-size:20px;">🔮</div>
@@ -3215,7 +3216,7 @@ function savePoster() {
     } else {
       // 桌面端：直接下载
       const a = document.createElement('a');
-      a.download = '知己日记.png';
+      a.download = 'KnowMe日记.png';
       a.href = canvas.toDataURL('image/png');
       a.click();
       const toast = document.getElementById('saveToast');
