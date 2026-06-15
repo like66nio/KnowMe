@@ -6,8 +6,8 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>知己 · 你好</title>
-  <link href="https://fonts.googleapis.com/css2?family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
+  <title>KnowMe · 你好</title>
+  <link href="https://fonts.googleapis.com/css2?family=ZCOOL+XiaoWei&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
@@ -73,7 +73,12 @@
     .name-col {}
     .ai-name {
       font-size: 15px; color: rgba(255,255,255,0.94);
-      letter-spacing: 1px;
+      letter-spacing: 0.5px;
+      font-family: 'Nunito', sans-serif; font-weight: 700;
+    }
+    /* 品牌名 KnowMe 专用字体，用于中文句子内嵌套时保持一致 */
+    .brand {
+      font-family: 'Nunito', sans-serif; font-weight: 700;
     }
     .ai-status {
       font-size: 11px; color: rgba(255,255,255,0.42);
@@ -324,8 +329,8 @@
         <svg class="avatar-svg" viewBox="0 0 100 100"><use href="#zj1"/></svg>
       </div>
       <div class="name-col">
-        <div class="ai-name">知己</div>
-        <div class="ai-status">任何时候，我都在</div>
+        <div class="ai-name">KnowMe</div>
+        <div class="ai-status">越聊越懂你</div>
       </div>
       <div class="reg-pill" onclick="localStorage.setItem('zjRegSource','no_assess'); window.location.href='screen5-register.html'">注册</div>
     </div>
@@ -365,7 +370,7 @@
       <div class="option-card" onclick="goStory()">
         <div class="opt-icon icon-story">💬</div>
         <div class="opt-body">
-          <div class="opt-title">先看看知己如何帮助其他人</div>
+          <div class="opt-title">先看看「<span class="brand">KnowMe</span>」如何帮助其他人</div>
           <div class="opt-desc">看看我能做什么，再决定要不要深入</div>
         </div>
         <div class="opt-arrow">›</div>
