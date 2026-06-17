@@ -1138,33 +1138,24 @@
       font-size: 11px; color: rgba(255,255,255,0.60); letter-spacing: 0.4px;
     }
 
-    /* ─── 表情选择器（底部弹出，不遮挡输入栏） ─── */
-    .emoji-sheet-overlay {
-      position: fixed; inset: 0;
-      z-index: 90; /* 低于 bottom-bar(100)，让输入框始终可见 */
-      background: transparent;
-      pointer-events: none;
-      transition: background 0.22s;
-    }
-    .emoji-sheet-overlay.open {
-      background: rgba(0,0,0,0.22);
-      pointer-events: auto;
-    }
-    .emoji-sheet {
-      position: absolute;
+    /* ─── 表情选择器（键盘替换式，贴底弹出） ─── */
+    .emoji-panel {
+      position: fixed;
       left: 50%; transform: translateX(-50%) translateY(100%);
-      bottom: 0; /* JS 动态设为 bottom-bar 高度，sheet 贴在输入栏上方 */
+      bottom: 0; /* JS 动态设置为 tab-bar 高度 */
       width: min(390px, 100vw);
-      background: rgba(255,255,255,0.10);
+      height: 260px;
+      background: rgba(30,18,60,0.96);
       backdrop-filter: blur(32px); -webkit-backdrop-filter: blur(32px);
       border-top: 1px solid rgba(255,255,255,0.14);
-      border-radius: 20px 20px 0 0;
-      padding: 10px 0 0;
+      z-index: 99; /* 低于 bottom-bar(100) 和 tab-bar(100)，实际在两者之间视觉上 */
+      pointer-events: none;
       transition: transform 0.3s cubic-bezier(0.32,0.72,0,1);
-      pointer-events: auto;
+      display: flex; flex-direction: column;
     }
-    .emoji-sheet-overlay.open .emoji-sheet {
+    .emoji-panel.open {
       transform: translateX(-50%) translateY(0);
+      pointer-events: auto;
     }
     /* 顶部拖拽把手 */
     .emoji-sheet-handle {
@@ -1178,8 +1169,8 @@
     .emoji-grid-wrap {
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
-      padding: 16px 16px 4px;
-      max-height: 220px;
+      padding: 12px 16px 4px;
+      flex: 1;
     }
     .emoji-grid {
       display: grid;
@@ -1211,9 +1202,10 @@
     /* 底部工具栏（删除键）*/
     .emoji-sheet-toolbar {
       display: flex; align-items: center; justify-content: flex-end;
-      padding: 8px 14px 16px;
+      padding: 6px 14px 8px;
       border-top: 1px solid rgba(255,255,255,0.08);
       margin-top: 4px;
+      flex-shrink: 0;
     }
     .emoji-delete-btn {
       width: 40px; height: 36px; border-radius: 10px;
@@ -2540,26 +2532,24 @@
 
   </div><!-- /phone-frame -->
 
-  <!-- 表情选择器底部弹出层 -->
-  <div class="emoji-sheet-overlay" id="emojiSheetOverlay" onclick="onEmojiSheetOverlayClick(event)">
-    <div class="emoji-sheet" id="emojiSheet">
-      <div id="emojiSheetHandle" style="display:flex;align-items:center;justify-content:center;padding:10px 0 6px;cursor:pointer"><div style="width:36px;height:4px;border-radius:2px;background:rgba(255,255,255,0.22)"></div></div>
-      <!-- 分类 tabs -->
-      <div class="emoji-tabs" id="emojiTabs"></div>
-      <!-- 表情网格 -->
-      <div class="emoji-grid-wrap">
-        <div class="emoji-grid" id="emojiGrid"></div>
-      </div>
-      <!-- 底部工具栏 -->
-      <div class="emoji-sheet-toolbar">
-        <button id="emojiCloseBtn" title="收起" style="margin-right:auto;background:none;border:none;padding:4px 8px;cursor:pointer;color:rgba(255,255,255,0.45);font-size:18px;line-height:1;-webkit-tap-highlight-color:transparent">︿</button>
-        <button class="emoji-delete-btn" id="emojiDeleteBtn" title="删除">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/>
-            <line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/>
-          </svg>
-        </button>
-      </div>
+  <!-- 表情面板（键盘替换式，贴在 tab-bar 上方） -->
+  <div class="emoji-panel" id="emojiPanel">
+    <div id="emojiSheetHandle" style="display:flex;align-items:center;justify-content:center;padding:8px 0 4px;cursor:pointer;flex-shrink:0"><div style="width:36px;height:4px;border-radius:2px;background:rgba(255,255,255,0.22)"></div></div>
+    <!-- 分类 tabs（知己只有一组，隐藏） -->
+    <div class="emoji-tabs" id="emojiTabs"></div>
+    <!-- 表情网格 -->
+    <div class="emoji-grid-wrap">
+      <div class="emoji-grid" id="emojiGrid"></div>
+    </div>
+    <!-- 底部工具栏 -->
+    <div class="emoji-sheet-toolbar">
+      <button id="emojiCloseBtn" title="收起" style="margin-right:auto;background:none;border:none;padding:4px 8px;cursor:pointer;color:rgba(255,255,255,0.45);font-size:18px;line-height:1;-webkit-tap-highlight-color:transparent">︿</button>
+      <button class="emoji-delete-btn" id="emojiDeleteBtn" title="删除">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/>
+          <line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/>
+        </svg>
+      </button>
     </div>
   </div>
 
@@ -5227,6 +5217,8 @@ TA现在的情绪状态是哪一种情绪，这个情绪背后的需求是什么
         if (tb)  topBarBottom = tb.getBoundingClientRect().bottom;
         if (bb)  bottomBarH   = bb.getBoundingClientRect().height;
         if (tab) tabBarH      = tab.getBoundingClientRect().height;
+        // 暴露给表情面板
+        window._layoutParams = { tabBarH, bottomBarH, topBarBottom };
         applyLayout(false);
         _ready = true;
         // layout 确定后滚底，用 fonts.ready 保证字体高度已计算
@@ -5253,8 +5245,17 @@ TA现在的情绪状态是哪一种情绪，这个情绪背后的需求是什么
         }, 800);
       }
 
+      // 暴露给表情面板使用的布局参数
+      window._layoutParams = { tabBarH: 60, bottomBarH: 60, topBarBottom: 116 };
+
       function applyLayout(kbOpen) {
         msgList.style.top = topBarBottom + 'px';
+
+        // 表情面板打开时，键盘收起后不重置位置（由表情面板自己管理 bottom-bar 位置）
+        if (!kbOpen && window._emojiPanelOpen) {
+          if (tabBar) tabBar.classList.remove('keyboard-up');
+          return; // 让表情面板控制 bottom-bar 和 msgList 的位置
+        }
 
         if (kbOpen) {
           // 键盘弹起：tab-bar 隐藏，打字框 bottom:0 贴键盘顶，消息区 bottom = 打字框高度
@@ -5875,8 +5876,18 @@ TA现在的情绪状态是哪一种情绪，这个情绪背后的需求是什么
       // 表情按钮（toolbar）
       window.toggleEmojiPanel = function() {
         if (_attachOpen) closeAttachPanel();
+        const panel = document.getElementById('emojiPanel');
+        const isOpen = panel && panel.classList.contains('open');
+        if (isOpen) {
+          // 已经打开：直接关闭
+          if (window.closeEmojiSheet) closeEmojiSheet();
+          return;
+        }
+        // 未打开：先收起键盘，等键盘动画结束（~320ms）再弹出面板
         input.blur();
-        openEmojiSheet();
+        setTimeout(function() {
+          if (window.openEmojiSheet) openEmojiSheet();
+        }, 320);
       };
 
       // 附件操作（演示用，实际小程序会调用系统API）
@@ -5965,7 +5976,7 @@ TA现在的情绪状态是哪一种情绪，这个情绪背后的需求是什么
     setTimeout(() => { nudge.style.display = 'none'; nudge.classList.remove('hiding'); }, 280);
   }
 
-  /* ── 表情选择器（微信风格底部弹出） ── */
+  /* ── 表情面板（键盘替换式，微信同款） ── */
   (function initEmojiSheet() {
     // 知己专属表情（与气泡反馈条保持一致）
     const ZJ_EMOJIS = [
@@ -5994,23 +6005,31 @@ TA现在的情绪状态是哪一种情绪，这个情绪背后的需求是什么
       ['😏','皮',      false],
     ];
 
-    const overlay = document.getElementById('emojiSheetOverlay');
+    const panel   = document.getElementById('emojiPanel');
     const gridEl  = document.getElementById('emojiGrid');
     const inputEl = document.getElementById('chatInput');
-    let _open = false;
-    let _built = false;
+    let _open   = false;
+    let _built  = false;
+    let _openTimer = null;
+
+    // 从 initKeyboardFix 暴露的参数获取尺寸（measure() 后准确）
+    function getTabBarH() {
+      return (window._layoutParams && window._layoutParams.tabBarH) ||
+             (document.getElementById('tabBar') || {}).getBoundingClientRect?.()?.height || 60;
+    }
+    function getBottomBarH() {
+      return (window._layoutParams && window._layoutParams.bottomBarH) ||
+             (document.getElementById('bottomBar') || {}).getBoundingClientRect?.()?.height || 60;
+    }
 
     function buildSheet() {
       if (_built) return;
       _built = true;
-
-      // 无分类 tab，直接渲染全部表情
       ZJ_EMOJIS.forEach(([emoji, label, isNeg]) => {
         const btn = document.createElement('button');
         btn.className = 'emoji-grid-btn' + (isNeg ? ' eg-negative' : '');
         btn.innerHTML = `<span class="eg-icon">${emoji}</span><span class="eg-label">${label}</span>`;
         btn.onclick = () => {
-          // 点击动效：短暂高亮
           btn.classList.add('eg-flash');
           setTimeout(() => btn.classList.remove('eg-flash'), 300);
           insertEmoji(emoji);
@@ -6025,7 +6044,6 @@ TA现在的情绪状态是哪一种情绪，这个情绪背后的需求是什么
       const end   = ta.selectionEnd;
       const val   = ta.value;
       ta.value = val.slice(0, start) + emoji + val.slice(end);
-      // 移动光标到插入点之后
       const pos = start + emoji.length;
       ta.setSelectionRange(pos, pos);
       if (window.autoResize) autoResize(ta);
@@ -6037,13 +6055,10 @@ TA现在的情绪状态是哪一种情绪，这个情绪背后的需求是什么
       const start = ta.selectionStart;
       const end   = ta.selectionEnd;
       if (start !== end) {
-        // 有选中内容：删除选中
         ta.value = ta.value.slice(0, start) + ta.value.slice(end);
         ta.setSelectionRange(start, start);
       } else if (start > 0) {
-        // 无选中：删除光标前一个字符（兼容 emoji 多字节）
         const before = ta.value.slice(0, start);
-        // 用 Intl.Segmenter 处理 emoji 字素群
         let removeLen = 1;
         if (typeof Intl !== 'undefined' && Intl.Segmenter) {
           const seg = new Intl.Segmenter();
@@ -6061,14 +6076,7 @@ TA现在的情绪状态是哪一种情绪，这个情绪背后的需求是什么
     // 删除按钮：单击删一个，长按连续删
     const deleteBtn = document.getElementById('emojiDeleteBtn');
     if (deleteBtn) {
-      let _delTimer = null;
-      let _delInterval = null;
-
-      function doDelete(e) {
-        e.stopPropagation();
-        window.emojiDelete();
-      }
-
+      let _delTimer = null, _delInterval = null;
       function startRepeat(e) {
         e.stopPropagation();
         window.emojiDelete();
@@ -6076,14 +6084,10 @@ TA现在的情绪状态是哪一种情绪，这个情绪背后的需求是什么
           _delInterval = setInterval(() => window.emojiDelete(), 80);
         }, 400);
       }
-
       function stopRepeat() {
-        clearTimeout(_delTimer);
-        clearInterval(_delInterval);
-        _delTimer = null;
-        _delInterval = null;
+        clearTimeout(_delTimer); clearInterval(_delInterval);
+        _delTimer = null; _delInterval = null;
       }
-
       deleteBtn.addEventListener('mousedown', startRepeat);
       deleteBtn.addEventListener('touchstart', function(e) { e.preventDefault(); startRepeat(e); }, { passive: false });
       deleteBtn.addEventListener('mouseup', stopRepeat);
@@ -6092,54 +6096,69 @@ TA现在的情绪状态是哪一种情绪，这个情绪背后的需求是什么
       deleteBtn.addEventListener('touchcancel', stopRepeat);
     }
 
-    const _frame = document.querySelector('.phone-frame');
+    const PANEL_H = 260; // 面板固定高度，与 CSS height:260px 一致
+
+    // 面板打开：调整 bottom-bar 和 msgList 位置，让面板"替代键盘"
+    function applyPanelOpen() {
+      const tabBarH    = getTabBarH();
+      const bottomBarH = getBottomBarH();
+      window._emojiPanelOpen = true;
+      // 面板贴 tab-bar 上方
+      panel.style.bottom = tabBarH + 'px';
+      // bottom-bar 上移到面板顶部
+      const bottomBar = document.getElementById('bottomBar');
+      if (bottomBar) bottomBar.style.bottom = (tabBarH + PANEL_H) + 'px';
+      // 消息列表腾出空间
+      const msgList = document.getElementById('msgList');
+      if (msgList) {
+        msgList.style.bottom = (tabBarH + PANEL_H + bottomBarH) + 'px';
+        // 滚到底
+        setTimeout(() => { msgList.scrollTop = msgList.scrollHeight; }, 80);
+      }
+    }
+
+    // 面板关闭：恢复 bottom-bar 和 msgList 到键盘收起状态
+    function applyPanelClose() {
+      window._emojiPanelOpen = false;
+      const tabBarH    = getTabBarH();
+      const bottomBarH = getBottomBarH();
+      const bottomBar  = document.getElementById('bottomBar');
+      if (bottomBar) bottomBar.style.bottom = tabBarH + 'px';
+      const msgList = document.getElementById('msgList');
+      if (msgList) msgList.style.bottom = (tabBarH + bottomBarH) + 'px';
+    }
 
     function doClose() {
+      if (!_open) return;
       _open = false;
-      overlay.classList.remove('open');
-      if (_frame) _frame.style.paddingBottom = '';
+      if (_openTimer) { clearTimeout(_openTimer); _openTimer = null; }
+      panel.classList.remove('open');
+      applyPanelClose();
       const eb = document.getElementById('emojiBtn');
       if (eb) eb.classList.remove('plus-active');
     }
 
     window.openEmojiSheet = function() {
       buildSheet();
+      if (_open) { doClose(); return; }
       _open = true;
-      // 让 sheet 底部贴在 bottom-bar 上方（bottom-bar z-index:100 > overlay z-index:90，输入框始终可见）
-      const bottomBar = document.getElementById('bottomBar');
-      const sheet = document.getElementById('emojiSheet');
-      if (bottomBar && sheet) {
-        sheet.style.bottom = bottomBar.offsetHeight + 'px';
-      }
-      overlay.classList.add('open');
-      // 推开消息列表，让内容不被 sheet 遮住
-      requestAnimationFrame(() => {
-        if (_frame && sheet) _frame.style.paddingBottom = sheet.offsetHeight + 'px';
-      });
+      applyPanelOpen();
+      panel.classList.add('open');
       const eb = document.getElementById('emojiBtn');
       if (eb) eb.classList.add('plus-active');
     };
 
     window.closeEmojiSheet = doClose;
 
-    // 顶部横条点击收起
+    // 顶部横条 & 左下角收起按钮
     const handleEl = document.getElementById('emojiSheetHandle');
     if (handleEl) handleEl.addEventListener('click', function(e) { e.stopPropagation(); doClose(); });
-
-    // 左下角收起按钮
     const closeBtn = document.getElementById('emojiCloseBtn');
     if (closeBtn) closeBtn.addEventListener('click', function(e) { e.stopPropagation(); doClose(); });
 
-    window.onEmojiSheetOverlayClick = function(e) {
-      // 点击遮罩（非 sheet 内部）关闭
-      if (!document.getElementById('emojiSheet').contains(e.target)) {
-        doClose();
-      }
-    };
-
-    // 打开输入框时如果 sheet 还开着，保持开着（可继续插入表情）
+    // 点击输入框：收起面板，恢复焦点（键盘弹出）
     inputEl.addEventListener('focus', () => {
-      if (_open) closeEmojiSheet();
+      if (_open) doClose();
     });
   })();
 
