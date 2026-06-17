@@ -1147,10 +1147,10 @@
       bottom: 0; /* JS 打开时设为 tabBarH，关闭时重置为 0 让面板完整藏入屏幕底部 */
       width: min(390px, 100vw);
       height: 260px;
-      /* 与聊天背景协调的紫调半透明，让背景渐变透过来 */
-      background: rgba(60,30,100,0.82);
-      backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
-      border-top: 1px solid rgba(200,160,255,0.20);
+      /* 薄磨砂：透出底下紫粉蓝渐变，只加轻微暗化，不盖住背景色 */
+      background: rgba(80,40,140,0.35);
+      backdrop-filter: blur(20px) brightness(0.8); -webkit-backdrop-filter: blur(20px) brightness(0.8);
+      border-top: 1px solid rgba(255,255,255,0.14);
       z-index: 99; /* 低于 bottom-bar(100) 和 tab-bar(100) */
       pointer-events: none;
       transition: transform 0.3s cubic-bezier(0.32,0.72,0,1), bottom 0s 0.3s; /* bottom 延迟重置，等动画结束 */
