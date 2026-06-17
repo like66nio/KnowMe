@@ -5395,9 +5395,13 @@ TA现在的情绪状态是哪一种情绪，这个情绪背后的需求是什么
 
     /* ──── 工具函数 ──── */
     function escHtml(t) {
-      return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      // 先把「回」字占位，避免被 HTML 转义破坏
+      const PLACEHOLDER = '\u0000HUI\u0000';
+      return t.replace(/回/g, PLACEHOLDER)
+               .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
                .replace(/"/g,'&quot;').replace(/\n/g,'<br>')
-               .replace(/回/g,'<span style="font-family:-apple-system,\'PingFang SC\',\'Heiti SC\',sans-serif;">回</span>');
+               // 最后把占位符还原成带系统字体的 span
+               .replace(new RegExp(PLACEHOLDER,'g'),'<span style="font-family:-apple-system,\'PingFang SC\',\'Heiti SC\',sans-serif;">回</span>');
     }
 
     // 过滤 AI 心理活动旁白：去掉中/英括号包裹的指令性说明
