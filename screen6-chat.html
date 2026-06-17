@@ -1138,10 +1138,10 @@
       font-size: 11px; color: rgba(255,255,255,0.60); letter-spacing: 0.4px;
     }
 
-    /* ─── 表情选择器（微信风格底部弹出） ─── */
+    /* ─── 表情选择器（底部弹出，不遮挡输入栏） ─── */
     .emoji-sheet-overlay {
       position: fixed; inset: 0;
-      z-index: 300;
+      z-index: 90; /* 低于 bottom-bar(100)，让输入框始终可见 */
       background: transparent;
       pointer-events: none;
       transition: background 0.22s;
@@ -1153,7 +1153,7 @@
     .emoji-sheet {
       position: absolute;
       left: 50%; transform: translateX(-50%) translateY(100%);
-      bottom: 0;
+      bottom: 0; /* JS 动态设为 bottom-bar 高度，sheet 贴在输入栏上方 */
       width: min(390px, 100vw);
       background: rgba(255,255,255,0.10);
       backdrop-filter: blur(32px); -webkit-backdrop-filter: blur(32px);
@@ -1202,6 +1202,12 @@
     }
     /* 负向表情标签色略淡 */
     .emoji-grid-btn.eg-negative .eg-label { color: rgba(255,200,200,0.50); }
+    /* 点击动效：短暂高亮 */
+    .emoji-grid-btn.eg-flash {
+      background: rgba(255,255,255,0.22);
+      transform: scale(0.88);
+      transition: background 0.1s, transform 0.1s;
+    }
     /* 底部工具栏（删除键）*/
     .emoji-sheet-toolbar {
       display: flex; align-items: center; justify-content: flex-end;
@@ -3626,6 +3632,7 @@ TA现在的情绪状态是哪一种情绪，这个情绪背后的需求是什么
 💡 | 没想过这个角度，有启发 | "那就继续想。"
 🫶 | 懂我，被理解了 | "我就知道。"
 🤗 | 爱你，喜欢你 | "我也是。"
+👍 | 赞，支持你，好 | "那就这样。"
 😊 | 开心，心情好 | "那就好。"
 🔮 | 被你看穿了，发现了 | "哈，藏不住。"
 😂 | 哈哈，好笑 | "好，笑出来就对了。"
@@ -5968,6 +5975,7 @@ TA现在的情绪状态是哪一种情绪，这个情绪背后的需求是什么
       ['🫶','懂我',   false],
       ['🤗','爱你',   false],
       ['😊','开心',   false],
+      ['👍','赞',      false],
       ['🔮','被发现了',false],
       ['😂','哈哈',   false],
       ['😁','呲牙',   false],
@@ -6001,7 +6009,12 @@ TA现在的情绪状态是哪一种情绪，这个情绪背后的需求是什么
         const btn = document.createElement('button');
         btn.className = 'emoji-grid-btn' + (isNeg ? ' eg-negative' : '');
         btn.innerHTML = `<span class="eg-icon">${emoji}</span><span class="eg-label">${label}</span>`;
-        btn.onclick = () => insertEmoji(emoji);
+        btn.onclick = () => {
+          // 点击动效：短暂高亮
+          btn.classList.add('eg-flash');
+          setTimeout(() => btn.classList.remove('eg-flash'), 300);
+          insertEmoji(emoji);
+        };
         gridEl.appendChild(btn);
       });
     }
@@ -6092,10 +6105,15 @@ TA现在的情绪状态是哪一种情绪，这个情绪背后的需求是什么
     window.openEmojiSheet = function() {
       buildSheet();
       _open = true;
+      // 让 sheet 底部贴在 bottom-bar 上方（bottom-bar z-index:100 > overlay z-index:90，输入框始终可见）
+      const bottomBar = document.getElementById('bottomBar');
+      const sheet = document.getElementById('emojiSheet');
+      if (bottomBar && sheet) {
+        sheet.style.bottom = bottomBar.offsetHeight + 'px';
+      }
       overlay.classList.add('open');
-      // 推开 phone-frame，让 bottom-bar 露在 sheet 上方
+      // 推开消息列表，让内容不被 sheet 遮住
       requestAnimationFrame(() => {
-        const sheet = document.getElementById('emojiSheet');
         if (_frame && sheet) _frame.style.paddingBottom = sheet.offsetHeight + 'px';
       });
       const eb = document.getElementById('emojiBtn');
