@@ -5396,7 +5396,8 @@ TA现在的情绪状态是哪一种情绪，这个情绪背后的需求是什么
     /* ──── 工具函数 ──── */
     function escHtml(t) {
       return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-               .replace(/"/g,'&quot;').replace(/\n/g,'<br>');
+               .replace(/"/g,'&quot;').replace(/\n/g,'<br>')
+               .replace(/回/g,'<span style="font-family:-apple-system,\'PingFang SC\',\'Heiti SC\',sans-serif;">回</span>');
     }
 
     // 过滤 AI 心理活动旁白：去掉中/英括号包裹的指令性说明
