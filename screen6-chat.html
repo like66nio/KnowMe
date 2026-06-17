@@ -1636,6 +1636,9 @@
       transition: opacity 0.15s;
     }
     .select-bar-btn.active { opacity: 1; pointer-events: auto; }
+    .select-bar-del-btn {
+      background: linear-gradient(135deg, rgba(220,60,60,0.90), rgba(180,30,30,0.90));
+    }
 
     /* ══════════════════════════════════
        聊天海报预览全屏层
@@ -2583,12 +2586,18 @@
       <span class="ctx-icon">🪄</span>
       <span class="ctx-label">生成分享卡片</span>
     </div>
+    <div class="ctx-divider"></div>
+    <div class="ctx-item danger" onclick="ctxAction('delete')">
+      <span class="ctx-icon">🗑️</span>
+      <span class="ctx-label">删除消息</span>
+    </div>
   </div>
 
   <!-- ═══ 多选模式底部操作栏 ═══ -->
   <div class="select-bar" id="selectBar">
     <button class="select-bar-btn" id="selectBarBtn" onclick="openChatPosterView()">生成海报</button>
     <div class="select-bar-count" id="selectBarCount">未选择</div>
+    <button class="select-bar-btn select-bar-del-btn" id="selectDelBtn" onclick="deleteSelectedMsgs()">删除</button>
     <div class="select-bar-cancel" onclick="exitSelectMode()">取消</div>
   </div>
 
@@ -3744,6 +3753,7 @@ TA现在的情绪状态是哪一种情绪，这个情绪背后的需求是什么
         pgUserRow.dataset.msgid = 'msg' + (++_msgCounter);
         pgUserRow.innerHTML = `<div class="user-bubble"><p>${escHtml(text)}</p></div>`;
         document.getElementById('msgList').appendChild(pgUserRow);
+        bindLongPress(pgUserRow.querySelector('.user-bubble'), pgUserRow.dataset.msgid);
         if (sendBtn) sendBtn.disabled = false;
         scrollBottom();
 
@@ -3789,6 +3799,7 @@ TA现在的情绪状态是哪一种情绪，这个情绪背后的需求是什么
         piUserRow.dataset.msgid = 'msg' + (++_msgCounter);
         piUserRow.innerHTML = `<div class="user-bubble"><p>${escHtml(text)}</p></div>`;
         list.appendChild(piUserRow);
+        bindLongPress(piUserRow.querySelector('.user-bubble'), piUserRow.dataset.msgid);
         saveChatLog('user', text);
         scrollBottom();
         if (sendBtn) sendBtn.disabled = false;
@@ -3814,6 +3825,7 @@ TA现在的情绪状态是哪一种情绪，这个情绪背后的需求是什么
         : '';
       userRow.innerHTML = `<div class="user-bubble"><p>${quoteHtml}${escHtml(text)}</p></div>`;
       list.appendChild(userRow);
+      bindLongPress(userRow.querySelector('.user-bubble'), userMsgId);
       saveChatLog('user', text);
       scrollBottom();
 
@@ -3881,6 +3893,7 @@ TA现在的情绪状态是哪一种情绪，这个情绪背后的需求是什么
       userRow.dataset.msgid = 'msg' + (++_msgCounter);
       userRow.innerHTML = `<div class="user-bubble"><p>${escHtml(el.querySelector('.mood-emoji').textContent + ' ' + label)}</p></div>`;
       list.appendChild(userRow);
+      bindLongPress(userRow.querySelector('.user-bubble'), userRow.dataset.msgid);
 
       setTimeout(() => {
         const replies = {
@@ -4272,6 +4285,11 @@ TA现在的情绪状态是哪一种情绪，这个情绪背后的需求是什么
         closeCtxMenu();
         // 进入多选模式，并把被长按的那条气泡所在行默认选中
         enterSelectMode(_ctxMsgId);
+
+      } else if (type === 'delete') {
+        closeCtxMenu();
+        // 进入多选模式（删除模式），默认选中该条
+        enterSelectMode(_ctxMsgId, undefined, true);
       }
     }
 
@@ -4280,11 +4298,14 @@ TA现在的情绪状态是哪一种情绪，这个情绪背后的需求是什么
     ══════════════════════════════════════ */
     let _selectMode = false;
     let _selectedMsgIds = new Set();
+    let _deleteMode = false; // true=删除模式，false=海报模式
 
     // 进入多选模式
     // defaultMsgId: 默认选中的消息 id（右键触发时传入）
     // recentCount:  默认选中最近 N 条 AI 消息（附件面板触发时传入）
-    function enterSelectMode(defaultMsgId, recentCount) {
+    // deleteMode:   true 时高亮删除按钮而非海报按钮
+    function enterSelectMode(defaultMsgId, recentCount, deleteMode) {
+      _deleteMode = !!deleteMode;
       _selectMode = true;
       _selectedMsgIds = new Set();
 
@@ -4390,15 +4411,56 @@ TA现在的情绪状态是哪一种情绪，这个情绪背后的需求是什么
     function _updateSelectBar() {
       const n = _selectedMsgIds.size;
       const countEl = document.getElementById('selectBarCount');
-      const btn = document.getElementById('selectBarBtn');
+      const posterBtn = document.getElementById('selectBarBtn');
+      const delBtn = document.getElementById('selectDelBtn');
       if (n === 0) {
         countEl.textContent = '未选择';
-        btn.classList.remove('active');
+        posterBtn.classList.remove('active');
+        if (delBtn) delBtn.classList.remove('active');
       } else {
         countEl.textContent = `已选 ${n} 条`;
-        btn.classList.add('active');
+        if (_deleteMode) {
+          if (delBtn) delBtn.classList.add('active');
+        } else {
+          posterBtn.classList.add('active');
+          if (delBtn) delBtn.classList.add('active');
+        }
       }
     }
+
+    // 删除选中的消息
+    window.deleteSelectedMsgs = function() {
+      if (_selectedMsgIds.size === 0) return;
+      const list = document.getElementById('msgList');
+      const idsToDelete = new Set(_selectedMsgIds);
+
+      // 1. 从 DOM 删除对应的行（包括 reaction-strip）
+      idsToDelete.forEach(msgId => {
+        const row = list.querySelector(`[data-msgid="${msgId}"]`);
+        if (row) {
+          // reaction-strip 紧跟在 bubble-row 后面
+          const next = row.nextElementSibling;
+          if (next && next.classList.contains('reaction-strip')) next.remove();
+          row.remove();
+        }
+      });
+
+      // 2. 重建 localStorage：把剩余消息行按顺序读出来重写 zjChatLog
+      const remaining = [];
+      list.querySelectorAll('.bubble-row[data-msgid], .user-row[data-msgid]').forEach(row => {
+        const isUser = row.classList.contains('user-row');
+        const bubbleEl = row.querySelector('.user-bubble p, .ai-bubble p');
+        if (!bubbleEl) return;
+        // innerText 会把 <br> 转成换行，<span> 包裹的"回"也能正确取到文字
+        const text = bubbleEl.innerText || bubbleEl.textContent || '';
+        remaining.push({ role: isUser ? 'user' : 'zhiji', text });
+      });
+      localStorage.setItem('zjChatLog', JSON.stringify(remaining));
+
+      // 3. 退出多选模式
+      exitSelectMode();
+      showToast(`已删除 ${idsToDelete.size} 条消息`);
+    };
 
     // 打开聊天海报预览层
     function openChatPosterView() {
@@ -4780,6 +4842,7 @@ TA现在的情绪状态是哪一种情绪，这个情绪背后的需求是什么
       row.dataset.msgid = 'msg' + (++_msgCounter);
       row.innerHTML = `<div class="user-bubble"><p>${label}</p></div>`;
       list.appendChild(row);
+      bindLongPress(row.querySelector('.user-bubble'), row.dataset.msgid);
       scrollBottom();
 
       // 打字动画 → 生成
@@ -5707,6 +5770,7 @@ TA现在的情绪状态是哪一种情绪，这个情绪背后的需求是什么
           row.dataset.msgid = 'msg' + (++_msgCounter);
           row.innerHTML = `<div class="user-bubble"><p>${escHtml(entry.text)}</p></div>`;
           list.appendChild(row);
+          bindLongPress(row.querySelector('.user-bubble'), row.dataset.msgid);
           chatHistory.push({ role: 'user', content: entry.text });
         } else {
           const msgId = 'msg' + (++_msgCounter);
