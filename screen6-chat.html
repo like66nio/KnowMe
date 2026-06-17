@@ -1141,21 +1141,25 @@
     /* ─── 表情选择器（键盘替换式，贴底弹出） ─── */
     .emoji-panel {
       position: fixed;
-      left: 50%; transform: translateX(-50%) translateY(100%);
-      bottom: 0; /* JS 动态设置为 tab-bar 高度 */
+      left: 50%;
+      /* 收起时：translateY(100%) 向下移动面板自身高度，完全隐藏到屏幕底部以下 */
+      transform: translateX(-50%) translateY(100%);
+      bottom: 0; /* JS 打开时设为 tabBarH，关闭时重置为 0 让面板完整藏入屏幕底部 */
       width: min(390px, 100vw);
       height: 260px;
-      background: rgba(30,18,60,0.96);
-      backdrop-filter: blur(32px); -webkit-backdrop-filter: blur(32px);
-      border-top: 1px solid rgba(255,255,255,0.14);
-      z-index: 99; /* 低于 bottom-bar(100) 和 tab-bar(100)，实际在两者之间视觉上 */
+      /* 与聊天背景协调的紫调半透明，让背景渐变透过来 */
+      background: rgba(60,30,100,0.82);
+      backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
+      border-top: 1px solid rgba(200,160,255,0.20);
+      z-index: 99; /* 低于 bottom-bar(100) 和 tab-bar(100) */
       pointer-events: none;
-      transition: transform 0.3s cubic-bezier(0.32,0.72,0,1);
+      transition: transform 0.3s cubic-bezier(0.32,0.72,0,1), bottom 0s 0.3s; /* bottom 延迟重置，等动画结束 */
       display: flex; flex-direction: column;
     }
     .emoji-panel.open {
       transform: translateX(-50%) translateY(0);
       pointer-events: auto;
+      transition: transform 0.3s cubic-bezier(0.32,0.72,0,1), bottom 0s 0s; /* 打开时 bottom 立即生效 */
     }
     /* 顶部拖拽把手 */
     .emoji-sheet-handle {
@@ -1188,11 +1192,11 @@
     .emoji-grid-btn:active { background: rgba(255,255,255,0.12); }
     .emoji-grid-btn .eg-icon { font-size: 30px; line-height: 1; }
     .emoji-grid-btn .eg-label {
-      font-size: 11px; color: rgba(255,255,255,0.50);
+      font-size: 11px; color: rgba(255,255,255,0.65);
       margin-top: 5px; letter-spacing: 0.3px; line-height: 1;
     }
     /* 负向表情标签色略淡 */
-    .emoji-grid-btn.eg-negative .eg-label { color: rgba(255,200,200,0.50); }
+    .emoji-grid-btn.eg-negative .eg-label { color: rgba(255,190,190,0.60); }
     /* 点击动效：短暂高亮 */
     .emoji-grid-btn.eg-flash {
       background: rgba(255,255,255,0.22);
@@ -6132,6 +6136,9 @@ TA现在的情绪状态是哪一种情绪，这个情绪背后的需求是什么
       if (!_open) return;
       _open = false;
       if (_openTimer) { clearTimeout(_openTimer); _openTimer = null; }
+      // 先把 bottom 重置为 0，再移除 open（触发 translateY(100%)）
+      // 这样面板从当前位置完整滑入屏幕底部以下，不留残影
+      panel.style.bottom = '0px';
       panel.classList.remove('open');
       applyPanelClose();
       const eb = document.getElementById('emojiBtn');
