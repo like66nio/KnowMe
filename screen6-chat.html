@@ -3659,10 +3659,12 @@ TA现在的情绪状态是哪一种情绪，这个情绪背后的需求是什么
 😭 | 大哭，崩溃了或者很委屈 | "哎，先哭一会儿，没事的。"
 😏 | 皮，嘲讽/幸灾乐祸/就是在搞怪 | "哈，你就是皮。"`;
 
-      // 把系统提示词里所有「KnowMe」和知己替换成用户自定义的名字
-      return _aiName === 'KnowMe'
-        ? _raw
-        : _raw.replace(/「KnowMe」/g, `「${_aiName}」`).replace(/KnowMe/g, _aiName);
+      // 把系统提示词里所有「KnowMe」替换：有自定义名字用名字，否则用"我"
+      if (_aiName === 'KnowMe') {
+        return _raw.replace(/「KnowMe」/g, '我').replace(/KnowMe/g, '我');
+      } else {
+        return _raw.replace(/「KnowMe」/g, `「${_aiName}」`).replace(/KnowMe/g, _aiName);
+      }
     }
 
     /* ──── 调用 LLM API ──── */
