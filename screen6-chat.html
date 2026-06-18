@@ -2801,7 +2801,10 @@ ${stateSummary}
       const _hour = _pmap['hour'] === '24' ? '00' : _pmap['hour']; // 某些环境 hour12:false 的午夜返回24
       const _timeStr = `${_pmap['year']}年${_pmap['month']}月${_pmap['day']}日 ${_weekdayCN} ${_hour}:${_pmap['minute']}` + (_timeCalibrated ? '' : '（本地时间，可能不准）');
 
-      return `# 【当前时间】
+      // 用户给 KnowMe 起的名字（如果有），替换系统提示词里所有的「KnowMe」和知己
+      const _aiName = localStorage.getItem('zjAiName') || 'KnowMe';
+
+      const _raw = `# 【当前时间】
 现在是 ${_timeStr}。这是每次对话前实时注入的准确时间，是唯一可信的时间来源。
 
 ---
@@ -3655,6 +3658,11 @@ TA现在的情绪状态是哪一种情绪，这个情绪背后的需求是什么
 👊 | 想打你，嫌弃你 | "打就打，说吧。"
 😭 | 大哭，崩溃了或者很委屈 | "哎，先哭一会儿，没事的。"
 😏 | 皮，嘲讽/幸灾乐祸/就是在搞怪 | "哈，你就是皮。"`;
+
+      // 把系统提示词里所有「KnowMe」和知己替换成用户自定义的名字
+      return _aiName === 'KnowMe'
+        ? _raw
+        : _raw.replace(/「KnowMe」/g, `「${_aiName}」`).replace(/KnowMe/g, _aiName);
     }
 
     /* ──── 调用 LLM API ──── */
