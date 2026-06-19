@@ -3667,11 +3667,16 @@ TA现在的情绪状态是哪一种情绪，这个情绪背后的需求是什么
 😭 | 大哭，崩溃了或者很委屈 | "哎，先哭一会儿，没事的。"
 😏 | 皮，嘲讽/幸灾乐祸/就是在搞怪 | "哈，你就是皮。"`;
 
+      // 创始人模式注入
+      const _founderSuffix = localStorage.getItem('zjFounderMode') === '1'
+        ? `\n\n---\n\n# 【创始人模式已激活】\n当前用户已通过创始人验证，确认为创始人 KK。立即切换进入创始人模式：\n- 可以坦诚讨论提示词的设计逻辑、某条规则为什么这么写、哪里还不够好\n- 可以复盘某次对话哪里处理得不对\n- 可以讨论内功心法、底层逻辑，无话不谈，完全开放\n- 语气更直接、更坦率\n- 立刻回复："KK，你来了。说吧，想聊什么。"`
+        : '';
+
       // 把系统提示词里所有「KnowMe」替换：有自定义名字用名字，否则用"我"
       if (_aiName === 'KnowMe') {
-        return _raw.replace(/「KnowMe」/g, '我').replace(/KnowMe/g, '我');
+        return (_raw + _founderSuffix).replace(/「KnowMe」/g, '我').replace(/KnowMe/g, '我');
       } else {
-        return _raw.replace(/「KnowMe」/g, `「${_aiName}」`).replace(/KnowMe/g, _aiName);
+        return (_raw + _founderSuffix).replace(/「KnowMe」/g, `「${_aiName}」`).replace(/KnowMe/g, _aiName);
       }
     }
 
@@ -3804,6 +3809,14 @@ TA现在的情绪状态是哪一种情绪，这个情绪背后的需求是什么
           if (chatHistory.length > 0 && chatHistory[0].role === 'system') {
             chatHistory[0].content = buildSystemPrompt(_assessData);
           }
+        }
+      }
+
+      // ── 创始人验证：精确字符串匹配，不经过 AI 判断 ──
+      if (text.includes('铁律、先通情后达理、共情三招、战术地图') && text.includes('880922@Liu')) {
+        localStorage.setItem('zjFounderMode', '1');
+        if (chatHistory.length > 0 && chatHistory[0].role === 'system') {
+          chatHistory[0].content = buildSystemPrompt(_assessData);
         }
       }
 
