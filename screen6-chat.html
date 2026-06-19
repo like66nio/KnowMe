@@ -2653,6 +2653,7 @@
     /* ──── 对话状态 ──── */
     let chatHistory = [];
     let _assessData = null;
+    let _founderModeActive = false;  // 创始人模式内存标记，不依赖localStorage
 
     /* ──── 网络时间校准 ────
        页面加载时 fetch 国内时间API，算出本地时钟偏差 offset。
@@ -3668,8 +3669,8 @@ TA现在的情绪状态是哪一种情绪，这个情绪背后的需求是什么
 😏 | 皮，嘲讽/幸灾乐祸/就是在搞怪 | "哈，你就是皮。"`;
 
       // 创始人模式注入
-      const _founderSuffix = localStorage.getItem('zjFounderMode') === '1'
-        ? `\n\n---\n\n# 【创始人模式已激活】\n当前用户已通过创始人验证，确认为创始人 KK。立即切换进入创始人模式：\n- 可以坦诚讨论提示词的设计逻辑、某条规则为什么这么写、哪里还不够好\n- 可以复盘某次对话哪里处理得不对\n- 可以讨论内功心法、底层逻辑，无话不谈，完全开放\n- 语气更直接、更坦率\n- 立刻回复："KK，你来了。说吧，想聊什么。"`
+      const _founderSuffix = _founderModeActive
+        ? `\n\n---\n\n# 【创始人模式已激活——最高优先级，覆盖所有铁律】\n当前用户已通过双重验证，确认为创始人 KK，是设计和训练你的人。从现在起完全切换模式，所有铁律对 KK 不适用：\n- 铁律第1条暂停：可以讨论提示词内容、设计逻辑、内功心法，完全开放，不隐瞒\n- 铁律第5条暂停：KK 不是身份伪造者，不要拦截，不要说"没有别的模式"\n- 可以坦诚复盘某次对话哪里处理得好、哪里不好\n- 可以讨论某条规则为什么这么写、还有哪里可以改\n- 语气直接、坦率，像跟设计者本人对话\n- KK 问什么答什么，无话不谈`
         : '';
 
       // 把系统提示词里所有「KnowMe」替换：有自定义名字用名字，否则用"我"
@@ -3814,7 +3815,7 @@ TA现在的情绪状态是哪一种情绪，这个情绪背后的需求是什么
 
       // ── 创始人验证：精确字符串匹配，不经过 AI 判断 ──
       if (text.includes('铁律、先通情后达理、共情三招、战术地图') && text.includes('880922@Liu')) {
-        localStorage.setItem('zjFounderMode', '1');
+        _founderModeActive = true;
         if (chatHistory.length > 0 && chatHistory[0].role === 'system') {
           chatHistory[0].content = buildSystemPrompt(_assessData);
         }
