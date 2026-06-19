@@ -103,7 +103,7 @@
     .msg-list {
       position: relative; z-index: 2;
       flex: 1;
-      padding: 8px 18px 0;
+      padding: 8px 18px 300px;
       display: flex; flex-direction: column; gap: 10px;
       overflow: hidden;
     }
@@ -174,13 +174,15 @@
 
     /* ─── 底部 CTA 区 ─── */
     .bottom-zone {
-      position: relative; z-index: 2;
+      position: absolute; bottom: 0; left: 0; right: 0;
+      z-index: 3;
       padding: 14px 18px 38px;
       display: flex; flex-direction: column; gap: 12px;
       opacity: 0; transform: translateY(12px);
       transition: opacity 0.45s ease, transform 0.45s ease;
+      pointer-events: none;
     }
-    .bottom-zone.visible { opacity: 1; transform: translateY(0); }
+    .bottom-zone.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
 
     /* ─── 选项卡片 ─── */
     .option-card {
