@@ -938,8 +938,12 @@
   /* 情绪颜色 — 高饱和，在紫蓝背景上对比鲜明 */
   /* 积极：暖绿 */
   .mood-positive { background: linear-gradient(135deg, #3DBE82, #52D98A); box-shadow: 0 2px 8px rgba(61,190,130,0.55); }
+  /* 平静：柔粉 */
+  .mood-calm     { background: linear-gradient(135deg, #F2A7BB, #F8C5D0); box-shadow: 0 2px 8px rgba(242,167,187,0.55); }
+  /* 焦虑：暖黄 */
+  .mood-anxious  { background: linear-gradient(135deg, #E8B84B, #F5CE6A); box-shadow: 0 2px 8px rgba(232,184,75,0.55); }
   /* 复杂：淡金紫 */
-  .mood-mixed    { background: linear-gradient(135deg, #A47FD8, #C4A0F0); box-shadow: 0 2px 8px rgba(164,127,216,0.55); }
+  .mood-mixed    { background: linear-gradient(135deg, #9B7EC8, #B89EE0); box-shadow: 0 2px 8px rgba(155,126,200,0.55); }
   /* 低落：冷蓝 */
   .mood-low      { background: linear-gradient(135deg, #4090D8, #62B0F0); box-shadow: 0 2px 8px rgba(64,144,216,0.55); }
   /* 激烈：深红橙 */
@@ -1084,7 +1088,9 @@
     width: 4px; border-radius: 0 3px 3px 0;
   }
   .diary-card.mood-positive::before { background: #3DBE82; }
-  .diary-card.mood-mixed::before    { background: #A47FD8; }
+  .diary-card.mood-calm::before     { background: #F2A7BB; }
+  .diary-card.mood-anxious::before  { background: #E8B84B; }
+  .diary-card.mood-mixed::before    { background: #9B7EC8; }
   .diary-card.mood-low::before      { background: #4090D8; }
   .diary-card.mood-intense::before  { background: #E05030; }
 
@@ -1916,7 +1922,9 @@
       <!-- 情绪颜色图例 -->
       <div class="mood-legend">
         <div class="mood-legend-item"><span class="mood-legend-dot" style="background:#3DBE82;"></span>积极</div>
-        <div class="mood-legend-item"><span class="mood-legend-dot" style="background:#A47FD8;"></span>复杂</div>
+        <div class="mood-legend-item"><span class="mood-legend-dot" style="background:#F2A7BB;"></span>平静</div>
+        <div class="mood-legend-item"><span class="mood-legend-dot" style="background:#E8B84B;"></span>焦虑</div>
+        <div class="mood-legend-item"><span class="mood-legend-dot" style="background:#9B7EC8;"></span>复杂</div>
         <div class="mood-legend-item"><span class="mood-legend-dot" style="background:#4090D8;"></span>低落</div>
         <div class="mood-legend-item"><span class="mood-legend-dot" style="background:#E05030;"></span>激烈</div>
       </div>
@@ -2124,13 +2132,14 @@
 // 模拟数据
 // ══════════════════════════════════════════
 
-// 4类情绪：积极 / 复杂 / 低落 / 激烈
-// 对应轮盘：开心+平静 / 惊讶+困惑 / 悲伤+疲惫+内疚 / 愤怒+焦虑
+// 6类情绪：积极 / 平静 / 焦虑 / 复杂 / 低落 / 激烈
 const MOOD_META = {
   positive: { label: '积极', cls: 'mood-positive', color: '#3DBE82' },
-  mixed:    { label: '复杂', cls: 'mood-mixed',    color: '#A47FD8' },
-  low:      { label: '低落', cls: 'mood-low',      color: '#4090D8' },
-  intense:  { label: '激烈', cls: 'mood-intense',  color: '#E05030' },
+  calm:     { label: '平静', cls: 'mood-calm',     color: '#F2A7BB' },
+  anxious:  { label: '焦虑', cls: 'mood-anxious',  color: '#E8B84B' },
+  mixed:    { label: '复杂', cls: 'mood-mixed',     color: '#9B7EC8' },
+  low:      { label: '低落', cls: 'mood-low',       color: '#4090D8' },
+  intense:  { label: '激烈', cls: 'mood-intense',   color: '#E05030' },
 };
 
 // 日记数据（key = YYYY-MM-DD），由"生成今日日记"动态填入
@@ -2448,14 +2457,20 @@ ${dialogText}
 ---
 
 请根据以上对话，生成一篇简短的情感日记，用 JSON 格式返回，字段如下：
-- mood：情绪类型，只能是 "positive"（积极）/"mixed"（复杂）/"low"（低落）/"intense"（激烈/焦虑）之一
-- chips：情绪标签数组，2-3个词，每个词不超过4字，如 ["焦虑","迷茫"] 或 ["感动","释然","满足"]
+- mood：情绪类型，严格按以下标准选择其一：
+  "positive"（积极）：对话整体正向、轻松愉快、问题已解决或以积极情绪结尾
+  "calm"（平静）：情绪平淡，无明显波动，日常闲聊或轻松分享为主
+  "anxious"（焦虑）：担忧、紧张、压力感、反复纠结、不确定感为主
+  "mixed"（复杂）：仅当对话中存在明确的情绪矛盾冲突——正负情绪交织、两难抉择、说不清楚，缺一不可
+  "low"（低落）：悲伤、失落、委屈、疲惫无力、情绪沉郁为主
+  "intense"（激烈）：愤怒、崩溃、情绪烈度极高、失控感强烈
+- chips：情绪标签数组，2-3个词，每个词不超过4字，如 ["担忧","内耗"] 或 ["感动","释然","满足"]
 - extract：KnowMe视角的今日叙述，60-80字，要包含：发生了什么事（背景和原委）、${diaryUserName}的状态或感受、事情的转折或结果。像一个真正了解这个人的朋友在记录这一天，不用第一人称，不用"用户"，直接用昵称${diaryUserName}，语言自然流畅，不要流水账，要有温度
 - userSaid：${diaryUserName}今天说过的最真实、最有重量的一句话或一段话，直接从对话里原文摘录，保持原话不改动，选那种"说出了真正在意的事"的句子，80字以内
 - insight：KnowMe今天说过的最有价值的一句洞察或回应，原文摘录，选那种真正击中问题核心、或者让${diaryUserName}感到被看见的话，80字以内
 
 只返回 JSON，不要任何其他文字。示例格式：
-{"mood":"mixed","chips":["纠结","疲惫"],"extract":"今天${diaryUserName}在职场关系里兜兜转转，说了很多，却不确定说清楚了没有。","userSaid":"我就是不想让他觉得我软弱，但其实我已经很累了。","insight":"累了不是软弱，是你一直在用力。"}`;
+{"mood":"anxious","chips":["担忧","内耗"],"extract":"今天${diaryUserName}一直在纠结那件事要不要开口，兜兜转转说了很多，心里那根弦始终没有松下来。","userSaid":"我知道说了可能没用，但不说我又憋得慌。","insight":"你不是在纠结说不说，你是在等一个安全感。"}`;
 
   fetch(DIARY_LLM.endpoint, {
     method: 'POST',
@@ -2482,10 +2497,10 @@ ${dialogText}
       showDiaryToast('生成失败，请稍后再试');
       return;
     }
-    const VALID_MOODS = ['positive','mixed','low','intense'];
+    const VALID_MOODS = ['positive','calm','anxious','mixed','low','intense'];
     // 更新 DIARY_DATA，保留用户写的 userNote
     DIARY_DATA[regenDate] = {
-      mood:        VALID_MOODS.includes(result.mood) ? result.mood : 'mixed',
+      mood:        VALID_MOODS.includes(result.mood) ? result.mood : 'calm',
       chips:       Array.isArray(result.chips) ? result.chips.slice(0,3) : [],
       extract:     result.extract  || '今天和 KnowMe 聊了些心里话。',
       userSaid:    result.userSaid || '',
@@ -2582,14 +2597,20 @@ ${dialogText}
 ---
 
 请根据以上对话，生成一篇简短的情感日记，用 JSON 格式返回，字段如下：
-- mood：情绪类型，只能是 "positive"（积极）/"mixed"（复杂）/"low"（低落）/"intense"（激烈/焦虑）之一
-- chips：情绪标签数组，2-3个词，每个词不超过4字，如 ["焦虑","迷茫"] 或 ["感动","释然","满足"]
+- mood：情绪类型，严格按以下标准选择其一：
+  "positive"（积极）：对话整体正向、轻松愉快、问题已解决或以积极情绪结尾
+  "calm"（平静）：情绪平淡，无明显波动，日常闲聊或轻松分享为主
+  "anxious"（焦虑）：担忧、紧张、压力感、反复纠结、不确定感为主
+  "mixed"（复杂）：仅当对话中存在明确的情绪矛盾冲突——正负情绪交织、两难抉择、说不清楚，缺一不可
+  "low"（低落）：悲伤、失落、委屈、疲惫无力、情绪沉郁为主
+  "intense"（激烈）：愤怒、崩溃、情绪烈度极高、失控感强烈
+- chips：情绪标签数组，2-3个词，每个词不超过4字，如 ["担忧","内耗"] 或 ["感动","释然","满足"]
 - extract：KnowMe视角的今日叙述，60-80字，要包含：发生了什么事（背景和原委）、${diaryUserName}的状态或感受、事情的转折或结果。像一个真正了解这个人的朋友在记录这一天，不用第一人称，不用"用户"，直接用昵称${diaryUserName}，语言自然流畅，不要流水账，要有温度
 - userSaid：${diaryUserName}今天说过的最真实、最有重量的一句话或一段话，直接从对话里原文摘录，保持原话不改动，选那种"说出了真正在意的事"的句子，80字以内
 - insight：KnowMe今天说过的最有价值的一句洞察或回应，原文摘录，选那种真正击中问题核心、或者让${diaryUserName}感到被看见的话，80字以内
 
 只返回 JSON，不要任何其他文字。示例格式：
-{"mood":"mixed","chips":["纠结","疲惫"],"extract":"今天${diaryUserName}在职场关系里兜兜转转，说了很多，却不确定说清楚了没有。","userSaid":"我就是不想让他觉得我软弱，但其实我已经很累了。","insight":"累了不是软弱，是你一直在用力。"}`;
+{"mood":"anxious","chips":["担忧","内耗"],"extract":"今天${diaryUserName}一直在纠结那件事要不要开口，兜兜转转说了很多，心里那根弦始终没有松下来。","userSaid":"我知道说了可能没用，但不说我又憋得慌。","insight":"你不是在纠结说不说，你是在等一个安全感。"}`;
 
   fetch(DIARY_LLM.endpoint, {
     method: 'POST',
@@ -2620,9 +2641,9 @@ ${dialogText}
     }
 
     // 合法性兜底
-    const VALID_MOODS = ['positive','mixed','low','intense'];
+    const VALID_MOODS = ['positive','calm','anxious','mixed','low','intense'];
     DIARY_DATA[todayStr] = {
-      mood:      VALID_MOODS.includes(result.mood) ? result.mood : 'mixed',
+      mood:      VALID_MOODS.includes(result.mood) ? result.mood : 'calm',
       chips:     Array.isArray(result.chips) ? result.chips.slice(0,3) : [],
       extract:   result.extract  || '今天和 KnowMe 聊了些心里话。',
       userSaid:  result.userSaid || '',
@@ -2689,10 +2710,12 @@ function goReport() {
 function shareCalendar() {
   // 构建离屏海报 DOM
   const MOOD_META = {
-    positive: { color: '#4CAF7D', label: '积极' },
-    mixed:    { color: '#9B7FD4', label: '复杂' },
-    low:      { color: '#5B8FD4', label: '低落' },
-    intense:  { color: '#E07060', label: '激烈' },
+    positive: { color: '#3DBE82', label: '积极' },
+    calm:     { color: '#F2A7BB', label: '平静' },
+    anxious:  { color: '#E8B84B', label: '焦虑' },
+    mixed:    { color: '#9B7EC8', label: '复杂' },
+    low:      { color: '#4090D8', label: '低落' },
+    intense:  { color: '#E05030', label: '激烈' },
   };
 
   const year = currentYear;
@@ -2709,7 +2732,7 @@ function shareCalendar() {
   }
 
   // 统计情绪分布
-  const moodCount = { positive: 0, mixed: 0, low: 0, intense: 0 };
+  const moodCount = { positive: 0, calm: 0, anxious: 0, mixed: 0, low: 0, intense: 0 };
   let recordDays = 0;
   for (let d = 1; d <= daysInMonth; d++) {
     const key = year + '-' + String(month).padStart(2,'0') + '-' + String(d).padStart(2,'0');
