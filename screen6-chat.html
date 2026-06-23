@@ -2645,10 +2645,37 @@
     /* ──── LLM 配置 ──── */
     const LLM_CONFIG = {
       provider: 'deepseek',
-      apiKey: 'sk-REDACTED',
-      model: 'deepseek-v4-pro',
-      endpoint: 'https://api.deepseek.com/v1/chat/completions',
+      model: 'deepseek-chat',
+      // 走服务器中转，API Key 不暴露在前端
+      endpoint: 'http://106.53.166.135:3000/api/chat',
     };
+
+    /* ──── 服务器认证：游客登录，获取 token ──── */
+    let _serverToken = localStorage.getItem('knowme_token') || '';
+    (async function initServerAuth() {
+      if (_serverToken) return;
+      try {
+        // 用设备指纹作为游客 ID
+        const deviceId = localStorage.getItem('knowme_device_id') || (() => {
+          const id = 'dev_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+          localStorage.setItem('knowme_device_id', id);
+          return id;
+        })();
+        const res = await fetch('http://106.53.166.135:3000/api/auth/guest', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ deviceId })
+        });
+        const data = await res.json();
+        if (data.token) {
+          _serverToken = data.token;
+          localStorage.setItem('knowme_token', data.token);
+          console.log('[Server Auth] 登录成功 userId:', data.userId);
+        }
+      } catch(e) {
+        console.warn('[Server Auth] 服务器认证失败，将直接调用API', e.message);
+      }
+    })();
 
     /* ──── 对话状态 ──── */
     let chatHistory = [];
@@ -2863,28 +2890,52 @@ ${_mainPrompt}${_techSection}`;
     async function callLLM(messages) {
       const cfg = LLM_CONFIG;
       try {
-        const res = await fetch(cfg.endpoint, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${cfg.apiKey}`,
-          },
-          body: JSON.stringify({
-            model: cfg.model,
-            messages: messages,
-            max_tokens: 200,
-            temperature: 0.9,
-            thinking: { type: 'disabled' },  // 关闭思考模式，避免 content 为 null
-          }),
-        });
-        if (!res.ok) {
-          const err = await res.text();
-          console.error('LLM API error:', res.status, err);
-          return '嗯……我刚刚走神了一下，你刚才说的，再说一遍？';
+        // 优先走服务器中转（有token），否则兜底直连 DeepSeek
+        if (_serverToken) {
+          const res = await fetch(cfg.endpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${_serverToken}`,
+            },
+            body: JSON.stringify({
+              model: cfg.model,
+              messages: messages,
+            }),
+          });
+          if (!res.ok) {
+            const err = await res.text();
+            console.error('Server API error:', res.status, err);
+            return '嗯……我刚刚走神了一下，你刚才说的，再说一遍？';
+          }
+          const json = await res.json();
+          const msg = json.choices?.[0]?.message;
+          return (msg?.content || '').trim();
+        } else {
+          // 兜底：直连 DeepSeek（服务器不可用时）
+          const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer sk-REDACTED`,
+            },
+            body: JSON.stringify({
+              model: 'deepseek-chat',
+              messages: messages,
+              max_tokens: 200,
+              temperature: 0.9,
+              thinking: { type: 'disabled' },
+            }),
+          });
+          if (!res.ok) {
+            const err = await res.text();
+            console.error('LLM API error:', res.status, err);
+            return '嗯……我刚刚走神了一下，你刚才说的，再说一遍？';
+          }
+          const json = await res.json();
+          const msg = json.choices[0].message;
+          return (msg.content || msg.reasoning_content || '').trim();
         }
-        const json = await res.json();
-        const msg = json.choices[0].message;
-        return (msg.content || msg.reasoning_content || '').trim();
       } catch (e) {
         console.error('LLM fetch error:', e);
         return '网络好像有点问题，你说的我听到了，稍等……';
