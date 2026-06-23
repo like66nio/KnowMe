@@ -5176,15 +5176,110 @@ ${_mainPrompt}${_techSection}`;
         }, 320);
       };
 
-      // 附件操作（演示用，实际小程序会调用系统API）
+      // 附件操作
       window.attachAction = function(type) {
         closeAttachPanel();
         if (type === 'poster') {
           triggerPosterMode();
+        } else if (type === 'photo' || type === 'camera') {
+          // 触发图片选择
+          const input = document.createElement('input');
+          input.type = 'file';
+          input.accept = 'image/*';
+          if (type === 'camera') input.capture = 'environment'; // 直接调用摄像头
+          input.onchange = async function() {
+            const file = input.files[0];
+            if (!file) return;
+            // 大小限制 10MB
+            if (file.size > 10 * 1024 * 1024) {
+              showToast('图片太大了，请选择10MB以内的图片');
+              return;
+            }
+            // 转 base64
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+              const base64 = e.target.result; // data:image/xxx;base64,....
+              await sendImage(base64, file.type);
+            };
+            reader.readAsDataURL(file);
+          };
+          input.click();
         } else {
           showToast('功能开发中');
         }
       };
+
+      // 发送图片消息
+      async function sendImage(base64DataUrl, mimeType) {
+        const list = document.getElementById('chatList');
+
+        // 用户气泡（显示图片缩略图）
+        const userRow = document.createElement('div');
+        userRow.className = 'user-row';
+        const userMsgId = 'msg' + (++_msgCounter);
+        userRow.dataset.msgid = userMsgId;
+        userRow.innerHTML = `<div class="user-bubble" style="padding:6px;background:rgba(255,255,255,0.18);">
+          <img src="${base64DataUrl}" style="max-width:200px;max-height:200px;border-radius:10px;display:block;" />
+        </div>`;
+        list.appendChild(userRow);
+        bindLongPress(userRow.querySelector('.user-bubble'), userMsgId);
+        scrollBottom();
+
+        // 打字动画
+        const typingRow = document.createElement('div');
+        typingRow.className = 'bubble-row';
+        typingRow.id = 'typingRow';
+        typingRow.innerHTML = `
+          <div class="bubble-avatar">${AVATAR_SVG}</div>
+          <div class="typing-bubble">
+            <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+          </div>`;
+        list.appendChild(typingRow);
+        scrollBottom();
+
+        // 构建带图片的消息
+        if (chatHistory.length === 0) {
+          chatHistory.push({ role: 'system', content: buildSystemPrompt(_assessData) });
+        } else {
+          chatHistory[0].content = buildSystemPrompt(_assessData);
+        }
+
+        // DeepSeek vision 格式：content 是数组，包含 image_url 和 text
+        chatHistory.push({
+          role: 'user',
+          content: [
+            {
+              type: 'image_url',
+              image_url: { url: base64DataUrl }
+            },
+            {
+              type: 'text',
+              text: '（用户发来了一张图片）'
+            }
+          ]
+        });
+
+        const reply = await callLLM(chatHistory);
+        chatHistory.push({ role: 'assistant', content: reply });
+
+        // 移除打字动画，渲染 AI 气泡
+        const tr = document.getElementById('typingRow');
+        if (tr) tr.remove();
+
+        const msgId = 'msg' + (++_msgCounter);
+        const aiRow = document.createElement('div');
+        aiRow.className = 'bubble-row';
+        aiRow.dataset.msgid = msgId;
+        const _displayReply = cleanReply(reply);
+        aiRow.innerHTML = `
+          <div class="bubble-avatar">${AVATAR_SVG}</div>
+          <div class="ai-bubble"><p>${escHtml(_displayReply)}</p></div>`;
+        list.appendChild(aiRow);
+        bindLongPress(aiRow.querySelector('.ai-bubble'), msgId);
+        addReactionStrip(msgId);
+        saveChatLog('zhiji', reply);
+        scrollBottom();
+      }
 
       // 语音录制（按住说话）
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
