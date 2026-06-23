@@ -4775,6 +4775,68 @@ ${_profileSection ? _profileSection + '\n\n---\n\n' : '---\n\n'}${_mainPrompt}${
     })();
     _assessData = loadAssessment();
 
+    /* ── 测评完成时推送到服务器档案 ── */
+    (async function syncAssessmentToServer() {
+      const regSource = localStorage.getItem('zjRegSource');
+      // 只在刚完成测评时推送（zjRegSource === 'done_assess'），避免每次打开都推
+      if (regSource !== 'done_assess' || !_assessData) return;
+      if (!_serverToken) {
+        // token 还没拿到，等 500ms 再试
+        await new Promise(r => setTimeout(r, 500));
+        if (!_serverToken) return;
+      }
+      try {
+        // 把测评数据转成文字描述（复用 buildSystemPrompt 里的逻辑）
+        const COLOR_SCORE = { s1: 3, s2: 2, s3: 0, s4: 1 };
+        const r = _assessData.raw || {};
+        const state = _assessData.state || {};
+        const sc = (q, o) => { const c = r[q] && r[q][o]; return c ? (COLOR_SCORE[c] || 0) : 1; };
+        const scBL = (q, pole) => {
+          const raw = r[q]; if (!raw || raw.bias === undefined) return 1;
+          return raw.bias === pole ? 3 : raw.bias === 0 ? 1 : 0;
+        };
+        const traits = [
+          { name: '理性分析', score: scBL('q1_mode', -1) },
+          { name: '直觉判断', score: scBL('q1_mode', 1) },
+          { name: '果断行动', score: scBL('q5_speed', 1) },
+          { name: '追求品质', score: sc('q7','quality') },
+          { name: '影响力驱动', score: scBL('q12_persuade', -1) },
+          { name: '共情感知', score: (scBL('q14', -1) + scBL('q13', 1)) / 2 },
+          { name: '自信稳定', score: scBL('q17', -1) },
+          { name: '乐观倾向', score: scBL('q18', -1) },
+        ].sort((a, b) => b.score - a.score);
+        const top3 = traits.slice(0, 3).map(t => t.name).join('、');
+        const stateMap = {
+          mood: { happy: '心情不错', down: '心情有些低落', neutral: '心情平稳' },
+          stress: { high: '压力较大', medium: '有一些压力', low: '压力不大' },
+          energy: { full: '精力充沛', ok: '精力还行', low: '有些疲惫' },
+          meaning: { clear: '方向感清晰', lost: '对方向有些迷茫', seeking: '正在寻找方向' },
+          security: { stable: '内心安稳', anxious: '有些不安', neutral: '状态平稳' },
+        };
+        const stateDesc = Object.entries(state)
+          .filter(([k, v]) => stateMap[k] && stateMap[k][v])
+          .map(([k, v]) => stateMap[k][v]).join('，');
+        const traitSummary = `最突出特质：${top3}。当前状态：${stateDesc || '未知'}。`;
+
+        await fetch('http://106.53.166.135:3000/api/assessment', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${_serverToken}`
+          },
+          body: JSON.stringify({
+            assessment_data: _assessData,
+            trait_summary: traitSummary
+          })
+        });
+        console.log('[测评] 已同步到服务器档案');
+        // 同步完立刻拉最新档案（含测评内容）
+        await loadUserProfile();
+      } catch(e) {
+        console.warn('[测评] 同步失败:', e.message);
+      }
+    })();
+
     /* ── 报告预览：复用 screen4 渲染函数 ── */
 
     function buildSpectrumClasses(score) {
