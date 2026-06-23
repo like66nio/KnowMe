@@ -2653,7 +2653,10 @@
     /* ──── 服务器认证：游客登录，获取 token ──── */
     let _serverToken = localStorage.getItem('knowme_token') || '';
     (async function initServerAuth() {
-      if (_serverToken) return;
+      if (_serverToken) {
+        loadUserProfile(); // 已有 token，直接拉档案
+        return;
+      }
       try {
         // 用设备指纹作为游客 ID
         const deviceId = localStorage.getItem('knowme_device_id') || (() => {
@@ -2671,6 +2674,7 @@
           _serverToken = data.token;
           localStorage.setItem('knowme_token', data.token);
           console.log('[Server Auth] 登录成功 userId:', data.userId);
+          loadUserProfile(); // token 就绪，立即拉取用户档案
         }
       } catch(e) {
         console.warn('[Server Auth] 服务器认证失败，将直接调用API', e.message);
@@ -2685,6 +2689,28 @@
     /* ──── 提示词 & 技术手册（从外部文件加载，启动时预取） ──── */
     let _systemPromptText = '';   // system-prompt.md 内容
     let _techManualText   = '';   // tech-manual.md 内容
+    let _userProfileText  = '';   // 用户档案（从服务器拉取）
+
+    // 拉取用户档案，token 就绪后调用
+    async function loadUserProfile() {
+      if (!_serverToken) return;
+      try {
+        const res = await fetch('http://106.53.166.135:3000/api/profile', {
+          headers: { 'Authorization': `Bearer ${_serverToken}` }
+        });
+        const data = await res.json();
+        if (data.profile) {
+          _userProfileText = data.profile;
+          console.log('[档案] 已加载用户档案，长度:', _userProfileText.length);
+          // 如果 chatHistory 的 system prompt 已建立，同步更新
+          if (chatHistory.length > 0 && chatHistory[0].role === 'system') {
+            chatHistory[0].content = buildSystemPrompt(_assessData);
+          }
+        }
+      } catch(e) {
+        console.warn('[档案] 档案加载失败:', e.message);
+      }
+    }
 
     (async function loadPromptFiles() {
       const base = location.href.replace(/\/[^/]*$/, '/');  // 当前目录
@@ -2862,6 +2888,11 @@ ${stateSummary}
         ? `\n\n---\n\n${_techManualText}`
         : '';
 
+      // 用户档案注入（从服务器拉取，异步加载，首次可能为空）
+      const _profileSection = _userProfileText
+        ? `---\n\n# 【用户档案】——这是你对这位用户的记忆，每次对话开始前必须读取\n\n${_userProfileText}\n\n注意：档案是你记住用户的依据。对话中如有待跟进事项，在合适时机自然提及，不要生硬列举。`
+        : '';
+
       const _raw = `# 【当前时间】
 现在是 ${_timeStr}。这是每次对话前实时注入的准确时间，是唯一可信的时间来源。
 
@@ -2869,9 +2900,7 @@ ${stateSummary}
 
 ${assessSection}
 
----
-
-${_mainPrompt}${_techSection}`;
+${_profileSection ? _profileSection + '\n\n---\n\n' : '---\n\n'}${_mainPrompt}${_techSection}`;
 
       // 创始人模式注入
       const _founderSuffix = _founderModeActive
