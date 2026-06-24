@@ -2915,33 +2915,52 @@ ${_profileSection ? _profileSection + '\n\n---\n\n' : '---\n\n'}${_mainPrompt}${
       }
     }
 
-    /* ──── 调用 LLM API ──── */
-    async function callLLM(messages) {
+    /* ──── 调用 LLM API（流式，onDelta 每次收到新内容时回调）──── */
+    async function callLLM(messages, onDelta) {
       const cfg = LLM_CONFIG;
       try {
-        // 优先走服务器中转（有token），否则兜底直连 DeepSeek
         if (_serverToken) {
+          // 走服务器流式中转
           const res = await fetch(cfg.endpoint, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${_serverToken}`,
             },
-            body: JSON.stringify({
-              model: cfg.model,
-              messages: messages,
-            }),
+            body: JSON.stringify({ model: cfg.model, messages, stream: true }),
           });
           if (!res.ok) {
             const err = await res.text();
             console.error('Server API error:', res.status, err);
             return '嗯……我刚刚走神了一下，你刚才说的，再说一遍？';
           }
-          const json = await res.json();
-          const msg = json.choices?.[0]?.message;
-          return (msg?.content || '').trim();
+          const reader = res.body.getReader();
+          const decoder = new TextDecoder();
+          let fullText = '';
+          let buffer = '';
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop();
+            for (const line of lines) {
+              if (!line.startsWith('data: ')) continue;
+              const data = line.slice(6).trim();
+              if (data === '[DONE]') break;
+              try {
+                const json = JSON.parse(data);
+                const delta = json.delta || '';
+                if (delta) {
+                  fullText += delta;
+                  if (onDelta) onDelta(delta, fullText);
+                }
+              } catch(e) {}
+            }
+          }
+          return fullText.trim();
         } else {
-          // 兜底：直连 DeepSeek（服务器不可用时）
+          // 兜底：直连 DeepSeek（非流式）
           const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
             method: 'POST',
             headers: {
@@ -2950,7 +2969,7 @@ ${_profileSection ? _profileSection + '\n\n---\n\n' : '---\n\n'}${_mainPrompt}${
             },
             body: JSON.stringify({
               model: 'deepseek-chat',
-              messages: messages,
+              messages,
               max_tokens: 200,
               temperature: 0.9,
               thinking: { type: 'disabled' },
@@ -2963,7 +2982,9 @@ ${_profileSection ? _profileSection + '\n\n---\n\n' : '---\n\n'}${_mainPrompt}${
           }
           const json = await res.json();
           const msg = json.choices[0].message;
-          return (msg.content || msg.reasoning_content || '').trim();
+          const text = (msg.content || msg.reasoning_content || '').trim();
+          if (onDelta) onDelta(text, text); // 兜底模式一次性触发
+          return text;
         }
       } catch (e) {
         console.error('LLM fetch error:', e);
@@ -3140,11 +3161,7 @@ ${_profileSection ? _profileSection + '\n\n---\n\n' : '---\n\n'}${_mainPrompt}${
       }
       chatHistory.push({ role: 'user', content: text });
 
-      // 调用 LLM
-      const reply = await callLLM(chatHistory);
-      chatHistory.push({ role: 'assistant', content: reply });
-
-      // 移除打字动画，渲染 AI 气泡
+      // 创建 AI 气泡（先空着，流式边收边填）
       const tr = document.getElementById('typingRow');
       if (tr) tr.remove();
 
@@ -3152,11 +3169,22 @@ ${_profileSection ? _profileSection + '\n\n---\n\n' : '---\n\n'}${_mainPrompt}${
       const aiRow = document.createElement('div');
       aiRow.className = 'bubble-row';
       aiRow.dataset.msgid = msgId;
-      const _displayReply = cleanReply(reply);
-      aiRow.innerHTML = `
-        <div class="bubble-avatar">${AVATAR_SVG}</div>
-        <div class="ai-bubble"><p>${escHtml(_displayReply)}</p></div>`;
+      aiRow.innerHTML = `<div class="bubble-avatar">${AVATAR_SVG}</div><div class="ai-bubble"><p></p></div>`;
       list.appendChild(aiRow);
+      scrollBottom();
+      const aiP = aiRow.querySelector('.ai-bubble p');
+
+      // 调用 LLM（流式），每次收到 delta 更新气泡文字
+      const reply = await callLLM(chatHistory, (delta, fullText) => {
+        const _clean = cleanReply(fullText);
+        aiP.innerHTML = escHtml(_clean).replace(/\n/g, '<br>');
+        scrollBottom();
+      });
+
+      chatHistory.push({ role: 'assistant', content: reply });
+      const _displayReply = cleanReply(reply);
+      // 确保最终内容完整（流式结束后统一刷一次）
+      aiP.innerHTML = escHtml(_displayReply).replace(/\n/g, '<br>');
       list.appendChild(makeReactionStrip(msgId));
       bindLongPress(aiRow.querySelector('.ai-bubble'), msgId);
       saveChatLog('zhiji', _displayReply);
