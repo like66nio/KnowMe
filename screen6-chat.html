@@ -2508,10 +2508,6 @@
           <div class="attach-icon-wrap">📷</div>
           <span class="attach-cell-label">拍摄</span>
         </div>
-        <div class="attach-cell" onclick="attachAction('file')">
-          <div class="attach-icon-wrap">📄</div>
-          <span class="attach-cell-label">文件</span>
-        </div>
         <div class="attach-cell" onclick="attachAction('voice-msg')">
           <div class="attach-icon-wrap">🎙️</div>
           <span class="attach-cell-label">语音消息</span>
@@ -5356,13 +5352,16 @@ ${_profileSection ? _profileSection + '\n\n---\n\n' : '---\n\n'}${_mainPrompt}${
         if (type === 'poster') {
           triggerPosterMode();
         } else if (type === 'photo' || type === 'camera') {
-          // 触发图片选择
-          const input = document.createElement('input');
-          input.type = 'file';
-          input.accept = 'image/*';
-          if (type === 'camera') input.capture = 'environment'; // 直接调用摄像头
-          input.onchange = async function() {
-            const file = input.files[0];
+          // 微信 WebView 里动态创建的 file input 必须 append 到 body 才能触发 onchange
+          const fileInput = document.createElement('input');
+          fileInput.type = 'file';
+          fileInput.accept = 'image/*';
+          fileInput.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;width:1px;height:1px;';
+          if (type === 'camera') fileInput.capture = 'environment'; // 直接调用摄像头
+
+          const onDone = async function() {
+            const file = fileInput.files && fileInput.files[0];
+            document.body.removeChild(fileInput);
             if (!file) return;
             // 大小限制 10MB
             if (file.size > 10 * 1024 * 1024) {
@@ -5377,7 +5376,15 @@ ${_profileSection ? _profileSection + '\n\n---\n\n' : '---\n\n'}${_mainPrompt}${
             };
             reader.readAsDataURL(file);
           };
-          input.click();
+
+          fileInput.addEventListener('change', onDone);
+          // 兜底：focus 事件（用户取消选择时部分机型只触发 focus 不触发 change）
+          fileInput.addEventListener('cancel', function() {
+            if (document.body.contains(fileInput)) document.body.removeChild(fileInput);
+          });
+
+          document.body.appendChild(fileInput);
+          fileInput.click();
         } else {
           showToast('功能开发中');
         }

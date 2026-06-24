@@ -707,8 +707,45 @@
 </div><!-- /phone-frame -->
 
 <script>
-  /* ── 倒计时 ── */
+  /* ── 服务器地址 ── */
+  const API_BASE = 'http://106.53.166.135:3000';
+
+  /* ── 工具：显示错误提示 ── */
+  function showTip(msg) {
+    let tip = document.getElementById('_tip');
+    if (!tip) {
+      tip = document.createElement('div');
+      tip.id = '_tip';
+      tip.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:rgba(180,30,30,0.9);color:#fff;padding:10px 20px;border-radius:20px;font-size:14px;z-index:9999;text-align:center;max-width:80vw;';
+      document.body.appendChild(tip);
+    }
+    tip.textContent = msg;
+    tip.style.display = 'block';
+    clearTimeout(tip._t);
+    tip._t = setTimeout(() => { tip.style.display = 'none'; }, 3000);
+  }
+
+  /* ── 倒计时工具 ── */
   let countdown = null;
+
+  function startCountdown(btnId, doneText) {
+    const btn = document.getElementById(btnId);
+    let sec = 60;
+    btn.textContent = `${sec}s 后重发`;
+    btn.classList.add('counting');
+    const timer = setInterval(() => {
+      sec--;
+      btn.textContent = `${sec}s 后重发`;
+      if (sec <= 0) {
+        clearInterval(timer);
+        if (btnId === 'sendCodeBtn') countdown = null;
+        else bindCountdown = null;
+        btn.textContent = doneText || '重新获取';
+        btn.classList.remove('counting');
+      }
+    }, 1000);
+    return timer;
+  }
 
   function onPhoneInput() {
     const phone = document.getElementById('phoneInput').value;
@@ -720,31 +757,36 @@
     }
   }
 
-  function onSendCode() {
+  async function onSendCode() {
     const phone = document.getElementById('phoneInput').value;
     if (phone.length < 11) return;
     if (countdown) return;
 
-    // Demo：自动填入测试验证码
-    const codeInput = document.getElementById('codeInput');
-    codeInput.value = '123456';
-    onCodeInput();
-
     const btn = document.getElementById('sendCodeBtn');
-    let sec = 60;
-    btn.textContent = `${sec}s 后重发`;
+    btn.textContent = '发送中...';
     btn.classList.add('counting');
 
-    countdown = setInterval(() => {
-      sec--;
-      btn.textContent = `${sec}s 后重发`;
-      if (sec <= 0) {
-        clearInterval(countdown);
-        countdown = null;
-        btn.textContent = '重新获取';
+    try {
+      const res = await fetch(`${API_BASE}/api/sms/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone })
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        btn.textContent = '获取验证码';
         btn.classList.remove('counting');
+        showTip(data.error || '发送失败，请稍后重试');
+        return;
       }
-    }, 1000);
+    } catch (e) {
+      btn.textContent = '获取验证码';
+      btn.classList.remove('counting');
+      showTip('网络错误，请检查网络后重试');
+      return;
+    }
+
+    countdown = startCountdown('sendCodeBtn', '重新获取');
   }
 
   function onCodeInput() {
@@ -754,9 +796,37 @@
     btn.disabled = !(phone.length === 11 && code.length === 6);
   }
 
-  function onConfirm() {
-    // 手机号注册：直接进入命名页（已有手机号，无需再绑定）
+  async function onConfirm() {
+    const phone = document.getElementById('phoneInput').value;
+    const code  = document.getElementById('codeInput').value;
+    const btn   = document.getElementById('confirmBtn');
+
+    btn.disabled = true;
+    btn.textContent = '验证中...';
+
+    try {
+      const res = await fetch(`${API_BASE}/api/sms/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, code })
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        btn.disabled = false;
+        btn.textContent = '确认，开始记住你';
+        showTip(data.error || '验证码错误，请重试');
+        return;
+      }
+    } catch (e) {
+      btn.disabled = false;
+      btn.textContent = '确认，开始记住你';
+      showTip('网络错误，请检查网络后重试');
+      return;
+    }
+
+    // 验证成功 → 存手机号，进命名页
     localStorage.setItem('zjIsRegistered', 'true');
+    localStorage.setItem('zjPhone', phone);
     showPage('regPage', 'namingPage');
   }
 
@@ -802,30 +872,36 @@
     }
   }
 
-  function onBindSendCode() {
+  async function onBindSendCode() {
     const phone = document.getElementById('bindPhoneInput').value;
     if (phone.length < 11) return;
     if (bindCountdown) return;
 
-    // Demo：自动填入测试验证码
-    const codeInput = document.getElementById('bindCodeInput');
-    codeInput.value = '123456';
-    onBindCodeInput();
-
     const btn = document.getElementById('bindSendCodeBtn');
-    let sec = 60;
-    btn.textContent = `${sec}s 后重发`;
+    btn.textContent = '发送中...';
     btn.classList.add('counting');
-    bindCountdown = setInterval(() => {
-      sec--;
-      btn.textContent = `${sec}s 后重发`;
-      if (sec <= 0) {
-        clearInterval(bindCountdown);
-        bindCountdown = null;
-        btn.textContent = '重新获取';
+
+    try {
+      const res = await fetch(`${API_BASE}/api/sms/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone })
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        btn.textContent = '获取验证码';
         btn.classList.remove('counting');
+        showTip(data.error || '发送失败，请稍后重试');
+        return;
       }
-    }, 1000);
+    } catch (e) {
+      btn.textContent = '获取验证码';
+      btn.classList.remove('counting');
+      showTip('网络错误，请检查网络后重试');
+      return;
+    }
+
+    bindCountdown = startCountdown('bindSendCodeBtn', '重新获取');
   }
 
   function onBindCodeInput() {
@@ -834,9 +910,37 @@
     document.getElementById('bindConfirmBtn').disabled = !(phone.length === 11 && code.length === 6);
   }
 
-  function onBindConfirm() {
-    // 绑定成功 → 进命名页
+  async function onBindConfirm() {
+    const phone = document.getElementById('bindPhoneInput').value;
+    const code  = document.getElementById('bindCodeInput').value;
+    const btn   = document.getElementById('bindConfirmBtn');
+
+    btn.disabled = true;
+    btn.textContent = '验证中...';
+
+    try {
+      const res = await fetch(`${API_BASE}/api/sms/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, code })
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        btn.disabled = false;
+        btn.textContent = '绑定，更安心';
+        showTip(data.error || '验证码错误，请重试');
+        return;
+      }
+    } catch (e) {
+      btn.disabled = false;
+      btn.textContent = '绑定，更安心';
+      showTip('网络错误，请检查网络后重试');
+      return;
+    }
+
+    // 验证成功 → 存手机号，进命名页
     localStorage.setItem('zjIsRegistered', 'true');
+    localStorage.setItem('zjPhone', phone);
     showPage('bindPage', 'namingPage');
   }
 
