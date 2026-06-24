@@ -4603,7 +4603,11 @@ ${_profileSection ? _profileSection + '\n\n---\n\n' : '---\n\n'}${_mainPrompt}${
         const tab = document.getElementById('tabBar');
         if (tb)  topBarBottom = tb.getBoundingClientRect().bottom;
         if (bb)  bottomBarH   = bb.getBoundingClientRect().height;
-        if (tab) tabBarH      = tab.getBoundingClientRect().height;
+        if (tab) {
+          const tabStyle = window.getComputedStyle(tab);
+          tabBarH = (tabStyle.display === 'none' || tabStyle.visibility === 'hidden' || tabStyle.opacity === '0')
+            ? 0 : tab.getBoundingClientRect().height;
+        }
         // 暴露给表情面板
         window._layoutParams = { tabBarH, bottomBarH, topBarBottom };
         applyLayout(false);
