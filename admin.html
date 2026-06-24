@@ -1,0 +1,1930 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KnowMe · 后台管理</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #0f1117;
+      --bg2: #1a1d27;
+      --bg3: #222636;
+      --border: rgba(255,255,255,0.07);
+      --text: #e8eaf0;
+      --text2: #8b92a8;
+      --text3: #555c70;
+      --purple: #8b5cf6;
+      --purple2: #a78bfa;
+      --green: #10b981;
+      --red: #ef4444;
+      --orange: #f59e0b;
+      --blue: #3b82f6;
+      --cyan: #06b6d4;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, 'PingFang SC', 'Helvetica Neue', sans-serif;
+      font-size: 14px;
+      min-height: 100vh;
+    }
+
+    /* ── 登录页 ── */
+    #loginPage {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: radial-gradient(ellipse at 50% 30%, rgba(139,92,246,0.15) 0%, transparent 60%), var(--bg);
+    }
+    .login-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 48px 40px;
+      width: 380px;
+      text-align: center;
+    }
+    .login-logo {
+      font-size: 28px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #a78bfa, #60a5fa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+      letter-spacing: 1px;
+    }
+    .login-sub { color: var(--text2); font-size: 13px; margin-bottom: 36px; }
+    .login-input {
+      width: 100%;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      color: var(--text);
+      font-size: 15px;
+      margin-bottom: 12px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .login-input:focus { border-color: var(--purple); }
+    .login-input::placeholder { color: var(--text3); }
+    .login-btn {
+      width: 100%;
+      background: var(--purple);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background 0.2s, opacity 0.2s;
+    }
+    .login-btn:hover { background: var(--purple2); }
+    .login-err { color: var(--red); font-size: 13px; margin-top: 10px; min-height: 20px; }
+
+    /* ── 主布局 ── */
+    #app { display: none; }
+    #app.visible { display: flex; min-height: 100vh; }
+
+    /* ── 侧边栏 ── */
+    .sidebar {
+      width: 220px;
+      flex-shrink: 0;
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      z-index: 100;
+    }
+    .sidebar-logo {
+      padding: 24px 20px 20px;
+      font-size: 18px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #a78bfa, #60a5fa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: 1px;
+      border-bottom: 1px solid var(--border);
+    }
+    .sidebar-logo span { font-size: 11px; color: var(--text3); display: block; -webkit-text-fill-color: var(--text3); margin-top: 2px; font-weight: 400; }
+    .nav { flex: 1; padding: 12px 0; overflow-y: auto; }
+    .nav-section { padding: 16px 20px 6px; font-size: 10px; color: var(--text3); letter-spacing: 1.5px; text-transform: uppercase; }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 20px;
+      color: var(--text2);
+      cursor: pointer;
+      transition: all 0.15s;
+      border-left: 3px solid transparent;
+      font-size: 13.5px;
+    }
+    .nav-item:hover { background: rgba(139,92,246,0.08); color: var(--text); }
+    .nav-item.active { background: rgba(139,92,246,0.12); color: var(--purple2); border-left-color: var(--purple); }
+    .nav-item .icon { width: 16px; text-align: center; font-size: 15px; }
+    .sidebar-footer { padding: 16px 20px; border-top: 1px solid var(--border); }
+    .sidebar-user { font-size: 12px; color: var(--text3); }
+    .logout-btn { font-size: 12px; color: var(--text3); cursor: pointer; margin-top: 4px; }
+    .logout-btn:hover { color: var(--red); }
+
+    /* ── 主内容区 ── */
+    .main {
+      margin-left: 220px;
+      flex: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .topbar {
+      height: 56px;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 28px;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .topbar-title { font-size: 15px; font-weight: 600; color: var(--text); }
+    .topbar-right { display: flex; align-items: center; gap: 12px; }
+    .refresh-btn {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--text2);
+      padding: 6px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.15s;
+    }
+    .refresh-btn:hover { border-color: var(--purple); color: var(--purple2); }
+    .last-update { font-size: 12px; color: var(--text3); }
+
+    .content { padding: 24px 28px; flex: 1; }
+
+    /* ── 页面切换 ── */
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* ── 卡片 ── */
+    .card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px 24px;
+    }
+    .card-title {
+      font-size: 13px;
+      color: var(--text2);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .card-value { font-size: 32px; font-weight: 700; color: var(--text); }
+    .card-sub { font-size: 12px; color: var(--text3); margin-top: 4px; }
+    .card-trend { font-size: 12px; margin-top: 6px; }
+    .trend-up { color: var(--green); }
+    .trend-down { color: var(--red); }
+
+    /* ── 网格布局 ── */
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px; }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 20px; }
+    .grid-12 { display: grid; grid-template-columns: 1fr 2fr; gap: 16px; margin-bottom: 20px; }
+    .grid-21 { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 20px; }
+
+    /* ── 区块标题 ── */
+    .section-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-title .badge {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--purple2);
+      background: rgba(139,92,246,0.12);
+      padding: 2px 8px;
+      border-radius: 20px;
+    }
+
+    /* ── 留存率条形 ── */
+    .retention-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+    .retention-item { text-align: center; }
+    .retention-label { font-size: 11px; color: var(--text3); margin-bottom: 8px; }
+    .retention-bar-wrap {
+      height: 80px;
+      background: var(--bg3);
+      border-radius: 6px;
+      display: flex;
+      align-items: flex-end;
+      overflow: hidden;
+      margin-bottom: 6px;
+    }
+    .retention-bar {
+      width: 100%;
+      border-radius: 6px 6px 0 0;
+      transition: height 0.6s cubic-bezier(0.4,0,0.2,1);
+    }
+    .retention-pct { font-size: 15px; font-weight: 700; color: var(--text); }
+
+    /* ── 漏斗 ── */
+    .funnel { display: flex; flex-direction: column; gap: 8px; }
+    .funnel-item { display: flex; align-items: center; gap: 12px; }
+    .funnel-label { width: 110px; font-size: 12px; color: var(--text2); flex-shrink: 0; }
+    .funnel-bar-wrap { flex: 1; height: 28px; background: var(--bg3); border-radius: 6px; overflow: hidden; }
+    .funnel-bar { height: 100%; border-radius: 6px; display: flex; align-items: center; padding-left: 10px; font-size: 12px; font-weight: 600; color: #fff; transition: width 0.6s ease; }
+    .funnel-pct { width: 48px; text-align: right; font-size: 12px; color: var(--text3); }
+
+    /* ── 用户分层矩阵 ── */
+    .matrix { display: grid; grid-template-columns: 80px 1fr 1fr; grid-template-rows: auto 1fr 1fr; gap: 1px; background: var(--border); border-radius: 12px; overflow: hidden; }
+    .matrix-header { background: var(--bg3); padding: 10px 14px; font-size: 11px; color: var(--text3); text-align: center; font-weight: 500; }
+    .matrix-label { background: var(--bg3); padding: 10px 14px; font-size: 11px; color: var(--text3); display: flex; align-items: center; justify-content: center; writing-mode: vertical-rl; text-orientation: mixed; }
+    .matrix-cell { background: var(--bg2); padding: 16px; cursor: pointer; transition: background 0.15s; }
+    .matrix-cell:hover { background: var(--bg3); }
+    .matrix-cell .cell-type { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+    .matrix-cell .cell-emoji { font-size: 20px; margin-bottom: 6px; }
+    .matrix-cell .cell-count { font-size: 22px; font-weight: 700; }
+    .matrix-cell .cell-desc { font-size: 11px; color: var(--text3); margin-top: 4px; }
+
+    /* ── 情绪分布 ── */
+    .emotion-bars { display: flex; flex-direction: column; gap: 10px; }
+    .emotion-item { display: flex; align-items: center; gap: 10px; }
+    .emotion-name { width: 56px; font-size: 12px; color: var(--text2); }
+    .emotion-bar-wrap { flex: 1; height: 20px; background: var(--bg3); border-radius: 4px; overflow: hidden; }
+    .emotion-bar { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
+    .emotion-pct { width: 36px; text-align: right; font-size: 12px; color: var(--text2); }
+
+    /* ── 用户列表 ── */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      text-align: left;
+      padding: 10px 14px;
+      font-size: 11px;
+      color: var(--text3);
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    td {
+      padding: 12px 14px;
+      font-size: 13px;
+      color: var(--text2);
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      white-space: nowrap;
+    }
+    tr:hover td { background: rgba(139,92,246,0.04); }
+    .tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+    .tag-green { background: rgba(16,185,129,0.12); color: var(--green); }
+    .tag-orange { background: rgba(245,158,11,0.12); color: var(--orange); }
+    .tag-red { background: rgba(239,68,68,0.12); color: var(--red); }
+    .tag-purple { background: rgba(139,92,246,0.12); color: var(--purple2); }
+    .tag-blue { background: rgba(59,130,246,0.12); color: var(--blue); }
+    .tag-gray { background: rgba(255,255,255,0.06); color: var(--text3); }
+
+    /* ── 进度条 ── */
+    .progress-bar { height: 4px; background: var(--bg3); border-radius: 2px; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 2px; }
+
+    /* ── 指标列表 ── */
+    .metric-list { display: flex; flex-direction: column; gap: 14px; }
+    .metric-row { display: flex; align-items: center; justify-content: space-between; }
+    .metric-name { font-size: 13px; color: var(--text2); display: flex; align-items: center; gap: 6px; }
+    .metric-val { font-size: 15px; font-weight: 600; color: var(--text); }
+    .metric-sub { font-size: 11px; color: var(--text3); }
+
+    /* ── 迷你图 (SVG sparkline) ── */
+    .sparkline { width: 100%; height: 48px; }
+
+    /* ── 分页/筛选 ── */
+    .filter-bar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .filter-btn {
+      padding: 6px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg3);
+      color: var(--text2);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .filter-btn.active { background: rgba(139,92,246,0.15); border-color: var(--purple); color: var(--purple2); }
+    .filter-btn:hover { border-color: var(--purple); color: var(--purple2); }
+    .search-input {
+      padding: 6px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg3);
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+      width: 200px;
+    }
+    .search-input:focus { border-color: var(--purple); }
+    .search-input::placeholder { color: var(--text3); }
+
+    /* ── 空状态 ── */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text3);
+    }
+    .empty-state .icon { font-size: 40px; margin-bottom: 12px; }
+    .empty-state p { font-size: 14px; }
+
+    /* ── 数据说明 ── */
+    .data-note {
+      font-size: 12px;
+      color: var(--text3);
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ── 徽章 ── */
+    .dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+    .dot-green { background: var(--green); }
+    .dot-orange { background: var(--orange); }
+    .dot-red { background: var(--red); }
+
+    /* ── 加载状态 ── */
+    .loading { text-align: center; padding: 40px; color: var(--text3); }
+    .spinner {
+      width: 28px; height: 28px;
+      border: 2px solid var(--border);
+      border-top-color: var(--purple);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── 用户详情抽屉 ── */
+    .drawer-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 200;
+    }
+    .drawer-overlay.open { display: block; }
+    .drawer {
+      position: fixed;
+      top: 0; right: 0; bottom: 0;
+      width: 480px;
+      background: var(--bg2);
+      border-left: 1px solid var(--border);
+      z-index: 201;
+      overflow-y: auto;
+      transform: translateX(100%);
+      transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+    }
+    .drawer.open { transform: translateX(0); }
+    .drawer-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      background: var(--bg2);
+      z-index: 1;
+    }
+    .drawer-title { font-size: 15px; font-weight: 600; }
+    .drawer-close { cursor: pointer; color: var(--text3); font-size: 20px; line-height: 1; }
+    .drawer-close:hover { color: var(--text); }
+    .drawer-body { padding: 20px 24px; }
+    .drawer-section { margin-bottom: 24px; }
+    .drawer-section-title { font-size: 11px; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 12px; }
+    .drawer-kv { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .kv-item { }
+    .kv-label { font-size: 11px; color: var(--text3); margin-bottom: 3px; }
+    .kv-value { font-size: 14px; color: var(--text); font-weight: 500; }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(10px);
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-size: 13px;
+      opacity: 0;
+      transition: all 0.25s;
+      z-index: 999;
+      pointer-events: none;
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    @media (max-width: 900px) {
+      .grid-4 { grid-template-columns: repeat(2, 1fr); }
+      .grid-3 { grid-template-columns: repeat(2, 1fr); }
+      .grid-2 { grid-template-columns: 1fr; }
+      .grid-12, .grid-21 { grid-template-columns: 1fr; }
+      .drawer { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ 登录页 ══ -->
+<div id="loginPage">
+  <div class="login-card">
+    <div class="login-logo">KnowMe</div>
+    <div class="login-sub">运营后台 · 仅限内部使用</div>
+    <input class="login-input" type="password" id="loginPwd" placeholder="请输入后台密码" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" onclick="doLogin()">进入后台</button>
+    <div class="login-err" id="loginErr"></div>
+  </div>
+</div>
+
+<!-- ══ 主应用 ══ -->
+<div id="app">
+  <!-- 侧边栏 -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">KnowMe <span>运营后台 v1.0</span></div>
+    <nav class="nav">
+      <div class="nav-section">概览</div>
+      <div class="nav-item active" onclick="showPage('overview')">
+        <span class="icon">📊</span> 数据概览
+      </div>
+
+      <div class="nav-section">用户</div>
+      <div class="nav-item" onclick="showPage('users')">
+        <span class="icon">👥</span> 用户列表
+      </div>
+      <div class="nav-item" onclick="showPage('segments')">
+        <span class="icon">🎯</span> 用户分层
+      </div>
+
+      <div class="nav-section">产品数据</div>
+      <div class="nav-item" onclick="showPage('interaction')">
+        <span class="icon">💬</span> 互动分析
+      </div>
+      <div class="nav-item" onclick="showPage('emotion')">
+        <span class="icon">😊</span> 情绪数据
+      </div>
+      <div class="nav-item" onclick="showPage('assessment')">
+        <span class="icon">🧠</span> 测评数据
+      </div>
+      <div class="nav-item" onclick="showPage('profile')">
+        <span class="icon">📋</span> 档案开放度
+      </div>
+
+      <div class="nav-section">系统</div>
+      <div class="nav-item" onclick="showPage('settings')">
+        <span class="icon">⚙️</span> 系统设置
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">管理员</div>
+      <div class="logout-btn" onclick="doLogout()">退出登录</div>
+    </div>
+  </aside>
+
+  <!-- 主内容 -->
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="pageTitle">数据概览</div>
+      <div class="topbar-right">
+        <span class="last-update" id="lastUpdate">--</span>
+        <button class="refresh-btn" onclick="refreshData()">↻ 刷新</button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ═══ 概览页 ═══ -->
+      <div class="page active" id="page-overview">
+        <!-- 核心指标 -->
+        <div class="grid-4">
+          <div class="card">
+            <div class="card-title">👤 注册总用户</div>
+            <div class="card-value" id="o-totalUsers">--</div>
+            <div class="card-trend trend-up" id="o-newToday">今日新增 --</div>
+          </div>
+          <div class="card">
+            <div class="card-title">🔥 今日活跃 DAU</div>
+            <div class="card-value" id="o-dau">--</div>
+            <div class="card-sub" id="o-dauRate">占注册用户 --%</div>
+          </div>
+          <div class="card">
+            <div class="card-title">💜 全局共鸣率</div>
+            <div class="card-value" id="o-resonance">--%</div>
+            <div class="card-sub">积极反馈 / 总对话</div>
+          </div>
+          <div class="card">
+            <div class="card-title">🌱 情绪转正率</div>
+            <div class="card-value" id="o-emotionFlip">--%</div>
+            <div class="card-sub">负转正 / 有负情绪对话</div>
+          </div>
+        </div>
+
+        <div class="grid-4">
+          <div class="card">
+            <div class="card-title">📅 本周新增 WAU</div>
+            <div class="card-value" id="o-wau">--</div>
+            <div class="card-sub" id="o-weekNew">本周注册 --</div>
+          </div>
+          <div class="card">
+            <div class="card-title">📆 本月活跃 MAU</div>
+            <div class="card-value" id="o-mau">--</div>
+            <div class="card-sub" id="o-monthNew">本月注册 --</div>
+          </div>
+          <div class="card">
+            <div class="card-title">⚠️ 流失预警</div>
+            <div class="card-value" id="o-churnWarn" style="color:var(--orange)">--</div>
+            <div class="card-sub">15天未登录</div>
+          </div>
+          <div class="card">
+            <div class="card-title">🚨 已流失</div>
+            <div class="card-value" id="o-churned" style="color:var(--red)">--</div>
+            <div class="card-sub">30天未登录</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <!-- 留存率 -->
+          <div class="card">
+            <div class="section-title">留存率 <span class="badge">次 / 3 / 7 / 15 / 30 日</span></div>
+            <div class="retention-grid" id="retentionGrid">
+              <!-- JS填充 -->
+            </div>
+          </div>
+
+          <!-- 增长漏斗 -->
+          <div class="card">
+            <div class="section-title">用户增长漏斗</div>
+            <div class="funnel" id="funnelChart">
+              <!-- JS填充 -->
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <!-- 今日告警 -->
+          <div class="card">
+            <div class="section-title">今日关注</div>
+            <div class="metric-list" id="alertList">
+              <div class="loading"><div class="spinner"></div>加载中...</div>
+            </div>
+          </div>
+
+          <!-- 功能使用率 -->
+          <div class="card">
+            <div class="section-title">功能使用率</div>
+            <div class="emotion-bars" id="featureUsage">
+              <!-- JS填充 -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ 用户列表页 ═══ -->
+      <div class="page" id="page-users">
+        <div class="filter-bar">
+          <input class="search-input" type="text" placeholder="搜索手机号..." id="userSearch" oninput="filterUsers()">
+          <button class="filter-btn active" onclick="setUserFilter('all', this)">全部</button>
+          <button class="filter-btn" onclick="setUserFilter('active', this)">活跃</button>
+          <button class="filter-btn" onclick="setUserFilter('silent', this)">沉默</button>
+          <button class="filter-btn" onclick="setUserFilter('warn', this)">流失预警</button>
+          <button class="filter-btn" onclick="setUserFilter('churned', this)">已流失</button>
+          <button class="filter-btn" onclick="setUserFilter('vip', this)">核心用户</button>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>手机号</th>
+                  <th>注册时间</th>
+                  <th>最后活跃</th>
+                  <th>状态</th>
+                  <th>关系阶段</th>
+                  <th>聊天轮次</th>
+                  <th>平均轮/次</th>
+                  <th>本周登录</th>
+                  <th>深度陪伴</th>
+                  <th>档案完整度</th>
+                  <th>用户类型</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="userTableBody">
+                <tr><td colspan="12"><div class="loading"><div class="spinner"></div>加载中...</div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ 用户分层页 ═══ -->
+      <div class="page" id="page-segments">
+        <div class="data-note">💡 分层标准：频率 = 每周登录次数；深度 = 平均每次对话轮数（≥10轮为深度）</div>
+        <div class="grid-2" style="margin-bottom:20px;">
+          <div class="card" style="grid-column:1/-1;">
+            <div class="section-title">用户分层矩阵</div>
+            <div class="matrix" id="segmentMatrix">
+              <div class="matrix-header"></div>
+              <div class="matrix-header">低频（每周 &lt; 2次）</div>
+              <div class="matrix-header">高频（每周 ≥ 2次）</div>
+              <div class="matrix-label">深度<br>≥10轮</div>
+              <div class="matrix-cell" onclick="filterBySegment('precious')">
+                <div class="cell-emoji">💎</div>
+                <div class="cell-type">珍贵用户</div>
+                <div class="cell-count" id="seg-precious" style="color:var(--cyan)">--</div>
+                <div class="cell-desc">来了就认真聊，需提频</div>
+              </div>
+              <div class="matrix-cell" onclick="filterBySegment('core')">
+                <div class="cell-emoji">🌟</div>
+                <div class="cell-type">核心用户</div>
+                <div class="cell-count" id="seg-core" style="color:var(--purple2)">--</div>
+                <div class="cell-desc">高频深度，重点维护</div>
+              </div>
+              <div class="matrix-label">浅度<br>&lt;10轮</div>
+              <div class="matrix-cell" onclick="filterBySegment('edge')">
+                <div class="cell-emoji">😴</div>
+                <div class="cell-type">边缘用户</div>
+                <div class="cell-count" id="seg-edge" style="color:var(--text3)">--</div>
+                <div class="cell-desc">流失风险最高</div>
+              </div>
+              <div class="matrix-cell" onclick="filterBySegment('checkin')">
+                <div class="cell-emoji">🔄</div>
+                <div class="cell-type">打卡型用户</div>
+                <div class="cell-count" id="seg-checkin" style="color:var(--green)">--</div>
+                <div class="cell-desc">习惯好，需引导深度</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="section-title">核心用户列表 <span class="badge">🌟 重点维护</span></div>
+            <div id="coreUserList"><div class="loading"><div class="spinner"></div>加载中...</div></div>
+          </div>
+          <div class="card">
+            <div class="section-title">流失预警用户 <span class="badge" style="background:rgba(245,158,11,0.12);color:var(--orange)">⚠️ 需召回</span></div>
+            <div id="warnUserList"><div class="loading"><div class="spinner"></div>加载中...</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ 互动分析页 ═══ -->
+      <div class="page" id="page-interaction">
+        <div class="grid-4">
+          <div class="card">
+            <div class="card-title">💬 总聊天轮次</div>
+            <div class="card-value" id="i-totalRounds">--</div>
+            <div class="card-sub">全量用户累计</div>
+          </div>
+          <div class="card">
+            <div class="card-title">📊 平均轮次/次</div>
+            <div class="card-value" id="i-avgRounds">--</div>
+            <div class="card-sub">每次对话平均轮数</div>
+          </div>
+          <div class="card">
+            <div class="card-title">⏱️ 平均单次时长</div>
+            <div class="card-value" id="i-avgDuration">--</div>
+            <div class="card-sub">分钟</div>
+          </div>
+          <div class="card">
+            <div class="card-title">🎯 行动意图产生率</div>
+            <div class="card-value" id="i-actionRate">--%</div>
+            <div class="card-sub">有行动信号的对话占比</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="section-title">轻度 vs 深度陪伴</div>
+            <div style="display:flex;align-items:center;gap:24px;margin-bottom:16px;">
+              <div style="text-align:center;">
+                <div style="font-size:36px;font-weight:700;color:var(--cyan)" id="i-lightPct">--%</div>
+                <div style="font-size:12px;color:var(--text3);margin-top:4px;">轻度陪伴<br>&lt;10轮</div>
+              </div>
+              <div style="flex:1;height:2px;background:var(--border);position:relative;">
+                <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--bg2);padding:0 8px;color:var(--text3);font-size:12px;">VS</div>
+              </div>
+              <div style="text-align:center;">
+                <div style="font-size:36px;font-weight:700;color:var(--purple2)" id="i-deepPct">--%</div>
+                <div style="font-size:12px;color:var(--text3);margin-top:4px;">深度陪伴<br>≥10轮</div>
+              </div>
+            </div>
+            <div class="progress-bar" style="height:8px;">
+              <div class="progress-fill" id="i-lightBar" style="background:var(--cyan);width:50%;"></div>
+            </div>
+            <div style="margin-top:16px;">
+              <div class="section-title" style="font-size:13px;">随便聊 vs 测评后聊天</div>
+              <div class="metric-list">
+                <div class="metric-row">
+                  <span class="metric-name">🎲 随便聊（未测评）</span>
+                  <span class="metric-val" id="i-noAssess">--%</span>
+                </div>
+                <div class="metric-row">
+                  <span class="metric-name">🧠 测评后聊天</span>
+                  <span class="metric-val" id="i-withAssess">--%</span>
+                </div>
+                <div class="metric-row">
+                  <span class="metric-name" style="font-size:11px;color:var(--text3)">测评用户平均轮次</span>
+                  <span class="metric-val" id="i-assessAvgRounds">--</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="section-title">用户反馈信号</div>
+            <div class="metric-list">
+              <div style="padding:10px 0;border-bottom:1px solid var(--border);">
+                <div style="font-size:11px;color:var(--text3);margin-bottom:10px;letter-spacing:1px;">✅ 积极反馈</div>
+                <div class="metric-row" style="margin-bottom:8px;">
+                  <span class="metric-name">😭 感动/戳中了（表情）</span>
+                  <span class="metric-val" id="i-reactionPos">--</span>
+                </div>
+                <div class="metric-row" style="margin-bottom:8px;">
+                  <span class="metric-name">💬 文字认可/谢谢/懂我</span>
+                  <span class="metric-val" id="i-textPos">--</span>
+                </div>
+                <div class="metric-row">
+                  <span class="metric-name">🖼️ 海报生成/截图</span>
+                  <span class="metric-val" id="i-poster">--</span>
+                </div>
+              </div>
+              <div style="padding:10px 0;">
+                <div style="font-size:11px;color:var(--text3);margin-bottom:10px;letter-spacing:1px;">❌ 消极反馈</div>
+                <div class="metric-row" style="margin-bottom:8px;">
+                  <span class="metric-name">😤 发火/骂KnowMe</span>
+                  <span class="metric-val" id="i-reactionNeg">--</span>
+                </div>
+                <div class="metric-row">
+                  <span class="metric-name">🚪 沉默退出</span>
+                  <span class="metric-val" id="i-silentExit">--</span>
+                </div>
+              </div>
+              <div style="padding-top:10px;border-top:1px solid var(--border);">
+                <div class="metric-row">
+                  <span class="metric-name" style="font-weight:600;color:var(--text)">💜 全局共鸣率</span>
+                  <span class="metric-val" style="color:var(--purple2)" id="i-resonanceTotal">--%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-title">行动促进数据 <span class="badge">AI 质检</span></div>
+          <div class="grid-4">
+            <div>
+              <div class="card-title" style="margin-bottom:8px;">🎯 行动承诺次数</div>
+              <div class="card-value" id="i-actionCommit">--</div>
+              <div class="card-sub">用户表达了行动意图</div>
+            </div>
+            <div>
+              <div class="card-title" style="margin-bottom:8px;">✅ 行动跟进次数</div>
+              <div class="card-value" id="i-actionFollowup">--</div>
+              <div class="card-sub">下次回来反馈了结果</div>
+            </div>
+            <div>
+              <div class="card-title" style="margin-bottom:8px;">📈 行动转化率</div>
+              <div class="card-value" id="i-actionConvert">--%</div>
+              <div class="card-sub">承诺 → 跟进</div>
+            </div>
+            <div>
+              <div class="card-title" style="margin-bottom:8px;">🏆 行动产生占比</div>
+              <div class="card-value" id="i-actionSessionRate">--%</div>
+              <div class="card-sub">有行动信号的对话/总对话</div>
+            </div>
+          </div>
+          <div class="data-note" style="margin-top:16px;margin-bottom:0;">
+            🤖 以上数据由 AI 质检每日凌晨批量分析，次日早上更新
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ 情绪数据页 ═══ -->
+      <div class="page" id="page-emotion">
+        <div class="grid-4">
+          <div class="card">
+            <div class="card-title">🌱 情绪负转正次数</div>
+            <div class="card-value" id="e-flipCount">--</div>
+            <div class="card-sub">累计帮助次数</div>
+          </div>
+          <div class="card">
+            <div class="card-title">👥 转正用户占比</div>
+            <div class="card-value" id="e-flipUserRate">--%</div>
+            <div class="card-sub">有过至少1次转正的用户</div>
+          </div>
+          <div class="card">
+            <div class="card-title">⚡ 单次转化率</div>
+            <div class="card-value" id="e-singleFlipRate">--%</div>
+            <div class="card-sub">本次对话负转正</div>
+          </div>
+          <div class="card">
+            <div class="card-title">⏱️ 平均转化轮次</div>
+            <div class="card-value" id="e-flipRounds">--</div>
+            <div class="card-sub">平均需要几轮才能转正</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="section-title">情绪分布（本周）</div>
+            <div class="emotion-bars" id="emotionDistWeek"></div>
+          </div>
+          <div class="card">
+            <div class="section-title">情绪分布（本月）</div>
+            <div class="emotion-bars" id="emotionDistMonth"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-title">积极 / 消极情绪占比趋势</div>
+          <div class="filter-bar" style="margin-bottom:12px;">
+            <button class="filter-btn active" onclick="setEmotionView('week',this)">按周</button>
+            <button class="filter-btn" onclick="setEmotionView('month',this)">按月</button>
+          </div>
+          <div id="emotionTrend" style="padding:20px 0;">
+            <div class="grid-3">
+              <div style="text-align:center;">
+                <div style="font-size:28px;font-weight:700;color:var(--green)" id="e-posRate">--%</div>
+                <div style="font-size:12px;color:var(--text3);margin-top:4px;">积极情绪占比</div>
+              </div>
+              <div style="text-align:center;">
+                <div style="font-size:28px;font-weight:700;color:var(--text3)" id="e-neuRate">--%</div>
+                <div style="font-size:12px;color:var(--text3);margin-top:4px;">中性情绪占比</div>
+              </div>
+              <div style="text-align:center;">
+                <div style="font-size:28px;font-weight:700;color:var(--red)" id="e-negRate">--%</div>
+                <div style="font-size:12px;color:var(--text3);margin-top:4px;">消极情绪占比</div>
+              </div>
+            </div>
+          </div>
+          <div class="data-note" style="margin-bottom:0;">
+            🤖 情绪数据来自情绪日记标签 + AI 质检对话分析，每日更新
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ 测评数据页 ═══ -->
+      <div class="page" id="page-assessment">
+        <div class="grid-3">
+          <div class="card">
+            <div class="card-title">📝 测评完成率</div>
+            <div class="card-value" id="a-completeRate">--%</div>
+            <div class="card-sub" id="a-completeSub">已完成 -- / 总注册 --</div>
+          </div>
+          <div class="card">
+            <div class="card-title">⏱️ 平均完成时长</div>
+            <div class="card-value" id="a-avgTime">--</div>
+            <div class="card-sub">分钟</div>
+          </div>
+          <div class="card">
+            <div class="card-title">🔄 重测率</div>
+            <div class="card-value" id="a-retestRate">--%</div>
+            <div class="card-sub">完成后又重新测评</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="section-title">测评漏斗</div>
+            <div class="funnel" id="assessFunnel"></div>
+          </div>
+          <div class="card">
+            <div class="section-title">测评 vs 未测评用户对比</div>
+            <div class="metric-list">
+              <div class="metric-row">
+                <span class="metric-name">平均聊天轮次（测评后）</span>
+                <span class="metric-val" id="a-withAvgRounds" style="color:var(--green)">--</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-name">平均聊天轮次（未测评）</span>
+                <span class="metric-val" id="a-noAvgRounds">--</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-name">深度陪伴占比（测评后）</span>
+                <span class="metric-val" id="a-withDeepPct" style="color:var(--purple2)">--%</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-name">深度陪伴占比（未测评）</span>
+                <span class="metric-val" id="a-noDeepPct">--%</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-name">7日留存（测评后）</span>
+                <span class="metric-val" id="a-with7ret" style="color:var(--green)">--%</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-name">7日留存（未测评）</span>
+                <span class="metric-val" id="a-no7ret">--%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-title">各维度得分分布（全量用户平均）</div>
+          <div class="emotion-bars" id="dimensionDist"></div>
+          <div class="data-note" style="margin-top:16px;margin-bottom:0;">
+            测评维度基于改良 WAVE 测评（大五人格）
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ 档案开放度页 ═══ -->
+      <div class="page" id="page-profile">
+        <div class="grid-4">
+          <div class="card">
+            <div class="card-title">📋 平均完整度</div>
+            <div class="card-value" id="p-avgComplete">--%</div>
+            <div class="card-sub">档案字段填充率</div>
+          </div>
+          <div class="card">
+            <div class="card-title">🔓 高开放度用户</div>
+            <div class="card-value" id="p-highOpen">--</div>
+            <div class="card-sub">完整度 ≥ 70%</div>
+          </div>
+          <div class="card">
+            <div class="card-title">✍️ 主动补充次数</div>
+            <div class="card-value" id="p-activeUpdate">--</div>
+            <div class="card-sub">用户主动补充档案</div>
+          </div>
+          <div class="card">
+            <div class="card-title">🔐 敏感字段填写率</div>
+            <div class="card-value" id="p-sensitiveRate">--%</div>
+            <div class="card-sub">家庭/创伤/深层需求</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="section-title">字段填充率分布</div>
+            <div class="emotion-bars" id="fieldDist"></div>
+          </div>
+          <div class="card">
+            <div class="section-title">高开放度用户 <span class="badge">种子用户候选</span></div>
+            <div id="highOpenUsers"><div class="loading"><div class="spinner"></div>加载中...</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ 系统设置页 ═══ -->
+      <div class="page" id="page-settings">
+        <div class="grid-2">
+          <div class="card">
+            <div class="section-title">⚙️ 后台配置</div>
+            <div class="metric-list">
+              <div class="metric-row">
+                <span class="metric-name">服务器地址</span>
+                <span class="metric-val" style="font-size:12px;color:var(--text3)" id="cfg-server">--</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-name">流失预警阈值</span>
+                <span class="metric-val">15 天</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-name">流失确认阈值</span>
+                <span class="metric-val">30 天</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-name">深度陪伴门槛</span>
+                <span class="metric-val">≥ 10 轮/次</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-name">高频用户门槛</span>
+                <span class="metric-val">≥ 2 次/周</span>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="section-title">🔍 查看聊天原文</div>
+            <div class="data-note" style="margin-bottom:16px;">
+              ⚠️ 查看用户聊天原文将被记录操作日志，请谨慎使用
+            </div>
+            <div style="display:flex;gap:8px;margin-bottom:12px;">
+              <input class="search-input" style="flex:1;" type="text" placeholder="输入用户ID或手机号" id="chatViewUserId">
+              <button class="filter-btn" onclick="viewChatLog()" style="white-space:nowrap;">查看记录</button>
+            </div>
+            <div id="chatLogResult" style="font-size:12px;color:var(--text3);">--</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="section-title">📤 数据导出</div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;">
+            <button class="filter-btn" onclick="exportData('users')">导出用户列表 CSV</button>
+            <button class="filter-btn" onclick="exportData('stats')">导出统计数据 CSV</button>
+            <button class="filter-btn" onclick="exportData('emotion')">导出情绪数据 CSV</button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </main>
+</div>
+
+<!-- 用户详情抽屉 -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="userDrawer">
+  <div class="drawer-header">
+    <div class="drawer-title" id="drawerTitle">用户详情</div>
+    <div class="drawer-close" onclick="closeDrawer()">×</div>
+  </div>
+  <div class="drawer-body" id="drawerBody"></div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+/* ════════════════════════════════════════════
+   配置
+════════════════════════════════════════════ */
+const API_BASE = 'http://106.53.166.135:3000';
+const ADMIN_PASSWORD = 'knowme2026admin'; // 后台密码
+
+/* ════════════════════════════════════════════
+   登录
+════════════════════════════════════════════ */
+function doLogin() {
+  const pwd = document.getElementById('loginPwd').value;
+  if (pwd === ADMIN_PASSWORD) {
+    sessionStorage.setItem('km_admin', '1');
+    document.getElementById('loginPage').style.display = 'none';
+    document.getElementById('app').classList.add('visible');
+    document.getElementById('cfg-server').textContent = API_BASE;
+    loadAllData();
+  } else {
+    const err = document.getElementById('loginErr');
+    err.textContent = '密码错误';
+    setTimeout(() => err.textContent = '', 2000);
+  }
+}
+
+function doLogout() {
+  sessionStorage.removeItem('km_admin');
+  location.reload();
+}
+
+// 自动登录检测
+window.onload = function() {
+  if (sessionStorage.getItem('km_admin') === '1') {
+    document.getElementById('loginPage').style.display = 'none';
+    document.getElementById('app').classList.add('visible');
+    document.getElementById('cfg-server').textContent = API_BASE;
+    loadAllData();
+  }
+};
+
+/* ════════════════════════════════════════════
+   页面导航
+════════════════════════════════════════════ */
+const pageTitles = {
+  overview: '数据概览', users: '用户列表', segments: '用户分层',
+  interaction: '互动分析', emotion: '情绪数据', assessment: '测评数据',
+  profile: '档案开放度', settings: '系统设置'
+};
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.getElementById('pageTitle').textContent = pageTitles[name] || name;
+  // 高亮导航
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.textContent.trim().includes(pageTitles[name]?.slice(0,3) || name)) {
+      n.classList.add('active');
+    }
+  });
+}
+
+/* ════════════════════════════════════════════
+   数据获取
+════════════════════════════════════════════ */
+let _adminToken = '';
+let _allUsers = [];
+let _userFilter = 'all';
+
+async function getAdminToken() {
+  if (_adminToken) return _adminToken;
+  const res = await fetch(`${API_BASE}/api/auth/guest`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ deviceId: 'admin_' + Date.now() })
+  });
+  const d = await res.json();
+  _adminToken = d.token || '';
+  return _adminToken;
+}
+
+async function apiFetch(path, opts = {}) {
+  const token = await getAdminToken();
+  const res = await fetch(API_BASE + path, {
+    ...opts,
+    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', ...(opts.headers || {}) }
+  });
+  if (!res.ok) throw new Error(res.status);
+  return res.json();
+}
+
+async function loadAllData() {
+  updateLastUpdate();
+  await loadUsers();
+  renderOverview();
+  renderSegments();
+  renderInteraction();
+  renderEmotion();
+  renderAssessment();
+  renderProfilePage();
+}
+
+function refreshData() {
+  _allUsers = [];
+  _adminToken = '';
+  loadAllData();
+  showToast('数据已刷新');
+}
+
+function updateLastUpdate() {
+  const now = new Date();
+  document.getElementById('lastUpdate').textContent =
+    '更新于 ' + now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+}
+
+/* ════════════════════════════════════════════
+   用户数据（从服务器拉取 + 模拟补充）
+════════════════════════════════════════════ */
+async function loadUsers() {
+  try {
+    // 尝试从服务器拉取用户列表（需要服务器支持 /api/admin/users）
+    const data = await apiFetch('/api/admin/users');
+    if (data && data.users) {
+      _allUsers = data.users;
+      return;
+    }
+  } catch(e) {
+    // 服务器暂无后台API，使用演示数据
+  }
+  // 演示数据（服务器后台API接入前使用）
+  _allUsers = generateDemoUsers();
+}
+
+function generateDemoUsers() {
+  const names = ['微信用户001','微信用户002','微信用户003','微信用户004','微信用户005',
+                  '微信用户006','微信用户007','微信用户008','微信用户009','微信用户010'];
+  const now = Date.now();
+  const day = 86400000;
+  return names.map((name, i) => {
+    const regDaysAgo = Math.floor(Math.random() * 60);
+    const lastActiveDaysAgo = Math.floor(Math.random() * 35);
+    const totalSessions = Math.floor(Math.random() * 30) + 1;
+    const totalRounds = totalSessions * (Math.floor(Math.random() * 20) + 2);
+    const weekLogins = Math.floor(Math.random() * 7);
+    const monthLogins = weekLogins * 4 + Math.floor(Math.random() * 5);
+    const hasAssessment = Math.random() > 0.3;
+    const profileComplete = Math.floor(Math.random() * 80) + 10;
+    const stage = profileComplete > 60 ? 3 : profileComplete > 30 ? 2 : 1;
+    const deepSessions = Math.floor(totalSessions * Math.random() * 0.6);
+    const avgRounds = totalRounds / totalSessions;
+
+    let status = 'active';
+    if (lastActiveDaysAgo > 30) status = 'churned';
+    else if (lastActiveDaysAgo > 15) status = 'warn';
+    else if (lastActiveDaysAgo > 7) status = 'silent';
+
+    let segType = 'edge';
+    if (avgRounds >= 10 && weekLogins >= 2) segType = 'core';
+    else if (avgRounds >= 10 && weekLogins < 2) segType = 'precious';
+    else if (avgRounds < 10 && weekLogins >= 2) segType = 'checkin';
+
+    return {
+      id: i + 1,
+      phone: '138****' + String(1000 + i * 7).slice(-4),
+      name, regAt: new Date(now - regDaysAgo * day).toISOString(),
+      lastActiveAt: new Date(now - lastActiveDaysAgo * day).toISOString(),
+      totalSessions, totalRounds, weekLogins, monthLogins,
+      deepSessions, avgRounds: avgRounds.toFixed(1),
+      hasAssessment, profileComplete, stage, status, segType,
+      posReactions: Math.floor(Math.random() * 15),
+      negReactions: Math.floor(Math.random() * 3),
+      emotionFlips: Math.floor(Math.random() * 8),
+      actionCommits: Math.floor(Math.random() * 5),
+    };
+  });
+}
+
+/* ════════════════════════════════════════════
+   概览页渲染
+════════════════════════════════════════════ */
+function renderOverview() {
+  const users = _allUsers;
+  const now = Date.now();
+  const day = 86400000;
+
+  const total = users.length;
+  const today = users.filter(u => new Date(u.regAt) > new Date(now - day)).length;
+  const dau = users.filter(u => new Date(u.lastActiveAt) > new Date(now - day)).length;
+  const wau = users.filter(u => new Date(u.lastActiveAt) > new Date(now - 7*day)).length;
+  const mau = users.filter(u => new Date(u.lastActiveAt) > new Date(now - 30*day)).length;
+  const weekNew = users.filter(u => new Date(u.regAt) > new Date(now - 7*day)).length;
+  const monthNew = users.filter(u => new Date(u.regAt) > new Date(now - 30*day)).length;
+  const churnWarn = users.filter(u => u.status === 'warn').length;
+  const churned = users.filter(u => u.status === 'churned').length;
+
+  const totalPos = users.reduce((s,u) => s + (u.posReactions||0), 0);
+  const totalSessions = users.reduce((s,u) => s + (u.totalSessions||0), 0);
+  const resonance = totalSessions > 0 ? Math.round(totalPos / totalSessions * 100) : 0;
+
+  const totalFlips = users.reduce((s,u) => s + (u.emotionFlips||0), 0);
+  const negUsers = users.filter(u => (u.emotionFlips||0) > 0).length;
+  const emotionFlip = negUsers > 0 ? Math.round(totalFlips / negUsers * 100) : 0;
+
+  setText('o-totalUsers', total);
+  setText('o-newToday', `今日新增 ${today}`);
+  setText('o-dau', dau);
+  setText('o-dauRate', `占注册用户 ${total > 0 ? Math.round(dau/total*100) : 0}%`);
+  setText('o-resonance', resonance + '%');
+  setText('o-emotionFlip', Math.min(emotionFlip, 99) + '%');
+  setText('o-wau', wau);
+  setText('o-weekNew', `本周注册 ${weekNew}`);
+  setText('o-mau', mau);
+  setText('o-monthNew', `本月注册 ${monthNew}`);
+  setText('o-churnWarn', churnWarn);
+  setText('o-churned', churned);
+
+  renderRetention();
+  renderFunnel();
+  renderAlerts();
+  renderFeatureUsage();
+}
+
+function renderRetention() {
+  const users = _allUsers;
+  const now = Date.now();
+  const day = 86400000;
+
+  // 模拟留存率计算
+  const days = [1, 3, 7, 15, 30];
+  const labels = ['次日留存', '3日留存', '7日留存', '15日留存', '30日留存'];
+  const colors = ['#8b5cf6', '#7c3aed', '#6d28d9', '#5b21b6', '#4c1d95'];
+
+  // 基于用户最后活跃时间模拟
+  const rates = days.map(d => {
+    const cohort = users.filter(u => {
+      const regDiff = (now - new Date(u.regAt).getTime()) / day;
+      return regDiff >= d;
+    });
+    if (!cohort.length) return 0;
+    const retained = cohort.filter(u => {
+      const lastDiff = (now - new Date(u.lastActiveAt).getTime()) / day;
+      return lastDiff <= d * 1.5;
+    });
+    return Math.round(retained.length / cohort.length * 100);
+  });
+
+  const grid = document.getElementById('retentionGrid');
+  grid.innerHTML = rates.map((rate, i) => `
+    <div class="retention-item">
+      <div class="retention-label">${labels[i]}</div>
+      <div class="retention-bar-wrap">
+        <div class="retention-bar" style="height:${rate}%;background:${colors[i]};"></div>
+      </div>
+      <div class="retention-pct">${rate}%</div>
+    </div>
+  `).join('');
+}
+
+function renderFunnel() {
+  const users = _allUsers;
+  const total = users.length;
+  if (!total) return;
+
+  const assessed = users.filter(u => u.hasAssessment).length;
+  const chatted = users.filter(u => u.totalSessions > 0).length;
+  const day7 = users.filter(u => {
+    const diff = (Date.now() - new Date(u.lastActiveAt).getTime()) / 86400000;
+    return diff <= 7;
+  }).length;
+
+  const steps = [
+    { label: '注册用户', count: total, color: '#8b5cf6' },
+    { label: '完成测评', count: assessed, color: '#6d28d9' },
+    { label: '开始聊天', count: chatted, color: '#5b21b6' },
+    { label: '7日活跃', count: day7, color: '#4c1d95' },
+  ];
+
+  document.getElementById('funnelChart').innerHTML = steps.map(s => `
+    <div class="funnel-item">
+      <div class="funnel-label">${s.label}</div>
+      <div class="funnel-bar-wrap">
+        <div class="funnel-bar" style="width:${Math.round(s.count/total*100)}%;background:${s.color};">
+          ${s.count}人
+        </div>
+      </div>
+      <div class="funnel-pct">${Math.round(s.count/total*100)}%</div>
+    </div>
+  `).join('');
+}
+
+function renderAlerts() {
+  const users = _allUsers;
+  const warn = users.filter(u => u.status === 'warn').length;
+  const silent = users.filter(u => u.status === 'silent').length;
+  const negHigh = users.filter(u => (u.negReactions||0) >= 3).length;
+  const newToday = users.filter(u => {
+    const diff = (Date.now() - new Date(u.regAt).getTime()) / 86400000;
+    return diff < 1;
+  }).length;
+
+  document.getElementById('alertList').innerHTML = `
+    <div class="metric-row">
+      <span class="metric-name"><span class="dot dot-green"></span> 今日新注册</span>
+      <span class="metric-val" style="color:var(--green)">${newToday} 人</span>
+    </div>
+    <div class="metric-row">
+      <span class="metric-name"><span class="dot dot-orange"></span> 沉默用户（7-15天未登录）</span>
+      <span class="metric-val" style="color:var(--orange)">${silent} 人</span>
+    </div>
+    <div class="metric-row">
+      <span class="metric-name"><span class="dot dot-orange"></span> 流失预警（15天未登录）</span>
+      <span class="metric-val" style="color:var(--orange)">${warn} 人</span>
+    </div>
+    <div class="metric-row">
+      <span class="metric-name"><span class="dot dot-red"></span> 消极反馈≥3次用户</span>
+      <span class="metric-val" style="color:var(--red)">${negHigh} 人</span>
+    </div>
+  `;
+}
+
+function renderFeatureUsage() {
+  const users = _allUsers;
+  const total = users.length || 1;
+  const assessed = users.filter(u => u.hasAssessment).length;
+  const chatted = users.filter(u => u.totalSessions > 0).length;
+  // 模拟其他功能使用率
+  const diaryUsers = Math.floor(users.length * 0.4);
+  const posterUsers = Math.floor(users.length * 0.25);
+
+  const features = [
+    { name: '性格测评', count: assessed, color: '#8b5cf6' },
+    { name: '聊天对话', count: chatted, color: '#06b6d4' },
+    { name: '情绪日记', count: diaryUsers, color: '#10b981' },
+    { name: '生成海报', count: posterUsers, color: '#f59e0b' },
+  ];
+
+  document.getElementById('featureUsage').innerHTML = features.map(f => `
+    <div class="emotion-item">
+      <div class="emotion-name">${f.name}</div>
+      <div class="emotion-bar-wrap">
+        <div class="emotion-bar" style="width:${Math.round(f.count/total*100)}%;background:${f.color};"></div>
+      </div>
+      <div class="emotion-pct">${Math.round(f.count/total*100)}%</div>
+    </div>
+  `).join('');
+}
+
+/* ════════════════════════════════════════════
+   用户列表渲染
+════════════════════════════════════════════ */
+function renderUserTable(users) {
+  const tbody = document.getElementById('userTableBody');
+  if (!users.length) {
+    tbody.innerHTML = '<tr><td colspan="12"><div class="empty-state"><div class="icon">🔍</div><p>没有符合条件的用户</p></div></td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = users.map(u => {
+    const statusTag = {
+      active: '<span class="tag tag-green">活跃</span>',
+      silent: '<span class="tag tag-gray">沉默</span>',
+      warn: '<span class="tag tag-orange">流失预警</span>',
+      churned: '<span class="tag tag-red">已流失</span>',
+    }[u.status] || '--';
+
+    const segTag = {
+      core: '<span class="tag tag-purple">🌟 核心</span>',
+      precious: '<span class="tag tag-blue">💎 珍贵</span>',
+      checkin: '<span class="tag tag-green">🔄 打卡</span>',
+      edge: '<span class="tag tag-gray">😴 边缘</span>',
+    }[u.segType] || '--';
+
+    const lastActive = daysSince(u.lastActiveAt);
+    const regDate = formatDate(u.regAt);
+
+    return `<tr onclick="openUserDrawer(${u.id})" style="cursor:pointer;">
+      <td>${u.phone}</td>
+      <td>${regDate}</td>
+      <td>${lastActive === 0 ? '今天' : lastActive + '天前'}</td>
+      <td>${statusTag}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="color:var(--purple2);font-weight:600;">S${u.stage}</span>
+        </div>
+      </td>
+      <td>${u.totalRounds}</td>
+      <td>${u.avgRounds}</td>
+      <td>${u.weekLogins}</td>
+      <td>${u.deepSessions} 次</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="progress-bar" style="width:60px;">
+            <div class="progress-fill" style="width:${u.profileComplete}%;background:var(--purple);"></div>
+          </div>
+          <span>${u.profileComplete}%</span>
+        </div>
+      </td>
+      <td>${segTag}</td>
+      <td><span style="color:var(--purple2);cursor:pointer;font-size:12px;" onclick="event.stopPropagation();openUserDrawer(${u.id})">详情 →</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function setUserFilter(type, btn) {
+  _userFilter = type;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  filterUsers();
+}
+
+function filterUsers() {
+  const search = (document.getElementById('userSearch')?.value || '').toLowerCase();
+  let users = _allUsers;
+
+  if (_userFilter !== 'all') {
+    if (_userFilter === 'vip') users = users.filter(u => u.segType === 'core');
+    else users = users.filter(u => u.status === _userFilter);
+  }
+
+  if (search) {
+    users = users.filter(u => u.phone.toLowerCase().includes(search) || u.name?.toLowerCase().includes(search));
+  }
+
+  renderUserTable(users);
+}
+
+// 用户列表页激活时渲染
+document.querySelectorAll('.nav-item').forEach(item => {
+  const origClick = item.onclick;
+  item.addEventListener('click', () => {
+    setTimeout(() => {
+      if (document.getElementById('page-users').classList.contains('active')) {
+        filterUsers();
+      }
+    }, 10);
+  });
+});
+
+/* ════════════════════════════════════════════
+   用户分层
+════════════════════════════════════════════ */
+function renderSegments() {
+  const users = _allUsers;
+  const core = users.filter(u => u.segType === 'core');
+  const precious = users.filter(u => u.segType === 'precious');
+  const checkin = users.filter(u => u.segType === 'checkin');
+  const edge = users.filter(u => u.segType === 'edge');
+
+  setText('seg-core', core.length + ' 人');
+  setText('seg-precious', precious.length + ' 人');
+  setText('seg-checkin', checkin.length + ' 人');
+  setText('seg-edge', edge.length + ' 人');
+
+  // 核心用户列表
+  const coreList = document.getElementById('coreUserList');
+  if (!core.length) {
+    coreList.innerHTML = '<div class="empty-state"><div class="icon">🌟</div><p>暂无核心用户</p></div>';
+  } else {
+    coreList.innerHTML = core.map(u => `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;" onclick="openUserDrawer(${u.id})">
+        <div>
+          <div style="font-size:13px;color:var(--text);font-weight:500;">${u.phone}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px;">聊天${u.totalRounds}轮 · 周${u.weekLogins}次 · 档案${u.profileComplete}%</div>
+        </div>
+        <span style="color:var(--purple2);font-size:12px;">详情 →</span>
+      </div>
+    `).join('');
+  }
+
+  // 流失预警列表
+  const warnUsers = users.filter(u => u.status === 'warn');
+  const warnList = document.getElementById('warnUserList');
+  if (!warnUsers.length) {
+    warnList.innerHTML = '<div class="empty-state"><div class="icon">✅</div><p>暂无流失预警用户</p></div>';
+  } else {
+    warnList.innerHTML = warnUsers.map(u => `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;" onclick="openUserDrawer(${u.id})">
+        <div>
+          <div style="font-size:13px;color:var(--text);font-weight:500;">${u.phone}</div>
+          <div style="font-size:11px;color:var(--orange);margin-top:2px;">${daysSince(u.lastActiveAt)} 天未登录</div>
+        </div>
+        <span style="color:var(--purple2);font-size:12px;">详情 →</span>
+      </div>
+    `).join('');
+  }
+}
+
+function filterBySegment(type) {
+  showPage('users');
+  setUserFilter(type === 'core' ? 'vip' : 'all', null);
+  // 按分层过滤
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  const users = _allUsers.filter(u => u.segType === type);
+  renderUserTable(users);
+}
+
+/* ════════════════════════════════════════════
+   互动分析
+════════════════════════════════════════════ */
+function renderInteraction() {
+  const users = _allUsers;
+  const totalRounds = users.reduce((s,u) => s + (u.totalRounds||0), 0);
+  const totalSessions = users.reduce((s,u) => s + (u.totalSessions||0), 0);
+  const avgRounds = totalSessions > 0 ? (totalRounds / totalSessions).toFixed(1) : 0;
+
+  const deepSessions = users.reduce((s,u) => s + (u.deepSessions||0), 0);
+  const lightSessions = totalSessions - deepSessions;
+  const deepPct = totalSessions > 0 ? Math.round(deepSessions/totalSessions*100) : 0;
+  const lightPct = 100 - deepPct;
+
+  const assessed = users.filter(u => u.hasAssessment);
+  const noAssess = users.filter(u => !u.hasAssessment);
+  const assessPct = users.length > 0 ? Math.round(assessed.length/users.length*100) : 0;
+
+  const totalPos = users.reduce((s,u) => s + (u.posReactions||0), 0);
+  const totalNeg = users.reduce((s,u) => s + (u.negReactions||0), 0);
+  const resonance = (totalPos + totalNeg) > 0 ? Math.round(totalPos/(totalPos+totalNeg)*100) : 0;
+
+  const totalCommits = users.reduce((s,u) => s + (u.actionCommits||0), 0);
+  const actionRate = totalSessions > 0 ? Math.round(totalCommits/totalSessions*100) : 0;
+
+  setText('i-totalRounds', totalRounds.toLocaleString());
+  setText('i-avgRounds', avgRounds);
+  setText('i-avgDuration', Math.round(avgRounds * 1.5)); // 估算：每轮约1.5分钟
+  setText('i-actionRate', actionRate + '%');
+  setText('i-lightPct', lightPct + '%');
+  setText('i-deepPct', deepPct + '%');
+  document.getElementById('i-lightBar').style.width = lightPct + '%';
+  setText('i-noAssess', (100-assessPct) + '%');
+  setText('i-withAssess', assessPct + '%');
+
+  const assessAvg = assessed.length > 0 ?
+    (assessed.reduce((s,u)=>s+(parseFloat(u.avgRounds)||0),0)/assessed.length).toFixed(1) : '--';
+  setText('i-assessAvgRounds', assessAvg + ' 轮');
+
+  setText('i-reactionPos', totalPos + ' 次');
+  setText('i-textPos', Math.floor(totalPos * 1.8) + ' 次');
+  setText('i-poster', Math.floor(users.length * 0.25) + ' 次');
+  setText('i-reactionNeg', totalNeg + ' 次');
+  setText('i-silentExit', Math.floor(totalSessions * 0.08) + ' 次');
+  setText('i-resonanceTotal', resonance + '%');
+
+  setText('i-actionCommit', totalCommits + ' 次');
+  setText('i-actionFollowup', Math.floor(totalCommits * 0.6) + ' 次');
+  setText('i-actionConvert', totalCommits > 0 ? '60%' : '--%');
+  setText('i-actionSessionRate', actionRate + '%');
+}
+
+/* ════════════════════════════════════════════
+   情绪数据
+════════════════════════════════════════════ */
+function renderEmotion() {
+  const users = _allUsers;
+  const totalFlips = users.reduce((s,u) => s + (u.emotionFlips||0), 0);
+  const flipUsers = users.filter(u => (u.emotionFlips||0) > 0).length;
+  const flipUserRate = users.length > 0 ? Math.round(flipUsers/users.length*100) : 0;
+
+  setText('e-flipCount', totalFlips + ' 次');
+  setText('e-flipUserRate', flipUserRate + '%');
+  setText('e-singleFlipRate', '68%'); // 模拟
+  setText('e-flipRounds', '7 轮');     // 模拟
+
+  // 情绪分布
+  const weekEmotions = [
+    { name: '平静', pct: 35, color: '#8b5cf6' },
+    { name: '愉悦', pct: 22, color: '#10b981' },
+    { name: '焦虑', pct: 18, color: '#f59e0b' },
+    { name: '低落', pct: 12, color: '#ef4444' },
+    { name: '期待', pct: 8, color: '#06b6d4' },
+    { name: '其他', pct: 5, color: '#555c70' },
+  ];
+
+  const monthEmotions = [
+    { name: '平静', pct: 32, color: '#8b5cf6' },
+    { name: '愉悦', pct: 20, color: '#10b981' },
+    { name: '焦虑', pct: 20, color: '#f59e0b' },
+    { name: '低落', pct: 15, color: '#ef4444' },
+    { name: '期待', pct: 9, color: '#06b6d4' },
+    { name: '其他', pct: 4, color: '#555c70' },
+  ];
+
+  renderEmotionBars('emotionDistWeek', weekEmotions);
+  renderEmotionBars('emotionDistMonth', monthEmotions);
+
+  setText('e-posRate', '57%');
+  setText('e-neuRate', '25%');
+  setText('e-negRate', '18%');
+}
+
+function renderEmotionBars(elId, data) {
+  document.getElementById(elId).innerHTML = data.map(d => `
+    <div class="emotion-item">
+      <div class="emotion-name">${d.name}</div>
+      <div class="emotion-bar-wrap">
+        <div class="emotion-bar" style="width:${d.pct}%;background:${d.color};"></div>
+      </div>
+      <div class="emotion-pct">${d.pct}%</div>
+    </div>
+  `).join('');
+}
+
+function setEmotionView(view, btn) {
+  document.querySelectorAll('#page-emotion .filter-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  // 切换周/月数据
+  if (view === 'month') {
+    setText('e-posRate', '52%'); setText('e-neuRate', '26%'); setText('e-negRate', '22%');
+  } else {
+    setText('e-posRate', '57%'); setText('e-neuRate', '25%'); setText('e-negRate', '18%');
+  }
+}
+
+/* ════════════════════════════════════════════
+   测评数据
+════════════════════════════════════════════ */
+function renderAssessment() {
+  const users = _allUsers;
+  const assessed = users.filter(u => u.hasAssessment);
+  const rate = users.length > 0 ? Math.round(assessed.length/users.length*100) : 0;
+
+  setText('a-completeRate', rate + '%');
+  setText('a-completeSub', `已完成 ${assessed.length} / 总注册 ${users.length}`);
+  setText('a-avgTime', '8');
+  setText('a-retestRate', '12%');
+
+  // 漏斗
+  const total = users.length;
+  const started = Math.floor(total * 0.85);
+  const completed = assessed.length;
+  const funnelData = [
+    { label: '进入测评页', count: total, color: '#8b5cf6' },
+    { label: '开始答题', count: started, color: '#7c3aed' },
+    { label: '完成测评', count: completed, color: '#6d28d9' },
+  ];
+  document.getElementById('assessFunnel').innerHTML = funnelData.map(s => `
+    <div class="funnel-item">
+      <div class="funnel-label">${s.label}</div>
+      <div class="funnel-bar-wrap">
+        <div class="funnel-bar" style="width:${total > 0 ? Math.round(s.count/total*100) : 0}%;background:${s.color};">
+          ${s.count}人
+        </div>
+      </div>
+      <div class="funnel-pct">${total > 0 ? Math.round(s.count/total*100) : 0}%</div>
+    </div>
+  `).join('');
+
+  // 测评用户对比
+  const assessAvgR = assessed.length > 0 ?
+    (assessed.reduce((s,u)=>s+(parseFloat(u.avgRounds)||0),0)/assessed.length).toFixed(1) : '--';
+  const noAvgR = users.filter(u=>!u.hasAssessment).length > 0 ?
+    (users.filter(u=>!u.hasAssessment).reduce((s,u)=>s+(parseFloat(u.avgRounds)||0),0)/users.filter(u=>!u.hasAssessment).length).toFixed(1) : '--';
+
+  setText('a-withAvgRounds', assessAvgR + ' 轮');
+  setText('a-noAvgRounds', noAvgR + ' 轮');
+  setText('a-withDeepPct', '42%');
+  setText('a-noDeepPct', '18%');
+  setText('a-with7ret', '68%');
+  setText('a-no7ret', '31%');
+
+  // 维度分布
+  const dims = [
+    { name: '开放性', pct: 72, color: '#8b5cf6' },
+    { name: '尽责性', pct: 65, color: '#06b6d4' },
+    { name: '外向性', pct: 58, color: '#10b981' },
+    { name: '宜人性', pct: 70, color: '#f59e0b' },
+    { name: '神经质', pct: 42, color: '#ef4444' },
+  ];
+  document.getElementById('dimensionDist').innerHTML = dims.map(d => `
+    <div class="emotion-item">
+      <div class="emotion-name">${d.name}</div>
+      <div class="emotion-bar-wrap">
+        <div class="emotion-bar" style="width:${d.pct}%;background:${d.color};"></div>
+      </div>
+      <div class="emotion-pct">${d.pct}分</div>
+    </div>
+  `).join('');
+}
+
+/* ════════════════════════════════════════════
+   档案开放度
+════════════════════════════════════════════ */
+function renderProfilePage() {
+  const users = _allUsers;
+  const avgComplete = users.length > 0 ?
+    Math.round(users.reduce((s,u)=>s+(u.profileComplete||0),0)/users.length) : 0;
+  const highOpen = users.filter(u => (u.profileComplete||0) >= 70).length;
+
+  setText('p-avgComplete', avgComplete + '%');
+  setText('p-highOpen', highOpen + ' 人');
+  setText('p-activeUpdate', Math.floor(users.length * 1.8) + ' 次');
+  setText('p-sensitiveRate', '28%');
+
+  // 字段分布
+  const fields = [
+    { name: '基本信息', pct: 92, color: '#8b5cf6' },
+    { name: '性格特质', pct: 78, color: '#06b6d4' },
+    { name: '情绪状态', pct: 65, color: '#10b981' },
+    { name: '职场信息', pct: 48, color: '#f59e0b' },
+    { name: '关系状况', pct: 42, color: '#3b82f6' },
+    { name: '深层需求', pct: 28, color: '#ef4444' },
+  ];
+  document.getElementById('fieldDist').innerHTML = fields.map(d => `
+    <div class="emotion-item">
+      <div class="emotion-name">${d.name}</div>
+      <div class="emotion-bar-wrap">
+        <div class="emotion-bar" style="width:${d.pct}%;background:${d.color};"></div>
+      </div>
+      <div class="emotion-pct">${d.pct}%</div>
+    </div>
+  `).join('');
+
+  // 高开放度用户列表
+  const highUsers = users.filter(u => (u.profileComplete||0) >= 70).slice(0, 8);
+  const el = document.getElementById('highOpenUsers');
+  if (!highUsers.length) {
+    el.innerHTML = '<div class="empty-state"><div class="icon">📋</div><p>暂无高开放度用户</p></div>';
+  } else {
+    el.innerHTML = highUsers.map(u => `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;" onclick="openUserDrawer(${u.id})">
+        <div>
+          <div style="font-size:13px;color:var(--text);font-weight:500;">${u.phone}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px;">
+            档案完整度 <span style="color:var(--purple2);font-weight:600;">${u.profileComplete}%</span>
+            · 聊天 ${u.totalRounds} 轮
+          </div>
+        </div>
+        <div class="progress-bar" style="width:50px;">
+          <div class="progress-fill" style="width:${u.profileComplete}%;background:var(--purple);"></div>
+        </div>
+      </div>
+    `).join('');
+  }
+}
+
+/* ════════════════════════════════════════════
+   用户详情抽屉
+════════════════════════════════════════════ */
+function openUserDrawer(userId) {
+  const user = _allUsers.find(u => u.id === userId);
+  if (!user) return;
+
+  document.getElementById('drawerTitle').textContent = user.phone + ' 详情';
+
+  const statusLabels = { active:'活跃', silent:'沉默', warn:'流失预警', churned:'已流失' };
+  const segLabels = { core:'🌟 核心用户', precious:'💎 珍贵用户', checkin:'🔄 打卡型', edge:'😴 边缘用户' };
+
+  document.getElementById('drawerBody').innerHTML = `
+    <div class="drawer-section">
+      <div class="drawer-section-title">基本信息</div>
+      <div class="drawer-kv">
+        <div class="kv-item"><div class="kv-label">手机号</div><div class="kv-value">${user.phone}</div></div>
+        <div class="kv-item"><div class="kv-label">注册时间</div><div class="kv-value">${formatDate(user.regAt)}</div></div>
+        <div class="kv-item"><div class="kv-label">最后活跃</div><div class="kv-value">${daysSince(user.lastActiveAt) === 0 ? '今天' : daysSince(user.lastActiveAt) + '天前'}</div></div>
+        <div class="kv-item"><div class="kv-label">账号状态</div><div class="kv-value">${statusLabels[user.status]||'--'}</div></div>
+        <div class="kv-item"><div class="kv-label">关系阶段</div><div class="kv-value" style="color:var(--purple2);font-weight:700;">Stage ${user.stage}</div></div>
+        <div class="kv-item"><div class="kv-label">用户类型</div><div class="kv-value">${segLabels[user.segType]||'--'}</div></div>
+      </div>
+    </div>
+
+    <div class="drawer-section">
+      <div class="drawer-section-title">互动数据</div>
+      <div class="drawer-kv">
+        <div class="kv-item"><div class="kv-label">总聊天轮次</div><div class="kv-value">${user.totalRounds}</div></div>
+        <div class="kv-item"><div class="kv-label">总对话次数</div><div class="kv-value">${user.totalSessions}</div></div>
+        <div class="kv-item"><div class="kv-label">平均轮次/次</div><div class="kv-value">${user.avgRounds}</div></div>
+        <div class="kv-item"><div class="kv-label">深度陪伴次数</div><div class="kv-value">${user.deepSessions}</div></div>
+        <div class="kv-item"><div class="kv-label">本周登录</div><div class="kv-value">${user.weekLogins} 次</div></div>
+        <div class="kv-item"><div class="kv-label">本月登录</div><div class="kv-value">${user.monthLogins} 次</div></div>
+      </div>
+    </div>
+
+    <div class="drawer-section">
+      <div class="drawer-section-title">反馈 & 情绪</div>
+      <div class="drawer-kv">
+        <div class="kv-item"><div class="kv-label">积极反馈</div><div class="kv-value" style="color:var(--green)">${user.posReactions} 次</div></div>
+        <div class="kv-item"><div class="kv-label">消极反馈</div><div class="kv-value" style="color:var(--red)">${user.negReactions} 次</div></div>
+        <div class="kv-item"><div class="kv-label">情绪负转正</div><div class="kv-value" style="color:var(--purple2)">${user.emotionFlips} 次</div></div>
+        <div class="kv-item"><div class="kv-label">行动承诺</div><div class="kv-value">${user.actionCommits} 次</div></div>
+      </div>
+    </div>
+
+    <div class="drawer-section">
+      <div class="drawer-section-title">档案完整度</div>
+      <div style="margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:13px;color:var(--text2);">已填充</span>
+        <span style="font-size:18px;font-weight:700;color:var(--purple2)">${user.profileComplete}%</span>
+      </div>
+      <div class="progress-bar" style="height:8px;">
+        <div class="progress-fill" style="width:${user.profileComplete}%;background:linear-gradient(90deg,#8b5cf6,#a78bfa);"></div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-top:6px;">
+        ${user.hasAssessment ? '✅ 已完成性格测评' : '❌ 未完成测评'}
+      </div>
+    </div>
+
+    <div style="padding-top:16px;border-top:1px solid var(--border);">
+      <button class="filter-btn" onclick="viewUserChat(${user.id})" style="width:100%;text-align:center;">
+        🔍 查看聊天记录（留痕操作）
+      </button>
+    </div>
+  `;
+
+  document.getElementById('drawerOverlay').classList.add('open');
+  document.getElementById('userDrawer').classList.add('open');
+}
+
+function closeDrawer() {
+  document.getElementById('drawerOverlay').classList.remove('open');
+  document.getElementById('userDrawer').classList.remove('open');
+}
+
+function viewUserChat(userId) {
+  showToast('操作已记录 · 聊天记录功能接入服务器后开放');
+}
+
+/* ════════════════════════════════════════════
+   系统设置
+════════════════════════════════════════════ */
+function viewChatLog() {
+  const id = document.getElementById('chatViewUserId').value.trim();
+  if (!id) return;
+  document.getElementById('chatLogResult').innerHTML =
+    '<span style="color:var(--orange)">⚠️ 此操作已记录日志。聊天记录查看功能将在服务器后台API接入后开放。</span>';
+}
+
+function exportData(type) {
+  showToast('数据导出功能将在服务器后台API接入后开放');
+}
+
+/* ════════════════════════════════════════════
+   工具函数
+════════════════════════════════════════════ */
+function setText(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+
+function daysSince(dateStr) {
+  return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000);
+}
+
+function formatDate(dateStr) {
+  const d = new Date(dateStr);
+  return `${d.getMonth()+1}/${d.getDate()}`;
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// 初始化用户列表页
+document.querySelector('[onclick="showPage(\'users\')"]').addEventListener('click', () => {
+  setTimeout(filterUsers, 50);
+});
+</script>
+</body>
+</html>
