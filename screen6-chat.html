@@ -3200,13 +3200,17 @@ ${_profileSection ? _profileSection + '\n\n---\n\n' : '---\n\n'}${_mainPrompt}${
         // 每次发消息前刷新 system prompt 里的当前时间，避免跨天/跨小时时间错误
         chatHistory[0].content = buildSystemPrompt(_assessData);
       }
-      chatHistory.push({ role: 'user', content: text });
+      chatHistory.push({ role: 'user', content: text, ts: Date.now() });
 
-      // 上下文截断：只保留 system prompt + 最近40条（约20轮对话）
-      // 超出部分丢弃，长期记忆依赖 archive 每日归纳的档案，符合人类自然记忆规律
-      const MAX_HISTORY = 40;
-      if (chatHistory.length > MAX_HISTORY + 1) {
-        chatHistory = [chatHistory[0], ...chatHistory.slice(-(MAX_HISTORY))];
+      // 截断规则：超过80轮（160条）时，只保留今天的消息
+      // 长期记忆由 archive 每日归纳的档案接住，符合人类自然记忆规律
+      const nonSystemMsgs = chatHistory.slice(1); // 去掉 system prompt
+      if (nonSystemMsgs.length > 160) {
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        const todayTs = todayStart.getTime();
+        const todayMsgs = nonSystemMsgs.filter(m => (m.ts || 0) >= todayTs);
+        chatHistory = [chatHistory[0], ...todayMsgs];
       }
 
       // 创建 AI 气泡（先空着，流式边收边填）
@@ -3242,7 +3246,7 @@ ${_profileSection ? _profileSection + '\n\n---\n\n' : '---\n\n'}${_mainPrompt}${
         list.appendChild(makeReactionStrip(msgId));
         bindLongPress(aiRow.querySelector('.ai-bubble'), msgId);
       } else {
-        chatHistory.push({ role: 'assistant', content: reply });
+        chatHistory.push({ role: 'assistant', content: reply, ts: Date.now() });
         const _displayReply = cleanReply(reply);
         // 确保最终内容完整（流式结束后统一刷一次）
         aiP.innerHTML = escHtml(_displayReply).replace(/\n/g, '<br>');
