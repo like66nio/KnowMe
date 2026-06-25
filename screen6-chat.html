@@ -5552,6 +5552,14 @@ ${_profileSection ? _profileSection + '\n\n---\n\n' : '---\n\n'}${_mainPrompt}${
       async function _uploadAndRecognize(blob, mimeType) {
         voiceRecordBtn.textContent = '识别中…';
         try {
+          // 调试信息
+          showToast('录音:' + blob.size + 'B 格式:' + (mimeType||'?'));
+          await new Promise(r => setTimeout(r, 2500));
+          if (blob.size < 100) {
+            showToast('录音数据为空，请重试');
+            _resetVoiceUI();
+            return;
+          }
           const ext = (mimeType || '').includes('mp4') ? 'mp4' : 'webm';
           const formData = new FormData();
           formData.append('audio', blob, 'voice.' + ext);
@@ -5567,15 +5575,14 @@ ${_profileSection ? _profileSection + '\n\n---\n\n' : '---\n\n'}${_mainPrompt}${
             input.value = data.text.trim();
             autoResize(input);
             updateSendBtn();
-            // 退出语音模式，让用户编辑后手动发送
             _resetVoiceUI();
             setTimeout(() => input.focus(), 100);
           } else {
-            showToast('没听清，请重试');
+            showToast('服务器返回:' + JSON.stringify(data).slice(0,60));
             _resetVoiceUI();
           }
         } catch(e) {
-          showToast('识别失败，请重试');
+          showToast('请求失败:' + e.message.slice(0,40));
           _resetVoiceUI();
         }
       }
