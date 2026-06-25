@@ -2988,6 +2988,51 @@ ${_profileSection ? _profileSection + '\n\n---\n\n' : '---\n\n'}${_mainPrompt}${
       }
     }
 
+    /* ──── 非流式 LLM 调用（用于图片消息等场景）──── */
+    async function callLLMNonStream(messages) {
+      const cfg = LLM_CONFIG;
+      try {
+        const token = _serverToken || '';
+        if (token) {
+          // 走服务器中转，非流式
+          const res = await fetch(cfg.endpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify({ model: cfg.model, messages, stream: false }),
+          });
+          if (!res.ok) {
+            const err = await res.text();
+            console.error('Server API error (non-stream):', res.status, err);
+            return '嗯……我刚刚走神了一下，你刚才说的，再说一遍？';
+          }
+          const json = await res.json();
+          // 服务器中转非流式返回标准 OpenAI 格式
+          const msg = json.choices && json.choices[0] && json.choices[0].message;
+          return (msg && msg.content || '').trim() || '嗯……我刚刚走神了一下，你刚才说的，再说一遍？';
+        } else {
+          // 兜底直连
+          const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer sk-REDACTED`,
+            },
+            body: JSON.stringify({ model: cfg.model, messages, max_tokens: 200, temperature: 0.9, stream: false }),
+          });
+          if (!res.ok) return '嗯……我刚刚走神了一下，你刚才说的，再说一遍？';
+          const json = await res.json();
+          const msg = json.choices[0].message;
+          return (msg.content || '').trim();
+        }
+      } catch (e) {
+        console.error('callLLMNonStream error:', e);
+        return '嗯……我刚刚走神了一下，你刚才说的，再说一遍？';
+      }
+    }
+
     /* ──── 头像 SVG 复用（与 screen1 同款 #zj1） ──── */
     const AVATAR_SVG = `<svg class="bubble-avatar-sm" viewBox="0 0 100 100"><use href="#zj1"/></svg>`;
 
@@ -5432,30 +5477,22 @@ ${_profileSection ? _profileSection + '\n\n---\n\n' : '---\n\n'}${_mainPrompt}${
         list.appendChild(typingRow);
         scrollBottom();
 
-        // 构建带图片的消息
+        // 构建带图片的消息（deepseek-chat 不支持视觉，用文字告知 AI）
         if (chatHistory.length === 0) {
           chatHistory.push({ role: 'system', content: buildSystemPrompt(_assessData) });
         } else {
           chatHistory[0].content = buildSystemPrompt(_assessData);
         }
 
-        // DeepSeek vision 格式：content 是数组，包含 image_url 和 text
+        // 用文字描述图片事件，让 AI 自然回应
         chatHistory.push({
           role: 'user',
-          content: [
-            {
-              type: 'image_url',
-              image_url: { url: base64DataUrl }
-            },
-            {
-              type: 'text',
-              text: '（用户发来了一张图片）'
-            }
-          ]
+          content: '（我发了一张图片给你）'
         });
 
         const ERROR_FALLBACK_IMG = '嗯……我刚刚走神了一下，你刚才说的，再说一遍？';
-        const reply = await callLLM(chatHistory);
+        // 图片消息走非流式，避免流式无回调导致内容丢失
+        const reply = await callLLMNonStream(chatHistory);
 
         // 移除打字动画，渲染 AI 气泡
         const tr = document.getElementById('typingRow');
