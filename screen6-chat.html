@@ -5534,47 +5534,79 @@ ${_profileSection ? _profileSection + '\n\n---\n\n' : '---\n\n'}${_mainPrompt}${
         scrollBottom();
       }
 
-      // 语音录制（按住说话）
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      let _rec = null, _recording = false, _baseText = '';
+      // 语音录制（按住说话）—— MediaRecorder + 腾讯云ASR
+      let _mediaRecorder = null, _audioChunks = [], _recording = false;
 
-      if (SpeechRecognition) {
-        _rec = new SpeechRecognition();
-        _rec.lang = 'zh-CN'; _rec.continuous = false; _rec.interimResults = true;
-
-        _rec.onresult = (e) => {
-          let interim = '';
-          for (let i = e.resultIndex; i < e.results.length; i++) {
-            const t = e.results[i][0].transcript;
-            if (e.results[i].isFinal) { _baseText += t; }
-            else { interim = t; }
-          }
-          input.value = _baseText + interim;
-          autoResize(input);
-          updateSendBtn();
-        };
-        _rec.onend = _rec.onerror = () => {
-          _recording = false;
-          voiceRecordBtn.classList.remove('active');
-          voiceRecordBtn.textContent = '按住 说话';
-          bottomBar.classList.remove('voice-mode');
-          _voiceMode = false;
-          voiceToggleIcon.innerHTML = MIC_SVG;
-          if (input.value.trim()) updateSendBtn();
-        };
+      function _resetVoiceUI() {
+        _recording = false;
+        voiceRecordBtn.classList.remove('active');
+        voiceRecordBtn.textContent = '按住 说话';
+        bottomBar.classList.remove('voice-mode');
+        _voiceMode = false;
+        voiceToggleIcon.innerHTML = MIC_SVG;
       }
 
-      window.startVoiceRecord = function() {
-        if (!_rec) return;
-        _baseText = '';
+      async function _uploadAndRecognize(blob) {
+        voiceRecordBtn.textContent = '识别中…';
+        try {
+          const formData = new FormData();
+          formData.append('audio', blob, 'voice.webm');
+          const token = localStorage.getItem('zjToken') || '';
+          const resp = await fetch('https://knowme.run/api/voice', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` },
+            body: formData,
+          });
+          const data = await resp.json();
+          if (data.text && data.text.trim()) {
+            input.value = data.text.trim();
+            autoResize(input);
+            updateSendBtn();
+            // 退出语音模式，让用户编辑后手动发送
+            _resetVoiceUI();
+            setTimeout(() => input.focus(), 100);
+          } else {
+            showToast('没听清，请重试');
+            _resetVoiceUI();
+          }
+        } catch(e) {
+          showToast('识别失败，请重试');
+          _resetVoiceUI();
+        }
+      }
+
+      window.startVoiceRecord = async function() {
+        if (_recording) return;
+        // 请求麦克风权限
+        let stream;
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        } catch(e) {
+          showToast('请允许麦克风权限');
+          return;
+        }
+        _audioChunks = [];
+        _mediaRecorder = new MediaRecorder(stream);
+        _mediaRecorder.ondataavailable = (e) => {
+          if (e.data && e.data.size > 0) _audioChunks.push(e.data);
+        };
+        _mediaRecorder.onstop = async () => {
+          // 停止所有轨道，释放麦克风
+          stream.getTracks().forEach(t => t.stop());
+          const blob = new Blob(_audioChunks, { type: 'audio/webm' });
+          await _uploadAndRecognize(blob);
+        };
+        _mediaRecorder.start();
         _recording = true;
         voiceRecordBtn.classList.add('active');
         voiceRecordBtn.textContent = '松开 结束';
-        try { _rec.start(); } catch(e) {}
       };
+
       window.stopVoiceRecord = function() {
-        if (!_recording) return;
-        try { _rec.stop(); } catch(e) {}
+        if (!_recording || !_mediaRecorder) return;
+        _mediaRecorder.stop();
+        // UI先不重置，等识别结果回来再重置
+        voiceRecordBtn.classList.remove('active');
       };
 
       // 点击输入框时关闭附件面板
