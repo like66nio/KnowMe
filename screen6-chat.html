@@ -5565,7 +5565,7 @@ ${_profileSection ? _profileSection + '\n\n---\n\n' : '---\n\n'}${_mainPrompt}${
           formData.append('audio', blob, 'voice.' + ext);
           formData.append('mimeType', mimeType || 'audio/webm');
           const token = localStorage.getItem('zjToken') || '';
-          const resp = await fetch('https://knowme.run/api/voice', {
+          const resp = await fetch('http://106.53.166.135:3000/api/voice', {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${token}` },
             body: formData,
