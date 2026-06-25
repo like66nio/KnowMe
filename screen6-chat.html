@@ -5549,11 +5549,13 @@ ${_profileSection ? _profileSection + '\n\n---\n\n' : '---\n\n'}${_mainPrompt}${
         voiceToggleIcon.innerHTML = MIC_SVG;
       }
 
-      async function _uploadAndRecognize(blob) {
+      async function _uploadAndRecognize(blob, mimeType) {
         voiceRecordBtn.textContent = '识别中…';
         try {
+          const ext = (mimeType || '').includes('mp4') ? 'mp4' : 'webm';
           const formData = new FormData();
-          formData.append('audio', blob, 'voice.webm');
+          formData.append('audio', blob, 'voice.' + ext);
+          formData.append('mimeType', mimeType || 'audio/webm');
           const token = localStorage.getItem('zjToken') || '';
           const resp = await fetch('https://knowme.run/api/voice', {
             method: 'POST',
@@ -5592,15 +5594,21 @@ ${_profileSection ? _profileSection + '\n\n---\n\n' : '---\n\n'}${_mainPrompt}${
           return;
         }
         _audioChunks = [];
-        _mediaRecorder = new MediaRecorder(stream);
+        // iOS只支持audio/mp4，Android支持audio/webm，自动选择
+        const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus'
+          : MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm'
+          : MediaRecorder.isTypeSupported('audio/mp4') ? 'audio/mp4'
+          : '';
+        _mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+        const actualMime = _mediaRecorder.mimeType || 'audio/webm';
         _mediaRecorder.ondataavailable = (e) => {
           if (e.data && e.data.size > 0) _audioChunks.push(e.data);
         };
         _mediaRecorder.onstop = async () => {
           // 停止所有轨道，释放麦克风
           stream.getTracks().forEach(t => t.stop());
-          const blob = new Blob(_audioChunks, { type: 'audio/webm' });
-          await _uploadAndRecognize(blob);
+          const blob = new Blob(_audioChunks, { type: actualMime });
+          await _uploadAndRecognize(blob, actualMime);
         };
         _mediaRecorder.start();
         _recording = true;
