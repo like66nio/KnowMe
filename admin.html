@@ -1153,7 +1153,7 @@ async function apiFetch(path, opts = {}) {
   const token = await getAdminToken();
   const res = await fetch(API_BASE + path, {
     ...opts,
-    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', ...(opts.headers || {}) }
+    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', 'x-admin-password': 'knowme2026admin', ...(opts.headers || {}) }
   });
   if (!res.ok) throw new Error(res.status);
   return res.json();
@@ -1191,7 +1191,43 @@ async function loadUsers() {
     // 尝试从服务器拉取用户列表（需要服务器支持 /api/admin/users）
     const data = await apiFetch('/api/admin/users');
     if (data && data.users) {
-      _allUsers = data.users;
+      const now = Date.now();
+      const day = 86400000;
+      _allUsers = data.users.map(u => {
+        const lastDiff = u.lastActiveAt ? (now - new Date(u.lastActiveAt).getTime()) / day : 9999;
+        let status = 'active';
+        if (lastDiff > 30) status = 'churned';
+        else if (lastDiff > 15) status = 'warn';
+        else if (lastDiff > 7) status = 'silent';
+
+        const avgRounds = u.weekLogins > 0 ? (u.totalRounds / Math.max(u.weekLogins, 1)).toFixed(1) : '0';
+        const deepSessions = Math.floor(u.totalRounds / 10);
+        const totalSessions = u.weekLogins || 0;
+
+        let segType = 'edge';
+        if (parseFloat(avgRounds) >= 10 && u.weekLogins >= 2) segType = 'core';
+        else if (parseFloat(avgRounds) >= 10 && u.weekLogins < 2) segType = 'precious';
+        else if (parseFloat(avgRounds) < 10 && u.weekLogins >= 2) segType = 'checkin';
+
+        const stage = u.profileComplete >= 60 ? 3 : u.profileComplete >= 30 ? 2 : 1;
+
+        return {
+          ...u,
+          lastActiveAt: u.lastActiveAt || null,
+          status,
+          avgRounds,
+          deepSessions,
+          totalSessions,
+          segType,
+          stage,
+          hasAssessment: false,
+          posReactions: 0,
+          negReactions: 0,
+          emotionFlips: 0,
+          actionCommits: 0,
+          monthLogins: u.weekLogins * 4,
+        };
+      });
       return;
     }
   } catch(e) {
@@ -1446,7 +1482,7 @@ function renderUserTable(users) {
     return `<tr onclick="openUserDrawer(${u.id})" style="cursor:pointer;">
       <td>${u.phone}</td>
       <td>${regDate}</td>
-      <td>${lastActive === 0 ? '今天' : lastActive + '天前'}</td>
+      <td>${lastActive >= 9999 ? '从未活跃' : lastActive === 0 ? '今天' : lastActive + '天前'}</td>
       <td>${statusTag}</td>
       <td>
         <div style="display:flex;align-items:center;gap:6px;">
@@ -1906,7 +1942,10 @@ function setText(id, val) {
 }
 
 function daysSince(dateStr) {
-  return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000);
+  if (!dateStr) return 9999;
+  const d = new Date(dateStr).getTime();
+  if (isNaN(d)) return 9999;
+  return Math.floor((Date.now() - d) / 86400000);
 }
 
 function formatDate(dateStr) {
