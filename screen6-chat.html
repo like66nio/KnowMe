@@ -5552,9 +5552,6 @@ ${_profileSection ? _profileSection + '\n\n---\n\n' : '---\n\n'}${_mainPrompt}${
       async function _uploadAndRecognize(blob, mimeType) {
         voiceRecordBtn.textContent = '识别中…';
         try {
-          // 调试信息
-          showToast('录音:' + blob.size + 'B 格式:' + (mimeType||'?'));
-          await new Promise(r => setTimeout(r, 2500));
           if (blob.size < 100) {
             showToast('录音数据为空，请重试');
             _resetVoiceUI();
@@ -5571,18 +5568,19 @@ ${_profileSection ? _profileSection + '\n\n---\n\n' : '---\n\n'}${_mainPrompt}${
             body: formData,
           });
           const data = await resp.json();
-          if (data.text && data.text.trim()) {
-            input.value = data.text.trim();
+          const text = data.text || data.Result || '';
+          if (text.trim()) {
+            input.value = text.trim();
             autoResize(input);
             updateSendBtn();
             _resetVoiceUI();
             setTimeout(() => input.focus(), 100);
           } else {
-            showToast('服务器返回:' + JSON.stringify(data).slice(0,60));
+            showToast('没听清，请重试');
             _resetVoiceUI();
           }
         } catch(e) {
-          showToast('请求失败:' + e.message.slice(0,40));
+          showToast('识别失败，请重试');
           _resetVoiceUI();
         }
       }
