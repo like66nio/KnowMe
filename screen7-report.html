@@ -3207,9 +3207,8 @@
   ══════════════════════════════════════ */
 
   const PORTRAIT_LLM = {
-    apiKey: 'sk-REDACTED',
     model: 'deepseek-chat',
-    endpoint: 'https://api.deepseek.com/v1/chat/completions',
+    endpoint: 'http://106.53.166.135:3000/api/chat',
   };
 
   async function generatePortraitSummary(data) {
@@ -3306,11 +3305,12 @@ ${stateSummary}
 只输出那段观察，不加任何前缀或解释。`;
 
     try {
+      const token = localStorage.getItem('zjToken') || localStorage.getItem('zjGuestToken') || '';
       const resp = await fetch(PORTRAIT_LLM.endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${PORTRAIT_LLM.apiKey}`,
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
           model: PORTRAIT_LLM.model,

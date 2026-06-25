@@ -2476,14 +2476,14 @@ ${dialogText}
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${DIARY_LLM.apiKey}`,
+      'Authorization': `Bearer ${DIARY_LLM.getToken()}`,
     },
     body: JSON.stringify({
       model: DIARY_LLM.model,
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.7,
       max_tokens: 700,
-      thinking: { type: 'disabled' },
+      stream: false,
     }),
   })
   .then(r => r.json())
@@ -2547,9 +2547,9 @@ function changeMonth(delta) {
 // ══════════════════════════════════════════
 
 const DIARY_LLM = {
-  apiKey: 'sk-REDACTED',
   model: 'deepseek-chat',
-  endpoint: 'https://api.deepseek.com/v1/chat/completions',
+  endpoint: 'http://106.53.166.135:3000/api/chat',
+  getToken: () => localStorage.getItem('zjToken') || localStorage.getItem('zjGuestToken') || '',
 };
 
 function triggerGenerate() {
@@ -2616,14 +2616,14 @@ ${dialogText}
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${DIARY_LLM.apiKey}`,
+      'Authorization': `Bearer ${DIARY_LLM.getToken()}`,
     },
     body: JSON.stringify({
       model: DIARY_LLM.model,
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.7,
       max_tokens: 700,
-      thinking: { type: 'disabled' },
+      stream: false,
     }),
   })
   .then(r => r.json())
