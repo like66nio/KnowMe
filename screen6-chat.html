@@ -3202,6 +3202,13 @@ ${_profileSection ? _profileSection + '\n\n---\n\n' : '---\n\n'}${_mainPrompt}${
       }
       chatHistory.push({ role: 'user', content: text });
 
+      // 上下文截断：只保留 system prompt + 最近40条（约20轮对话）
+      // 超出部分丢弃，长期记忆依赖 archive 每日归纳的档案，符合人类自然记忆规律
+      const MAX_HISTORY = 40;
+      if (chatHistory.length > MAX_HISTORY + 1) {
+        chatHistory = [chatHistory[0], ...chatHistory.slice(-(MAX_HISTORY))];
+      }
+
       // 创建 AI 气泡（先空着，流式边收边填）
       const tr = document.getElementById('typingRow');
       if (tr) tr.remove();
