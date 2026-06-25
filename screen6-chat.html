@@ -5372,8 +5372,9 @@ ${_profileSection ? _profileSection + '\n\n---\n\n' : '---\n\n'}${_mainPrompt}${
         if (_voiceMode) {
           bottomBar.classList.add('voice-mode');
           voiceToggleIcon.innerHTML = KEYBOARD_SVG;
-          // 关闭附件面板
+          // 关闭附件面板，收起键盘
           if (_attachOpen) closeAttachPanel();
+          input.blur();
         } else {
           bottomBar.classList.remove('voice-mode');
           voiceToggleIcon.innerHTML = MIC_SVG;
@@ -5577,6 +5578,9 @@ ${_profileSection ? _profileSection + '\n\n---\n\n' : '---\n\n'}${_mainPrompt}${
 
       window.startVoiceRecord = async function() {
         if (_recording) return;
+        // 确保键盘不弹出
+        input.blur();
+        document.activeElement && document.activeElement.blur();
         // 请求麦克风权限
         let stream;
         try {
