@@ -3171,19 +3171,33 @@ ${_profileSection ? _profileSection + '\n\n---\n\n' : '---\n\n'}${_mainPrompt}${
       const aiP = aiRow.querySelector('.ai-bubble p');
 
       // 调用 LLM（流式），每次收到 delta 更新气泡文字
+      const ERROR_FALLBACK = '嗯……我刚刚走神了一下，你刚才说的，再说一遍？';
       const reply = await callLLM(chatHistory, (delta, fullText) => {
         const _clean = cleanReply(fullText);
         aiP.innerHTML = escHtml(_clean).replace(/\n/g, '<br>');
         scrollBottom();
       });
 
-      chatHistory.push({ role: 'assistant', content: reply });
-      const _displayReply = cleanReply(reply);
-      // 确保最终内容完整（流式结束后统一刷一次）
-      aiP.innerHTML = escHtml(_displayReply).replace(/\n/g, '<br>');
-      list.appendChild(makeReactionStrip(msgId));
-      bindLongPress(aiRow.querySelector('.ai-bubble'), msgId);
-      saveChatLog('zhiji', _displayReply);
+      const isError = (reply === ERROR_FALLBACK);
+
+      if (isError) {
+        // 网络/服务器出错：撤销刚才推入 chatHistory 的用户消息，避免历史污染
+        if (chatHistory.length > 0 && chatHistory[chatHistory.length - 1].role === 'user') {
+          chatHistory.pop();
+        }
+        // 显示网络错误提示，不存入历史
+        aiP.innerHTML = '网络好像出了点问题，稍等一下再试试？';
+        list.appendChild(makeReactionStrip(msgId));
+        bindLongPress(aiRow.querySelector('.ai-bubble'), msgId);
+      } else {
+        chatHistory.push({ role: 'assistant', content: reply });
+        const _displayReply = cleanReply(reply);
+        // 确保最终内容完整（流式结束后统一刷一次）
+        aiP.innerHTML = escHtml(_displayReply).replace(/\n/g, '<br>');
+        list.appendChild(makeReactionStrip(msgId));
+        bindLongPress(aiRow.querySelector('.ai-bubble'), msgId);
+        saveChatLog('zhiji', _displayReply);
+      }
       scrollBottom();
 
       if (sendBtn) sendBtn.disabled = false;
@@ -5440,25 +5454,35 @@ ${_profileSection ? _profileSection + '\n\n---\n\n' : '---\n\n'}${_mainPrompt}${
           ]
         });
 
+        const ERROR_FALLBACK_IMG = '嗯……我刚刚走神了一下，你刚才说的，再说一遍？';
         const reply = await callLLM(chatHistory);
-        chatHistory.push({ role: 'assistant', content: reply });
 
         // 移除打字动画，渲染 AI 气泡
         const tr = document.getElementById('typingRow');
         if (tr) tr.remove();
 
+        const isError = (reply === ERROR_FALLBACK_IMG);
+        if (isError) {
+          // 撤销刚才加入的图片消息，不存入历史
+          if (chatHistory.length > 0 && chatHistory[chatHistory.length - 1].role === 'user') {
+            chatHistory.pop();
+          }
+        } else {
+          chatHistory.push({ role: 'assistant', content: reply });
+        }
+
         const msgId = 'msg' + (++_msgCounter);
         const aiRow = document.createElement('div');
         aiRow.className = 'bubble-row';
         aiRow.dataset.msgid = msgId;
-        const _displayReply = cleanReply(reply);
+        const _displayReply = isError ? '网络好像出了点问题，稍等一下再试试？' : cleanReply(reply);
         aiRow.innerHTML = `
           <div class="bubble-avatar">${AVATAR_SVG}</div>
           <div class="ai-bubble"><p>${escHtml(_displayReply)}</p></div>`;
         list.appendChild(aiRow);
         bindLongPress(aiRow.querySelector('.ai-bubble'), msgId);
         addReactionStrip(msgId);
-        saveChatLog('zhiji', reply);
+        if (!isError) saveChatLog('zhiji', reply);
         scrollBottom();
       }
 
