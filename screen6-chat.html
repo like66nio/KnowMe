@@ -2450,7 +2450,7 @@
       <!-- 输入行 -->
       <div class="input-row">
         <!-- 左：键盘/语音切换 -->
-        <button class="voice-toggle-btn" id="voiceToggleBtn" onclick="toggleVoiceMode()" title="切换语音输入">
+        <button class="voice-toggle-btn" id="voiceToggleBtn" ontouchend="event.preventDefault();toggleVoiceMode()" onclick="toggleVoiceMode()" title="切换语音输入">
           <!-- 麦克风图标（文字模式时显示，点击切换到语音模式） -->
           <svg id="voiceToggleIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="9" y="2" width="6" height="12" rx="3"/>
@@ -5370,11 +5370,13 @@ ${_profileSection ? _profileSection + '\n\n---\n\n' : '---\n\n'}${_mainPrompt}${
       window.toggleVoiceMode = function() {
         _voiceMode = !_voiceMode;
         if (_voiceMode) {
-          bottomBar.classList.add('voice-mode');
-          voiceToggleIcon.innerHTML = KEYBOARD_SVG;
-          // 关闭附件面板，收起键盘
-          if (_attachOpen) closeAttachPanel();
           input.blur();
+          if (_attachOpen) closeAttachPanel();
+          // 延迟一帧确保blur完成后再切UI，防止微信WebView的blur回调干扰
+          setTimeout(() => {
+            bottomBar.classList.add('voice-mode');
+            voiceToggleIcon.innerHTML = KEYBOARD_SVG;
+          }, 50);
         } else {
           bottomBar.classList.remove('voice-mode');
           voiceToggleIcon.innerHTML = MIC_SVG;
