@@ -2700,7 +2700,7 @@
           console.log('[档案] 已加载用户档案，长度:', _userProfileText.length);
           // 如果 chatHistory 的 system prompt 已建立，同步更新
           if (chatHistory.length > 0 && chatHistory[0].role === 'system') {
-            chatHistory[0].content = buildSystemPrompt(_assessData);
+            chatHistory[0].content = buildSystemPrompt();
           }
         }
       } catch(e) {
@@ -2798,63 +2798,9 @@
     }
 
     /* ──── 构建系统提示 ──── */
-    function buildSystemPrompt(data) {
-      const COLOR_SCORE = { s1: 3, s2: 2, s3: 0, s4: 1 };
-      let traitSummary = '';
-      let stateSummary = '';
-
-      if (data) {
-        const r = data.raw || {};
-        const state = data.state || {};
-        const sc = (q, o) => { const c = r[q] && r[q][o]; return c ? (COLOR_SCORE[c] || 0) : 1; };
-        const scBL = (q, pole) => {
-          const raw = r[q]; if (!raw || raw.bias === undefined) return 1;
-          return raw.bias === pole ? 3 : raw.bias === 0 ? 1 : 0;
-        };
-
-        const traits = [
-          { name: '理性分析', score: scBL('q1_mode', -1) },
-          { name: '直觉判断', score: scBL('q1_mode', 1) },
-          { name: '果断行动', score: scBL('q5_speed', 1) },
-          { name: '追求品质', score: sc('q7','quality') },
-          { name: '影响力驱动', score: scBL('q12_persuade', -1) },
-          { name: '共情感知', score: (scBL('q14', -1) + scBL('q13', 1)) / 2 },
-          { name: '自信稳定', score: scBL('q17', -1) },
-          { name: '乐观倾向', score: scBL('q18', -1) },
-        ].sort((a, b) => b.score - a.score);
-
-        const top3 = traits.slice(0, 3).map(t => t.name).join('、');
-        traitSummary = `用户最突出的特质是：${top3}。`;
-
-        const stateMap = {
-          mood: { happy: '心情不错', down: '心情有些低落', neutral: '心情平稳' },
-          stress: { high: '压力较大', medium: '有一些压力', low: '压力不大' },
-          energy: { full: '精力充沛', ok: '精力还行', low: '有些疲惫' },
-          meaning: { clear: '方向感清晰', lost: '对方向有些迷茫', seeking: '正在寻找方向' },
-          security: { stable: '内心安稳', anxious: '有些不安', neutral: '状态平稳' },
-        };
-        const stateDesc = Object.entries(state)
-          .filter(([k, v]) => stateMap[k] && stateMap[k][v])
-          .map(([k, v]) => stateMap[k][v])
-          .join('，');
-        if (stateDesc) stateSummary = `用户当前状态：${stateDesc}。`;
-      }
-
-      const assessSection = data
-        ? `# 【测评报告】——每次对话开始前必须读取，这是你感知这个用户的基础
-
-关于这位用户：
-${traitSummary}
-${stateSummary}
-
-测评数据是你了解这个人的起点，不是唯一依据。对话中灵活调用，不强行套用。`
-        : `# 【测评报告】
-
-这位用户还没有完成测评，目前没有任何测评数据。
-绝对不要假装知道或猜测用户的性格特质。
-如果用户问"你了解我吗"/"你记得我的测评吗"，直接告诉他/她：「你还没做测评，做完之后我就更了解你了。」`;
-
-      // 【注意】时间不再注入系统prompt，改为注入用户消息，保证系统prompt稳定以命中DeepSeek缓存
+    function buildSystemPrompt() {
+      // 【注意】时间、测评报告、用户档案均不注入系统prompt
+      // 全部作为第一条 user 消息注入，保证系统prompt对所有用户完全一致，最大化DeepSeek缓存命中
 
       // 用户给 KnowMe 起的名字（如果有），替换系统提示词里所有的「KnowMe」和知己
       const _aiName = localStorage.getItem('zjAiName') || 'KnowMe';
@@ -2870,14 +2816,7 @@ ${stateSummary}
         ? `\n\n---\n\n${_techManualText}`
         : '';
 
-      // 用户档案注入（从服务器拉取，异步加载，首次可能为空）
-      const _profileSection = _userProfileText
-        ? `---\n\n# 【用户档案】——这是你对这位用户的记忆，每次对话开始前必须读取\n\n${_userProfileText}\n\n注意：档案是你记住用户的依据。对话中如有待跟进事项，在合适时机自然提及，不要生硬列举。`
-        : '';
-
-      const _raw = `${assessSection}
-
-${_profileSection ? _profileSection + '\n\n---\n\n' : '---\n\n'}${_mainPrompt}${_techSection}`;
+      const _raw = `${_mainPrompt}${_techSection}`;
 
       // 创始人模式注入
       const _founderSuffix = _founderModeActive
@@ -3109,7 +3048,7 @@ ${_profileSection ? _profileSection + '\n\n---\n\n' : '---\n\n'}${_mainPrompt}${
           localStorage.setItem('zjUserNickname', newNick);
           // 更新 system prompt 以便本次对话后续也生效
           if (chatHistory.length > 0 && chatHistory[0].role === 'system') {
-            chatHistory[0].content = buildSystemPrompt(_assessData);
+            chatHistory[0].content = buildSystemPrompt();
           }
         }
       }
@@ -3118,7 +3057,7 @@ ${_profileSection ? _profileSection + '\n\n---\n\n' : '---\n\n'}${_mainPrompt}${
       if (text.includes('铁律、先通情后达理、共情三招、战术地图') && text.includes('880922@Liu')) {
         _founderModeActive = true;
         if (chatHistory.length > 0 && chatHistory[0].role === 'system') {
-          chatHistory[0].content = buildSystemPrompt(_assessData);
+          chatHistory[0].content = buildSystemPrompt();
         }
       }
 
@@ -3177,7 +3116,7 @@ ${_profileSection ? _profileSection + '\n\n---\n\n' : '---\n\n'}${_mainPrompt}${
       // 构建对话历史（懒初始化 system prompt）
       // 系统prompt不含时间，永远稳定，保证DeepSeek缓存命中
       if (chatHistory.length === 0) {
-        chatHistory.push({ role: 'system', content: buildSystemPrompt(_assessData) });
+        chatHistory.push({ role: 'system', content: buildSystemPrompt() });
       }
 
       // 时间前缀注入到用户消息（保证AI知道当前时间，同时不破坏系统prompt缓存）
@@ -3219,8 +3158,41 @@ ${_profileSection ? _profileSection + '\n\n---\n\n' : '---\n\n'}${_mainPrompt}${
       const aiP = aiRow.querySelector('.ai-bubble p');
 
       // 调用 LLM（流式），每次收到 delta 更新气泡文字
+      // 用户档案 + 测评报告注入：作为第一对 user/assistant 消息，不放入 system prompt，避免破坏缓存
       const ERROR_FALLBACK = '嗯……我刚刚走神了一下，你刚才说的，再说一遍？';
-      const reply = await callLLM(chatHistory, (delta, fullText) => {
+
+      // 生成测评报告文字（与之前逻辑一致）
+      const _buildAssessText = (data) => {
+        if (!data) return `# 【测评报告】\n\n这位用户还没有完成测评，目前没有任何测评数据。\n绝对不要假装知道或猜测用户的性格特质。\n如果用户问"你了解我吗"/"你记得我的测评吗"，直接告诉他/她：「你还没做测评，做完之后我就更了解你了。」`;
+        const COLOR_SCORE = { s1: 3, s2: 2, s3: 0, s4: 1 };
+        const r = data.raw || {}, state = data.state || {};
+        const sc = (q, o) => { const c = r[q] && r[q][o]; return c ? (COLOR_SCORE[c] || 0) : 1; };
+        const scBL = (q, pole) => { const raw = r[q]; if (!raw || raw.bias === undefined) return 1; return raw.bias === pole ? 3 : raw.bias === 0 ? 1 : 0; };
+        const traits = [
+          { name: '理性分析', score: scBL('q1_mode', -1) }, { name: '直觉判断', score: scBL('q1_mode', 1) },
+          { name: '果断行动', score: scBL('q5_speed', 1) }, { name: '追求品质', score: sc('q7','quality') },
+          { name: '影响力驱动', score: scBL('q12_persuade', -1) }, { name: '共情感知', score: (scBL('q14', -1) + scBL('q13', 1)) / 2 },
+          { name: '自信稳定', score: scBL('q17', -1) }, { name: '乐观倾向', score: scBL('q18', -1) },
+        ].sort((a, b) => b.score - a.score);
+        const top3 = traits.slice(0, 3).map(t => t.name).join('、');
+        const stateMap = { mood: { happy:'心情不错', down:'心情有些低落', neutral:'心情平稳' }, stress: { high:'压力较大', medium:'有一些压力', low:'压力不大' }, energy: { full:'精力充沛', ok:'精力还行', low:'有些疲惫' }, meaning: { clear:'方向感清晰', lost:'对方向有些迷茫', seeking:'正在寻找方向' }, security: { stable:'内心安稳', anxious:'有些不安', neutral:'状态平稳' } };
+        const stateDesc = Object.entries(state).filter(([k,v]) => stateMap[k] && stateMap[k][v]).map(([k,v]) => stateMap[k][v]).join('，');
+        return `# 【测评报告】——这是你感知这个用户的基础\n\n关于这位用户：\n用户最突出的特质是：${top3}。\n${stateDesc ? `用户当前状态：${stateDesc}。` : ''}\n\n测评数据是你了解这个人的起点，不是唯一依据。对话中灵活调用，不强行套用。`;
+      };
+
+      // 合并测评报告 + 用户档案，作为第一对 user/assistant 消息
+      let _messagesWithProfile = chatHistory;
+      const _assessText = _buildAssessText(_assessData);
+      const _profileParts = [_assessText, _userProfileText ? `# 【用户档案】——这是你对这位用户的记忆\n\n${_userProfileText}\n\n注意：档案是你记住用户的依据。对话中如有待跟进事项，在合适时机自然提及，不要生硬列举。` : ''].filter(Boolean).join('\n\n---\n\n');
+      if (_profileParts) {
+        _messagesWithProfile = [
+          chatHistory[0],
+          { role: 'user', content: `以下是关于这位用户的档案和测评，请在对话中自然运用：\n\n${_profileParts}` },
+          { role: 'assistant', content: '好的，我已了解这位用户的情况。' },
+          ...chatHistory.slice(1)
+        ];
+      }
+      const reply = await callLLM(_messagesWithProfile, (delta, fullText) => {
         const _clean = cleanReply(fullText);
         aiP.innerHTML = escHtml(_clean).replace(/\n/g, '<br>');
         scrollBottom();
@@ -5206,7 +5178,7 @@ ${_profileSection ? _profileSection + '\n\n---\n\n' : '---\n\n'}${_mainPrompt}${
       if (regNudgeEl && regNudgeEl.parentNode) regNudgeEl.parentNode.removeChild(regNudgeEl);
       list.innerHTML = '';  // 清空静态示例
 
-      chatHistory = [{ role: 'system', content: buildSystemPrompt(_assessData) }];
+      chatHistory = [{ role: 'system', content: buildSystemPrompt() }];
 
       savedLog.forEach(entry => {
         if (entry.role === 'user') {
@@ -5272,7 +5244,7 @@ ${_profileSection ? _profileSection + '\n\n---\n\n' : '---\n\n'}${_mainPrompt}${
       scrollBottom();
 
       // 构建请求：根据有无历史记录，生成不同引导语
-      const sysPrompt = buildSystemPrompt(_assessData);
+      const sysPrompt = buildSystemPrompt();
       const priorLog = loadChatLog();
       const hasHistory = priorLog.length > 0;
 
@@ -5485,9 +5457,9 @@ ${_profileSection ? _profileSection + '\n\n---\n\n' : '---\n\n'}${_mainPrompt}${
 
         // 构建带图片的消息（deepseek-chat 不支持视觉，用文字告知 AI）
         if (chatHistory.length === 0) {
-          chatHistory.push({ role: 'system', content: buildSystemPrompt(_assessData) });
+          chatHistory.push({ role: 'system', content: buildSystemPrompt() });
         } else {
-          chatHistory[0].content = buildSystemPrompt(_assessData);
+          chatHistory[0].content = buildSystemPrompt();
         }
 
         // 用文字描述图片事件，让 AI 自然回应
