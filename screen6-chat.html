@@ -2643,7 +2643,7 @@
       provider: 'deepseek',
       model: 'deepseek-chat',
       // 走服务器中转，API Key 不暴露在前端
-      endpoint: 'http://106.53.166.135:3000/api/chat',
+      endpoint: 'https://like-knowme.com/api/chat',
     };
 
     /* ──── 服务器认证：游客登录，获取 token ──── */
@@ -2661,7 +2661,7 @@
           localStorage.setItem('knowme_device_id', id);
           return id;
         })();
-        const res = await fetch('http://106.53.166.135:3000/api/auth/guest', {
+        const res = await fetch('https://like-knowme.com/api/auth/guest', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ deviceId })
@@ -2693,7 +2693,7 @@
     async function loadUserProfile() {
       if (!_serverToken) return;
       try {
-        const res = await fetch('http://106.53.166.135:3000/api/profile', {
+        const res = await fetch('https://like-knowme.com/api/profile', {
           headers: { 'Authorization': `Bearer ${_serverToken}` }
         });
         const data = await res.json();
@@ -2714,8 +2714,8 @@
       try {
         const headers = { 'Authorization': `Bearer ${token}` };
         const [spRes, tmRes] = await Promise.all([
-          fetch('http://106.53.166.135:3000/api/system-prompt', { headers }),
-          fetch('http://106.53.166.135:3000/api/tech-manual',   { headers })
+          fetch('https://like-knowme.com/api/system-prompt', { headers }),
+          fetch('https://like-knowme.com/api/tech-manual',   { headers })
         ]);
         if (spRes.ok) _systemPromptText = await spRes.text();
         if (tmRes.ok) _techManualText   = await tmRes.text();
@@ -4848,7 +4848,7 @@
           .map(([k, v]) => stateMap[k][v]).join('，');
         const traitSummary = `最突出特质：${top3}。当前状态：${stateDesc || '未知'}。`;
 
-        await fetch('http://106.53.166.135:3000/api/assessment', {
+        await fetch('https://like-knowme.com/api/assessment', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -5494,7 +5494,7 @@
           formData.append('audio', blob, 'voice.' + ext);
           formData.append('mimeType', mimeType || 'audio/webm');
           const token = localStorage.getItem('zjToken') || '';
-          const resp = await fetch('https://106.53.166.135/api/voice', {
+          const resp = await fetch('https://like-knowme.com/api/voice', {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${token}` },
             body: formData,
