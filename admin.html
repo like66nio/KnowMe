@@ -1194,22 +1194,28 @@ async function loadUsers() {
       const now = Date.now();
       const day = 86400000;
       _allUsers = data.users.map(u => {
-        const lastDiff = u.lastActiveAt ? (now - new Date(u.lastActiveAt).getTime()) / day : 9999;
+        // 流失判断：从未活跃的新用户（注册<7天）不算流失
+        const regDiff = (now - new Date(u.regAt).getTime()) / day;
+        const lastDiff = u.lastActiveAt ? (now - new Date(u.lastActiveAt).getTime()) / day : null;
         let status = 'active';
-        if (lastDiff > 30) status = 'churned';
+        if (lastDiff === null) {
+          // 从未活跃：注册超过7天才算流失，否则是新用户
+          status = regDiff > 7 ? 'churned' : 'active';
+        } else if (lastDiff > 30) status = 'churned';
         else if (lastDiff > 15) status = 'warn';
         else if (lastDiff > 7) status = 'silent';
 
-        const avgRounds = u.weekLogins > 0 ? (u.totalRounds / Math.max(u.weekLogins, 1)).toFixed(1) : '0';
-        const deepSessions = Math.floor(u.totalRounds / 10);
-        const totalSessions = u.weekLogins || 0;
+        // 直接使用服务器返回的真实值
+        const avgRounds = u.avgRounds || '0';
+        const totalSessions = u.totalSessions || 0;
+        const deepSessions = u.deepSessions || 0;
+        const monthLogins = u.monthLogins || 0;
 
+        // 用户分层：基于真实avgRounds和weekLogins
         let segType = 'edge';
         if (parseFloat(avgRounds) >= 10 && u.weekLogins >= 2) segType = 'core';
         else if (parseFloat(avgRounds) >= 10 && u.weekLogins < 2) segType = 'precious';
         else if (parseFloat(avgRounds) < 10 && u.weekLogins >= 2) segType = 'checkin';
-
-        const stage = u.profileComplete >= 60 ? 3 : u.profileComplete >= 30 ? 2 : 1;
 
         return {
           ...u,
@@ -1218,14 +1224,10 @@ async function loadUsers() {
           avgRounds,
           deepSessions,
           totalSessions,
+          monthLogins,
           segType,
-          stage,
-          hasAssessment: false,
-          posReactions: 0,
-          negReactions: 0,
-          emotionFlips: 0,
-          actionCommits: 0,
-          monthLogins: u.weekLogins * 4,
+          stage: u.stage || 1,
+          hasAssessment: u.hasAssessment || false,
         };
       });
       return;
@@ -1299,20 +1301,14 @@ function renderOverview() {
   const churnWarn = users.filter(u => u.status === 'warn').length;
   const churned = users.filter(u => u.status === 'churned').length;
 
-  const totalPos = users.reduce((s,u) => s + (u.posReactions||0), 0);
-  const totalSessions = users.reduce((s,u) => s + (u.totalSessions||0), 0);
-  const resonance = totalSessions > 0 ? Math.round(totalPos / totalSessions * 100) : 0;
-
-  const totalFlips = users.reduce((s,u) => s + (u.emotionFlips||0), 0);
-  const negUsers = users.filter(u => (u.emotionFlips||0) > 0).length;
-  const emotionFlip = negUsers > 0 ? Math.round(totalFlips / negUsers * 100) : 0;
+  // resonance 和 emotionFlip 需要AI分析埋点，暂无数据
 
   setText('o-totalUsers', total);
   setText('o-newToday', `今日新增 ${today}`);
   setText('o-dau', dau);
   setText('o-dauRate', `占注册用户 ${total > 0 ? Math.round(dau/total*100) : 0}%`);
-  setText('o-resonance', resonance + '%');
-  setText('o-emotionFlip', Math.min(emotionFlip, 99) + '%');
+  setText('o-resonance', '--');
+  setText('o-emotionFlip', '--');
   setText('o-wau', wau);
   setText('o-weekNew', `本周注册 ${weekNew}`);
   setText('o-mau', mau);
@@ -1336,16 +1332,20 @@ function renderRetention() {
   const labels = ['次日留存', '3日留存', '7日留存', '15日留存', '30日留存'];
   const colors = ['#8b5cf6', '#7c3aed', '#6d28d9', '#5b21b6', '#4c1d95'];
 
-  // 基于用户最后活跃时间模拟
+  // 正确的留存率：注册满d天的用户中，在注册后第d天仍有活跃的占比
   const rates = days.map(d => {
+    // 找注册时间 >= d天前的用户（有机会产生d日留存）
     const cohort = users.filter(u => {
       const regDiff = (now - new Date(u.regAt).getTime()) / day;
       return regDiff >= d;
     });
     if (!cohort.length) return 0;
+    // 留存定义：最后活跃时间在注册后第d天之后（即没有在d天内流失）
     const retained = cohort.filter(u => {
-      const lastDiff = (now - new Date(u.lastActiveAt).getTime()) / day;
-      return lastDiff <= d * 1.5;
+      if (!u.lastActiveAt) return false;
+      const regTime = new Date(u.regAt).getTime();
+      const lastTime = new Date(u.lastActiveAt).getTime();
+      return (lastTime - regTime) / day >= d;
     });
     return Math.round(retained.length / cohort.length * 100);
   });
@@ -1398,7 +1398,7 @@ function renderAlerts() {
   const users = _allUsers;
   const warn = users.filter(u => u.status === 'warn').length;
   const silent = users.filter(u => u.status === 'silent').length;
-  const negHigh = users.filter(u => (u.negReactions||0) >= 3).length;
+  const negHigh = 0; // 需要AI埋点，暂无数据
   const newToday = users.filter(u => {
     const diff = (Date.now() - new Date(u.regAt).getTime()) / 86400000;
     return diff < 1;
@@ -1419,7 +1419,7 @@ function renderAlerts() {
     </div>
     <div class="metric-row">
       <span class="metric-name"><span class="dot dot-red"></span> 消极反馈≥3次用户</span>
-      <span class="metric-val" style="color:var(--red)">${negHigh} 人</span>
+      <span class="metric-val" style="color:var(--text3)">暂无统计</span>
     </div>
   `;
 }
@@ -1429,24 +1429,21 @@ function renderFeatureUsage() {
   const total = users.length || 1;
   const assessed = users.filter(u => u.hasAssessment).length;
   const chatted = users.filter(u => u.totalSessions > 0).length;
-  // 模拟其他功能使用率
-  const diaryUsers = Math.floor(users.length * 0.4);
-  const posterUsers = Math.floor(users.length * 0.25);
 
   const features = [
     { name: '性格测评', count: assessed, color: '#8b5cf6' },
     { name: '聊天对话', count: chatted, color: '#06b6d4' },
-    { name: '情绪日记', count: diaryUsers, color: '#10b981' },
-    { name: '生成海报', count: posterUsers, color: '#f59e0b' },
+    { name: '情绪日记', count: 0, color: '#10b981', noData: true },
+    { name: '生成海报', count: 0, color: '#f59e0b', noData: true },
   ];
 
   document.getElementById('featureUsage').innerHTML = features.map(f => `
     <div class="emotion-item">
       <div class="emotion-name">${f.name}</div>
       <div class="emotion-bar-wrap">
-        <div class="emotion-bar" style="width:${Math.round(f.count/total*100)}%;background:${f.color};"></div>
+        <div class="emotion-bar" style="width:${f.noData ? 0 : Math.round(f.count/total*100)}%;background:${f.color};"></div>
       </div>
-      <div class="emotion-pct">${Math.round(f.count/total*100)}%</div>
+      <div class="emotion-pct">${f.noData ? '--' : Math.round(f.count/total*100) + '%'}</div>
     </div>
   `).join('');
 }
@@ -1618,17 +1615,9 @@ function renderInteraction() {
   const noAssess = users.filter(u => !u.hasAssessment);
   const assessPct = users.length > 0 ? Math.round(assessed.length/users.length*100) : 0;
 
-  const totalPos = users.reduce((s,u) => s + (u.posReactions||0), 0);
-  const totalNeg = users.reduce((s,u) => s + (u.negReactions||0), 0);
-  const resonance = (totalPos + totalNeg) > 0 ? Math.round(totalPos/(totalPos+totalNeg)*100) : 0;
-
-  const totalCommits = users.reduce((s,u) => s + (u.actionCommits||0), 0);
-  const actionRate = totalSessions > 0 ? Math.round(totalCommits/totalSessions*100) : 0;
-
   setText('i-totalRounds', totalRounds.toLocaleString());
   setText('i-avgRounds', avgRounds);
-  setText('i-avgDuration', Math.round(avgRounds * 1.5)); // 估算：每轮约1.5分钟
-  setText('i-actionRate', actionRate + '%');
+  setText('i-avgDuration', '暂无统计');
   setText('i-lightPct', lightPct + '%');
   setText('i-deepPct', deepPct + '%');
   document.getElementById('i-lightBar').style.width = lightPct + '%';
@@ -1639,58 +1628,40 @@ function renderInteraction() {
     (assessed.reduce((s,u)=>s+(parseFloat(u.avgRounds)||0),0)/assessed.length).toFixed(1) : '--';
   setText('i-assessAvgRounds', assessAvg + ' 轮');
 
-  setText('i-reactionPos', totalPos + ' 次');
-  setText('i-textPos', Math.floor(totalPos * 1.8) + ' 次');
-  setText('i-poster', Math.floor(users.length * 0.25) + ' 次');
-  setText('i-reactionNeg', totalNeg + ' 次');
-  setText('i-silentExit', Math.floor(totalSessions * 0.08) + ' 次');
-  setText('i-resonanceTotal', resonance + '%');
-
-  setText('i-actionCommit', totalCommits + ' 次');
-  setText('i-actionFollowup', Math.floor(totalCommits * 0.6) + ' 次');
-  setText('i-actionConvert', totalCommits > 0 ? '60%' : '--%');
-  setText('i-actionSessionRate', actionRate + '%');
+  // 以下字段暂无埋点数据
+  setText('i-actionRate', '--');
+  setText('i-reactionPos', '--');
+  setText('i-textPos', '--');
+  setText('i-poster', '--');
+  setText('i-reactionNeg', '--');
+  setText('i-silentExit', '--');
+  setText('i-resonanceTotal', '--');
+  setText('i-actionCommit', '--');
+  setText('i-actionFollowup', '--');
+  setText('i-actionConvert', '--');
+  setText('i-actionSessionRate', '--');
 }
 
 /* ════════════════════════════════════════════
    情绪数据
 ════════════════════════════════════════════ */
 function renderEmotion() {
-  const users = _allUsers;
-  const totalFlips = users.reduce((s,u) => s + (u.emotionFlips||0), 0);
-  const flipUsers = users.filter(u => (u.emotionFlips||0) > 0).length;
-  const flipUserRate = users.length > 0 ? Math.round(flipUsers/users.length*100) : 0;
+  // 情绪数据需要AI分析埋点，暂无真实数据
+  setText('e-flipCount', '--');
+  setText('e-flipUserRate', '--');
+  setText('e-singleFlipRate', '--');
+  setText('e-flipRounds', '--');
 
-  setText('e-flipCount', totalFlips + ' 次');
-  setText('e-flipUserRate', flipUserRate + '%');
-  setText('e-singleFlipRate', '68%'); // 模拟
-  setText('e-flipRounds', '7 轮');     // 模拟
-
-  // 情绪分布
-  const weekEmotions = [
-    { name: '平静', pct: 35, color: '#8b5cf6' },
-    { name: '愉悦', pct: 22, color: '#10b981' },
-    { name: '焦虑', pct: 18, color: '#f59e0b' },
-    { name: '低落', pct: 12, color: '#ef4444' },
-    { name: '期待', pct: 8, color: '#06b6d4' },
-    { name: '其他', pct: 5, color: '#555c70' },
+  // 情绪分布暂无统计
+  const noDataEmotions = [
+    { name: '暂无数据', pct: 100, color: '#555c70' },
   ];
+  renderEmotionBars('emotionDistWeek', noDataEmotions);
+  renderEmotionBars('emotionDistMonth', noDataEmotions);
 
-  const monthEmotions = [
-    { name: '平静', pct: 32, color: '#8b5cf6' },
-    { name: '愉悦', pct: 20, color: '#10b981' },
-    { name: '焦虑', pct: 20, color: '#f59e0b' },
-    { name: '低落', pct: 15, color: '#ef4444' },
-    { name: '期待', pct: 9, color: '#06b6d4' },
-    { name: '其他', pct: 4, color: '#555c70' },
-  ];
-
-  renderEmotionBars('emotionDistWeek', weekEmotions);
-  renderEmotionBars('emotionDistMonth', monthEmotions);
-
-  setText('e-posRate', '57%');
-  setText('e-neuRate', '25%');
-  setText('e-negRate', '18%');
+  setText('e-posRate', '--');
+  setText('e-neuRate', '--');
+  setText('e-negRate', '--');
 }
 
 function renderEmotionBars(elId, data) {
@@ -1708,12 +1679,6 @@ function renderEmotionBars(elId, data) {
 function setEmotionView(view, btn) {
   document.querySelectorAll('#page-emotion .filter-btn').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
-  // 切换周/月数据
-  if (view === 'month') {
-    setText('e-posRate', '52%'); setText('e-neuRate', '26%'); setText('e-negRate', '22%');
-  } else {
-    setText('e-posRate', '57%'); setText('e-neuRate', '25%'); setText('e-negRate', '18%');
-  }
 }
 
 /* ════════════════════════════════════════════
@@ -1726,16 +1691,14 @@ function renderAssessment() {
 
   setText('a-completeRate', rate + '%');
   setText('a-completeSub', `已完成 ${assessed.length} / 总注册 ${users.length}`);
-  setText('a-avgTime', '8');
-  setText('a-retestRate', '12%');
+  setText('a-avgTime', '--');
+  setText('a-retestRate', '--');
 
-  // 漏斗
+  // 漏斗（进入测评页、开始答题暂无埋点，只有完成数真实）
   const total = users.length;
-  const started = Math.floor(total * 0.85);
   const completed = assessed.length;
   const funnelData = [
-    { label: '进入测评页', count: total, color: '#8b5cf6' },
-    { label: '开始答题', count: started, color: '#7c3aed' },
+    { label: '注册用户', count: total, color: '#8b5cf6' },
     { label: '完成测评', count: completed, color: '#6d28d9' },
   ];
   document.getElementById('assessFunnel').innerHTML = funnelData.map(s => `
@@ -1758,28 +1721,13 @@ function renderAssessment() {
 
   setText('a-withAvgRounds', assessAvgR + ' 轮');
   setText('a-noAvgRounds', noAvgR + ' 轮');
-  setText('a-withDeepPct', '42%');
-  setText('a-noDeepPct', '18%');
-  setText('a-with7ret', '68%');
-  setText('a-no7ret', '31%');
+  setText('a-withDeepPct', '--');
+  setText('a-noDeepPct', '--');
+  setText('a-with7ret', '--');
+  setText('a-no7ret', '--');
 
-  // 维度分布
-  const dims = [
-    { name: '开放性', pct: 72, color: '#8b5cf6' },
-    { name: '尽责性', pct: 65, color: '#06b6d4' },
-    { name: '外向性', pct: 58, color: '#10b981' },
-    { name: '宜人性', pct: 70, color: '#f59e0b' },
-    { name: '神经质', pct: 42, color: '#ef4444' },
-  ];
-  document.getElementById('dimensionDist').innerHTML = dims.map(d => `
-    <div class="emotion-item">
-      <div class="emotion-name">${d.name}</div>
-      <div class="emotion-bar-wrap">
-        <div class="emotion-bar" style="width:${d.pct}%;background:${d.color};"></div>
-      </div>
-      <div class="emotion-pct">${d.pct}分</div>
-    </div>
-  `).join('');
+  // 维度分布暂无统计
+  document.getElementById('dimensionDist').innerHTML = '<div style="color:var(--text3);font-size:13px;padding:12px 0;">暂无测评维度汇总数据</div>';
 }
 
 /* ════════════════════════════════════════════
@@ -1793,27 +1741,11 @@ function renderProfilePage() {
 
   setText('p-avgComplete', avgComplete + '%');
   setText('p-highOpen', highOpen + ' 人');
-  setText('p-activeUpdate', Math.floor(users.length * 1.8) + ' 次');
-  setText('p-sensitiveRate', '28%');
+  setText('p-activeUpdate', '--');
+  setText('p-sensitiveRate', '--');
 
-  // 字段分布
-  const fields = [
-    { name: '基本信息', pct: 92, color: '#8b5cf6' },
-    { name: '性格特质', pct: 78, color: '#06b6d4' },
-    { name: '情绪状态', pct: 65, color: '#10b981' },
-    { name: '职场信息', pct: 48, color: '#f59e0b' },
-    { name: '关系状况', pct: 42, color: '#3b82f6' },
-    { name: '深层需求', pct: 28, color: '#ef4444' },
-  ];
-  document.getElementById('fieldDist').innerHTML = fields.map(d => `
-    <div class="emotion-item">
-      <div class="emotion-name">${d.name}</div>
-      <div class="emotion-bar-wrap">
-        <div class="emotion-bar" style="width:${d.pct}%;background:${d.color};"></div>
-      </div>
-      <div class="emotion-pct">${d.pct}%</div>
-    </div>
-  `).join('');
+  // 字段分布暂无统计
+  document.getElementById('fieldDist').innerHTML = '<div style="color:var(--text3);font-size:13px;padding:12px 0;">暂无档案字段分布数据</div>';
 
   // 高开放度用户列表
   const highUsers = users.filter(u => (u.profileComplete||0) >= 70).slice(0, 8);
@@ -1856,7 +1788,7 @@ function openUserDrawer(userId) {
       <div class="drawer-kv">
         <div class="kv-item"><div class="kv-label">手机号</div><div class="kv-value">${user.phone}</div></div>
         <div class="kv-item"><div class="kv-label">注册时间</div><div class="kv-value">${formatDate(user.regAt)}</div></div>
-        <div class="kv-item"><div class="kv-label">最后活跃</div><div class="kv-value">${daysSince(user.lastActiveAt) === 0 ? '今天' : daysSince(user.lastActiveAt) + '天前'}</div></div>
+        <div class="kv-item"><div class="kv-label">最后活跃</div><div class="kv-value">${daysSince(user.lastActiveAt) >= 9999 ? '从未活跃' : daysSince(user.lastActiveAt) === 0 ? '今天' : daysSince(user.lastActiveAt) + '天前'}</div></div>
         <div class="kv-item"><div class="kv-label">账号状态</div><div class="kv-value">${statusLabels[user.status]||'--'}</div></div>
         <div class="kv-item"><div class="kv-label">关系阶段</div><div class="kv-value" style="color:var(--purple2);font-weight:700;">Stage ${user.stage}</div></div>
         <div class="kv-item"><div class="kv-label">用户类型</div><div class="kv-value">${segLabels[user.segType]||'--'}</div></div>
@@ -1878,10 +1810,10 @@ function openUserDrawer(userId) {
     <div class="drawer-section">
       <div class="drawer-section-title">反馈 & 情绪</div>
       <div class="drawer-kv">
-        <div class="kv-item"><div class="kv-label">积极反馈</div><div class="kv-value" style="color:var(--green)">${user.posReactions} 次</div></div>
-        <div class="kv-item"><div class="kv-label">消极反馈</div><div class="kv-value" style="color:var(--red)">${user.negReactions} 次</div></div>
-        <div class="kv-item"><div class="kv-label">情绪负转正</div><div class="kv-value" style="color:var(--purple2)">${user.emotionFlips} 次</div></div>
-        <div class="kv-item"><div class="kv-label">行动承诺</div><div class="kv-value">${user.actionCommits} 次</div></div>
+        <div class="kv-item"><div class="kv-label">积极反馈</div><div class="kv-value" style="color:var(--text3)">暂无统计</div></div>
+        <div class="kv-item"><div class="kv-label">消极反馈</div><div class="kv-value" style="color:var(--text3)">暂无统计</div></div>
+        <div class="kv-item"><div class="kv-label">情绪负转正</div><div class="kv-value" style="color:var(--text3)">暂无统计</div></div>
+        <div class="kv-item"><div class="kv-label">行动承诺</div><div class="kv-value" style="color:var(--text3)">暂无统计</div></div>
       </div>
     </div>
 
