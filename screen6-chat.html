@@ -2854,21 +2854,7 @@ ${stateSummary}
 绝对不要假装知道或猜测用户的性格特质。
 如果用户问"你了解我吗"/"你记得我的测评吗"，直接告诉他/她：「你还没做测评，做完之后我就更了解你了。」`;
 
-      // 当前时间：优先使用网络校准后的时间（_timeOffset），fallback 到本地时间
-      // 用 Intl.DateTimeFormat formatToParts 直接取字段，避免字符串重解析在 iOS 微信 WebView 里出错
-      const _now = new Date(Date.now() + _timeOffset);
-      const _parts = new Intl.DateTimeFormat('en-US', {
-        timeZone: 'Asia/Shanghai', hour12: false,
-        year: 'numeric', month: '2-digit', day: '2-digit',
-        weekday: 'short', hour: '2-digit', minute: '2-digit'
-      }).formatToParts(_now);
-      const _pmap = {};
-      _parts.forEach(p => { if (p.type !== 'literal') _pmap[p.type] = p.value; });
-      const _days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-      const _daysCN = ['周日','周一','周二','周三','周四','周五','周六'];
-      const _weekdayCN = _daysCN[_days.indexOf(_pmap['weekday'])];
-      const _hour = _pmap['hour'] === '24' ? '00' : _pmap['hour']; // 某些环境 hour12:false 的午夜返回24
-      const _timeStr = `${_pmap['year']}年${_pmap['month']}月${_pmap['day']}日 ${_weekdayCN} ${_hour}:${_pmap['minute']}` + (_timeCalibrated ? '' : '（本地时间，可能不准）');
+      // 【注意】时间不再注入系统prompt，改为注入用户消息，保证系统prompt稳定以命中DeepSeek缓存
 
       // 用户给 KnowMe 起的名字（如果有），替换系统提示词里所有的「KnowMe」和知己
       const _aiName = localStorage.getItem('zjAiName') || 'KnowMe';
@@ -2889,12 +2875,7 @@ ${stateSummary}
         ? `---\n\n# 【用户档案】——这是你对这位用户的记忆，每次对话开始前必须读取\n\n${_userProfileText}\n\n注意：档案是你记住用户的依据。对话中如有待跟进事项，在合适时机自然提及，不要生硬列举。`
         : '';
 
-      const _raw = `# 【当前时间】
-现在是 ${_timeStr}。这是每次对话前实时注入的准确时间，是唯一可信的时间来源。
-
----
-
-${assessSection}
+      const _raw = `${assessSection}
 
 ${_profileSection ? _profileSection + '\n\n---\n\n' : '---\n\n'}${_mainPrompt}${_techSection}`;
 
@@ -3194,13 +3175,24 @@ ${_profileSection ? _profileSection + '\n\n---\n\n' : '---\n\n'}${_mainPrompt}${
       scrollBottom();
 
       // 构建对话历史（懒初始化 system prompt）
+      // 系统prompt不含时间，永远稳定，保证DeepSeek缓存命中
       if (chatHistory.length === 0) {
         chatHistory.push({ role: 'system', content: buildSystemPrompt(_assessData) });
-      } else {
-        // 每次发消息前刷新 system prompt 里的当前时间，避免跨天/跨小时时间错误
-        chatHistory[0].content = buildSystemPrompt(_assessData);
       }
-      chatHistory.push({ role: 'user', content: text, ts: Date.now() });
+
+      // 时间前缀注入到用户消息（保证AI知道当前时间，同时不破坏系统prompt缓存）
+      const _msgNow = new Date(Date.now() + _timeOffset);
+      const _msgParts = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Asia/Shanghai', hour12: false,
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        weekday: 'short', hour: '2-digit', minute: '2-digit'
+      }).formatToParts(_msgNow);
+      const _msgPmap = {};
+      _msgParts.forEach(p => { if (p.type !== 'literal') _msgPmap[p.type] = p.value; });
+      const _msgDaysCN = { Sun:'周日', Mon:'周一', Tue:'周二', Wed:'周三', Thu:'周四', Fri:'周五', Sat:'周六' };
+      const _msgHour = _msgPmap['hour'] === '24' ? '00' : _msgPmap['hour'];
+      const _msgTimePrefix = `[${_msgPmap['month']}月${_msgPmap['day']}日 ${_msgDaysCN[_msgPmap['weekday']] || ''} ${_msgHour}:${_msgPmap['minute']}] `;
+      chatHistory.push({ role: 'user', content: _msgTimePrefix + text, ts: Date.now() });
 
       // 截断规则：超过80轮（160条）时，只保留今天的消息
       // 长期记忆由 archive 每日归纳的档案接住，符合人类自然记忆规律
