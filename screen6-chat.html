@@ -3112,18 +3112,11 @@
         chatHistory = [chatHistory[0], ...todayMsgs];
       }
 
-      // 创建 AI 气泡（先空着，流式边收边填）
-      const tr = document.getElementById('typingRow');
-      if (tr) tr.remove();
-
+      // AI 气泡延迟到第一个 chunk 到来时才替换三个点动画
       const msgId = 'msg' + (++_msgCounter);
-      const aiRow = document.createElement('div');
-      aiRow.className = 'bubble-row';
-      aiRow.dataset.msgid = msgId;
-      aiRow.innerHTML = `<div class="bubble-avatar">${AVATAR_SVG}</div><div class="ai-bubble"><p></p></div>`;
-      list.appendChild(aiRow);
-      scrollBottom();
-      const aiP = aiRow.querySelector('.ai-bubble p');
+      let aiRow = null;
+      let aiP = null;
+      let _firstChunk = true;
 
       // 调用 LLM（流式），每次收到 delta 更新气泡文字
       // 用户档案 + 测评报告注入：作为第一对 user/assistant 消息，不放入 system prompt，避免破坏缓存
@@ -3161,12 +3154,36 @@
         ];
       }
       const reply = await callLLM(_messagesWithProfile, (delta, fullText) => {
+        // 第一个 chunk 到来时：移除三个点动画，插入 AI 气泡
+        if (_firstChunk) {
+          _firstChunk = false;
+          const tr = document.getElementById('typingRow');
+          if (tr) tr.remove();
+          aiRow = document.createElement('div');
+          aiRow.className = 'bubble-row';
+          aiRow.dataset.msgid = msgId;
+          aiRow.innerHTML = `<div class="bubble-avatar">${AVATAR_SVG}</div><div class="ai-bubble"><p></p></div>`;
+          list.appendChild(aiRow);
+          aiP = aiRow.querySelector('.ai-bubble p');
+        }
         const _clean = cleanReply(fullText);
         aiP.innerHTML = escHtml(_clean).replace(/\n/g, '<br>');
         scrollBottom();
       });
 
       const isError = (reply === ERROR_FALLBACK);
+
+      // 如果没有任何 chunk（纯错误），还没有创建 AI 气泡，现在创建
+      if (!aiRow) {
+        const tr = document.getElementById('typingRow');
+        if (tr) tr.remove();
+        aiRow = document.createElement('div');
+        aiRow.className = 'bubble-row';
+        aiRow.dataset.msgid = msgId;
+        aiRow.innerHTML = `<div class="bubble-avatar">${AVATAR_SVG}</div><div class="ai-bubble"><p></p></div>`;
+        list.appendChild(aiRow);
+        aiP = aiRow.querySelector('.ai-bubble p');
+      }
 
       if (isError) {
         // 网络/服务器出错：撤销刚才推入 chatHistory 的用户消息，避免历史污染
