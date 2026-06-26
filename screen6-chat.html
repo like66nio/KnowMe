@@ -2883,6 +2883,26 @@
         }
       } catch (e) {
         console.error('LLM fetch error:', e);
+        // 微信 webview 流式读取偶发失败，自动重试一次（非流式）
+        if (_serverToken) {
+          try {
+            console.log('[LLM] 流式失败，降级到非流式重试');
+            const cfg2 = LLM_CONFIG;
+            const res2 = await fetch(cfg2.endpoint, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${_serverToken}` },
+              body: JSON.stringify({ model: cfg2.model, messages, stream: false }),
+            });
+            if (res2.ok) {
+              const j = await res2.json();
+              const text = j.choices?.[0]?.message?.content || j.content || '';
+              if (text) {
+                if (onDelta) onDelta(text, text);
+                return text.trim();
+              }
+            }
+          } catch(e2) { console.error('LLM retry error:', e2); }
+        }
         return '网络好像有点问题，你说的我听到了，稍等……';
       }
     }
