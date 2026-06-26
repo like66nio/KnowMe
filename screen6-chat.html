@@ -3153,10 +3153,13 @@
           ...chatHistory.slice(1)
         ];
       }
-      const reply = await callLLM(_messagesWithProfile, (delta, fullText) => {
-        // 第一个 chunk 到来时：移除三个点动画，插入 AI 气泡
-        if (_firstChunk) {
-          _firstChunk = false;
+      // 三个点动画最短显示 800ms，让人感觉在"思考"
+      const _typingMinMs = 800;
+      const _typingStartTs = Date.now();
+      let _pendingText = null; // 最短时间内收到的内容先缓存
+
+      const _showAiBubble = (fullText) => {
+        if (!aiRow) {
           const tr = document.getElementById('typingRow');
           if (tr) tr.remove();
           aiRow = document.createElement('div');
@@ -3169,6 +3172,30 @@
         const _clean = cleanReply(fullText);
         aiP.innerHTML = escHtml(_clean).replace(/\n/g, '<br>');
         scrollBottom();
+      };
+
+      const reply = await callLLM(_messagesWithProfile, (delta, fullText) => {
+        if (_firstChunk) {
+          _firstChunk = false;
+          const elapsed = Date.now() - _typingStartTs;
+          const remaining = _typingMinMs - elapsed;
+          if (remaining <= 0) {
+            _showAiBubble(fullText);
+          } else {
+            _pendingText = fullText;
+            setTimeout(() => {
+              if (_pendingText !== null) {
+                _showAiBubble(_pendingText);
+                _pendingText = null;
+              }
+            }, remaining);
+          }
+        } else if (_pendingText !== null) {
+          // 还在等待最短时间，持续更新缓存内容
+          _pendingText = fullText;
+        } else {
+          _showAiBubble(fullText);
+        }
       });
 
       const isError = (reply === ERROR_FALLBACK);
