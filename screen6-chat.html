@@ -2850,6 +2850,33 @@
           if (!res.ok) {
             const err = await res.text();
             console.error('Server API error:', res.status, err);
+            // 401 token失效，尝试重新获取guest token再重试
+            if (res.status === 401) {
+              try {
+                const authRes = await fetch('https://like-knowme.com/api/auth/guest', {
+                  method: 'POST', headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ phone: localStorage.getItem('zjPhone') || 'guest' })
+                });
+                if (authRes.ok) {
+                  const authData = await authRes.json();
+                  if (authData.token) {
+                    _serverToken = authData.token;
+                    localStorage.setItem('zjServerToken', authData.token);
+                    // 用新token重试（非流式，避免再次失败）
+                    const retry = await fetch(cfg.endpoint, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${_serverToken}` },
+                      body: JSON.stringify({ model: cfg.model, messages, stream: false }),
+                    });
+                    if (retry.ok) {
+                      const j = await retry.json();
+                      const text = j.choices?.[0]?.message?.content || '';
+                      if (text) { if (onDelta) onDelta(text, text); return text.trim(); }
+                    }
+                  }
+                }
+              } catch(e2) { console.error('token refresh error:', e2); }
+            }
             return '嗯……我刚刚走神了一下，你刚才说的，再说一遍？';
           }
           const reader = res.body.getReader();
