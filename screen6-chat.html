@@ -1335,6 +1335,8 @@
     }
     .bottom-bar.voice-mode .input-wrap { display: none; }
     .bottom-bar.voice-mode .voice-record-btn { display: flex; }
+    .bottom-bar.voice-mode #emojiBtn { display: none; }
+    .bottom-bar.voice-mode #plusBtn { display: none; }
 
     /* 右侧工具按钮 */
     .toolbar-btn {
@@ -5546,11 +5548,15 @@
           formData.append('audio', blob, 'voice.' + ext);
           formData.append('mimeType', mimeType || 'audio/webm');
           const token = localStorage.getItem('zjToken') || '';
+          const controller = new AbortController();
+          const voiceTimeout = setTimeout(() => controller.abort(), 10000);
           const resp = await fetch('https://like-knowme.com/api/voice', {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${token}` },
             body: formData,
+            signal: controller.signal,
           });
+          clearTimeout(voiceTimeout);
           const data = await resp.json();
           const text = data.text || data.Result || '';
           if (text.trim()) {
