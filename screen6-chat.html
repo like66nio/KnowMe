@@ -2838,14 +2838,14 @@
       const cfg = LLM_CONFIG;
       try {
         if (_serverToken) {
-          // 走服务器流式中转
+          // 非流式请求（备案通过后可改回流式）
           const res = await fetch(cfg.endpoint, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${_serverToken}`,
             },
-            body: JSON.stringify({ model: cfg.model, messages, stream: true }),
+            body: JSON.stringify({ model: cfg.model, messages, stream: false }),
           });
           if (!res.ok) {
             const err = await res.text();
@@ -2862,7 +2862,6 @@
                   if (authData.token) {
                     _serverToken = authData.token;
                     localStorage.setItem('zjServerToken', authData.token);
-                    // 用新token重试（非流式，避免再次失败）
                     const retry = await fetch(cfg.endpoint, {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${_serverToken}` },
@@ -2879,57 +2878,19 @@
             }
             return '嗯……我刚刚走神了一下，你刚才说的，再说一遍？';
           }
-          const reader = res.body.getReader();
-          const decoder = new TextDecoder();
-          let fullText = '';
-          let buffer = '';
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split('\n');
-            buffer = lines.pop();
-            for (const line of lines) {
-              if (!line.startsWith('data: ')) continue;
-              const data = line.slice(6).trim();
-              if (data === '[DONE]') break;
-              try {
-                const json = JSON.parse(data);
-                const delta = json.delta || '';
-                if (delta) {
-                  fullText += delta;
-                  if (onDelta) onDelta(delta, fullText);
-                }
-              } catch(e) {}
-            }
+          const j = await res.json();
+          const text = j.choices?.[0]?.message?.content || j.content || '';
+          if (text) {
+            if (onDelta) onDelta(text, text);
+            return text.trim();
           }
-          return fullText.trim();
+          return '嗯……我刚刚走神了一下，你刚才说的，再说一遍？';
         } else {
           // 未登录，无法调用
           return '嗯……我刚刚走神了一下，你刚才说的，再说一遍？';
         }
       } catch (e) {
         console.error('LLM fetch error:', e);
-        // 微信 webview 流式读取偶发失败，自动重试一次（非流式）
-        if (_serverToken) {
-          try {
-            console.log('[LLM] 流式失败，降级到非流式重试');
-            const cfg2 = LLM_CONFIG;
-            const res2 = await fetch(cfg2.endpoint, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${_serverToken}` },
-              body: JSON.stringify({ model: cfg2.model, messages, stream: false }),
-            });
-            if (res2.ok) {
-              const j = await res2.json();
-              const text = j.choices?.[0]?.message?.content || j.content || '';
-              if (text) {
-                if (onDelta) onDelta(text, text);
-                return text.trim();
-              }
-            }
-          } catch(e2) { console.error('LLM retry error:', e2); }
-        }
         return '网络好像有点问题，你说的我听到了，稍等……';
       }
     }
