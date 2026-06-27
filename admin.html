@@ -505,6 +505,11 @@
         <span class="icon">📋</span> 档案开放度
       </div>
 
+      <div class="nav-section">质检</div>
+      <div class="nav-item" onclick="showPage('observer')">
+        <span class="icon">👁</span> AI 观察员
+      </div>
+
       <div class="nav-section">系统</div>
       <div class="nav-item" onclick="showPage('settings')">
         <span class="icon">⚙️</span> 系统设置
@@ -1051,6 +1056,49 @@
         </div>
       </div>
 
+      <!-- 观察员页面 -->
+      <div class="page" id="page-observer">
+        <div style="display:flex;gap:16px;height:calc(100vh - 120px);">
+
+          <!-- 左列：报告列表 -->
+          <div style="width:260px;flex-shrink:0;display:flex;flex-direction:column;gap:12px;">
+            <div class="card" style="padding:16px;">
+              <div class="section-title" style="margin-bottom:12px;">👁 AI 观察员</div>
+              <div style="display:flex;gap:8px;margin-bottom:12px;">
+                <input type="date" id="obs-date-picker" class="search-input" style="flex:1;font-size:12px;">
+                <button class="filter-btn" onclick="obsLoadReports()" style="white-space:nowrap;">查询</button>
+              </div>
+              <div id="obs-report-list" style="display:flex;flex-direction:column;gap:8px;overflow-y:auto;max-height:calc(100vh - 280px);">
+                <div style="color:var(--text3);font-size:12px;">选择日期后加载报告</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 右侧：报告详情 + 追问 -->
+          <div style="flex:1;display:flex;flex-direction:column;gap:12px;min-width:0;">
+
+            <!-- 报告内容 -->
+            <div class="card" style="flex:1;overflow-y:auto;padding:20px;" id="obs-report-content">
+              <div style="color:var(--text3);font-size:13px;text-align:center;padding:40px 0;">
+                从左侧选择一份报告查看
+              </div>
+            </div>
+
+            <!-- 追问区 -->
+            <div class="card" style="padding:16px;flex-shrink:0;">
+              <div id="obs-chat-history" style="max-height:200px;overflow-y:auto;margin-bottom:12px;display:none;"></div>
+              <div style="display:flex;gap:8px;">
+                <input type="text" id="obs-chat-input" class="search-input" style="flex:1;"
+                  placeholder="向观察员追问..." onkeydown="if(event.key==='Enter')obsSendChat()">
+                <button class="filter-btn" onclick="obsSendChat()" style="white-space:nowrap;">发送</button>
+              </div>
+              <div id="obs-current-report-id" style="display:none;"></div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
     </div><!-- /content -->
   </main>
 </div>
@@ -1114,7 +1162,7 @@ window.onload = function() {
 const pageTitles = {
   overview: '数据概览', users: '用户列表', segments: '用户分层',
   interaction: '互动分析', emotion: '情绪数据', assessment: '测评数据',
-  profile: '档案开放度', settings: '系统设置'
+  profile: '档案开放度', observer: 'AI 观察员', settings: '系统设置'
 };
 
 function showPage(name) {
@@ -1863,6 +1911,117 @@ function viewChatLog() {
 
 function exportData(type) {
   showToast('数据导出功能将在服务器后台API接入后开放');
+}
+
+/* ════════════════════════════════════════════
+   AI 观察员
+════════════════════════════════════════════ */
+let _obsCurrentReportId = null;
+
+async function obsLoadReports() {
+  const date = document.getElementById('obs-date-picker').value;
+  if (!date) { showToast('请先选择日期'); return; }
+  const listEl = document.getElementById('obs-report-list');
+  listEl.innerHTML = '<div style="color:var(--text3);font-size:12px;">加载中...</div>';
+  try {
+    const res = await fetch(`${API_BASE}/api/observer/reports?date=${date}`, {
+      headers: { 'x-admin-password': ADMIN_PASSWORD }
+    });
+    const data = await res.json();
+    if (!data.reports || data.reports.length === 0) {
+      listEl.innerHTML = '<div style="color:var(--text3);font-size:12px;">该日期暂无报告</div>';
+      return;
+    }
+    listEl.innerHTML = data.reports.map(r => `
+      <div class="obs-report-item" onclick="obsLoadReport(${r.id})" style="
+        padding:10px 12px;border-radius:8px;cursor:pointer;
+        background:var(--bg2);border:1px solid var(--border);
+        font-size:12px;transition:background 0.15s;
+      " onmouseover="this.style.background='var(--hover)'" onmouseout="this.style.background='var(--bg2)'">
+        <div style="font-weight:600;margin-bottom:4px;">用户 #${r.user_id}</div>
+        <div style="color:var(--text3);">${r.report_date}</div>
+      </div>
+    `).join('');
+  } catch(e) {
+    listEl.innerHTML = `<div style="color:#e74c3c;font-size:12px;">加载失败：${e.message}</div>`;
+  }
+}
+
+async function obsLoadReport(reportId) {
+  _obsCurrentReportId = reportId;
+  document.getElementById('obs-report-content').innerHTML = '<div style="color:var(--text3);font-size:13px;padding:20px;">加载中...</div>';
+  document.getElementById('obs-chat-history').style.display = 'none';
+  document.getElementById('obs-chat-history').innerHTML = '';
+  try {
+    const res = await fetch(`${API_BASE}/api/observer/report/${reportId}`, {
+      headers: { 'x-admin-password': ADMIN_PASSWORD }
+    });
+    const data = await res.json();
+    const r = data.report;
+    // 渲染 markdown（简单处理）
+    const html = obsMarkdownToHtml(r.report_md || '（报告为空）');
+    document.getElementById('obs-report-content').innerHTML = `
+      <div style="font-size:13px;line-height:1.8;color:var(--text1);">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:16px;">
+          用户 #${r.user_id} · ${r.report_date} · 生成于 ${new Date(r.created_at).toLocaleString('zh-CN')}
+        </div>
+        ${html}
+      </div>
+    `;
+    // 恢复历史追问
+    const history = r.conversation || [];
+    if (history.length > 0) {
+      const chatEl = document.getElementById('obs-chat-history');
+      chatEl.style.display = 'block';
+      chatEl.innerHTML = history.map(m => `
+        <div style="margin-bottom:8px;font-size:12px;">
+          <span style="font-weight:600;color:${m.role==='user'?'var(--primary)':'var(--text2)'};">
+            ${m.role==='user'?'KK':'观察员'}
+          </span>：${m.content}
+        </div>
+      `).join('');
+      chatEl.scrollTop = chatEl.scrollHeight;
+    }
+  } catch(e) {
+    document.getElementById('obs-report-content').innerHTML = `<div style="color:#e74c3c;">加载失败：${e.message}</div>`;
+  }
+}
+
+async function obsSendChat() {
+  if (!_obsCurrentReportId) { showToast('请先选择一份报告'); return; }
+  const input = document.getElementById('obs-chat-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+  const chatEl = document.getElementById('obs-chat-history');
+  chatEl.style.display = 'block';
+  chatEl.innerHTML += `<div style="margin-bottom:8px;font-size:12px;"><span style="font-weight:600;color:var(--primary);">KK</span>：${msg}</div>`;
+  chatEl.innerHTML += `<div id="obs-thinking" style="margin-bottom:8px;font-size:12px;color:var(--text3);">观察员思考中...</div>`;
+  chatEl.scrollTop = chatEl.scrollHeight;
+  try {
+    const res = await fetch(`${API_BASE}/api/observer/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-password': ADMIN_PASSWORD },
+      body: JSON.stringify({ reportId: _obsCurrentReportId, userMsg: msg, password: ADMIN_PASSWORD })
+    });
+    const data = await res.json();
+    document.getElementById('obs-thinking')?.remove();
+    chatEl.innerHTML += `<div style="margin-bottom:8px;font-size:12px;"><span style="font-weight:600;color:var(--text2);">观察员</span>：${data.reply || '（无回复）'}</div>`;
+    chatEl.scrollTop = chatEl.scrollHeight;
+  } catch(e) {
+    document.getElementById('obs-thinking')?.remove();
+    chatEl.innerHTML += `<div style="color:#e74c3c;font-size:12px;">发送失败：${e.message}</div>`;
+  }
+}
+
+function obsMarkdownToHtml(md) {
+  return md
+    .replace(/^## (.+)$/gm, '<h2 style="font-size:14px;font-weight:700;margin:20px 0 8px;color:var(--text1);">$1</h2>')
+    .replace(/^### (.+)$/gm, '<h3 style="font-size:13px;font-weight:600;margin:14px 0 6px;color:var(--text2);">$1</h3>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/^---$/gm, '<hr style="border:none;border-top:1px solid var(--border);margin:16px 0;">')
+    .replace(/^- (.+)$/gm, '<li style="margin-left:16px;margin-bottom:4px;">$1</li>')
+    .replace(/\n/g, '<br>');
 }
 
 /* ════════════════════════════════════════════
