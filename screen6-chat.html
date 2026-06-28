@@ -2968,9 +2968,11 @@
     }
 
     /* ──── 发送用户消息 ──── */
-    async function sendMsg() {
+    async function sendMsg(overrideText) {
       const input = document.getElementById('chatInput');
-      const text = input.value.trim();
+      // 有传入文字就用传入的（如语音识别结果，绕开 iOS textarea 隐藏态读写不稳的坑）；
+      // 否则照旧从输入框读。
+      const text = (typeof overrideText === 'string' ? overrideText : input.value).trim();
       if (!text) return;
 
       input.value = '';
@@ -5563,11 +5565,9 @@
             // 退出语音模式
             _resetVoiceUI();
             const recognized = text.trim();
-            // iOS Safari 对 display:none→显示 的 textarea 不重绘内容，字填进 value 也看不见。
-            // 直接把识别结果当成消息发出去（像微信语音转文字直发），彻底绕开渲染坑，体验也更顺。
-            input.value = recognized;
-            if (window.updateSendBtn) updateSendBtn();
-            sendMsg();
+            // iOS Safari 对隐藏态 textarea 赋值/读值都不稳，所以不走 input 中转，
+            // 直接把识别结果传给 sendMsg（像微信语音转文字直发），彻底绕开 textarea。
+            sendMsg(recognized);
           } else {
             showToast('没听清，请重试');
             _resetVoiceUI();
