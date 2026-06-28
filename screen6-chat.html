@@ -5567,7 +5567,7 @@
             // 直接把识别结果当成消息发出去（像微信语音转文字直发），彻底绕开渲染坑，体验也更顺。
             input.value = recognized;
             if (window.updateSendBtn) updateSendBtn();
-            if (window.sendMsg) sendMsg();
+            sendMsg();
           } else {
             showToast('没听清，请重试');
             _resetVoiceUI();
