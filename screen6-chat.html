@@ -5560,11 +5560,13 @@
           const data = await resp.json();
           const text = data.text || data.Result || '';
           if (text.trim()) {
-            input.value = text.trim();
-            autoResize(input);
-            updateSendBtn();
+            // 先退出语音模式，让输入框恢复显示（voice-mode 下 input-wrap 是 display:none）
+            // 否则对隐藏元素算高度会得到 0，导致输入框变矮、且填的字看不见
             _resetVoiceUI();
-            setTimeout(() => input.focus(), 100);
+            input.value = text.trim();
+            updateSendBtn();
+            // 等输入框真正显示出来后再算高度并聚焦
+            setTimeout(() => { autoResize(input); input.focus(); }, 50);
           } else {
             showToast('没听清，请重试');
             _resetVoiceUI();
