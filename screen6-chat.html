@@ -5561,12 +5561,22 @@
           const text = data.text || data.Result || '';
           if (text.trim()) {
             // 先退出语音模式，让输入框恢复显示（voice-mode 下 input-wrap 是 display:none）
-            // 否则对隐藏元素算高度会得到 0，导致输入框变矮、且填的字看不见
             _resetVoiceUI();
-            input.value = text.trim();
-            updateSendBtn();
-            // 等输入框真正显示出来后再算高度并聚焦
-            setTimeout(() => { autoResize(input); input.focus(); }, 50);
+            const recognized = text.trim();
+            // iOS Safari 在 display:none→显示 的瞬间不会重绘 textarea 内容，
+            // 必须等两帧布局完成后再赋值+算高度，否则字虽在 value 里却画不出来、且框变矮
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                input.value = recognized;
+                input.style.height = 'auto';          // 先复位
+                autoResize(input);                    // 对已显示的元素算高度
+                updateSendBtn();
+                input.focus();
+                // 强制 Safari 重绘：把光标移到末尾，触发内容刷新
+                const len = input.value.length;
+                try { input.setSelectionRange(len, len); } catch(e) {}
+              });
+            });
           } else {
             showToast('没听清，请重试');
             _resetVoiceUI();
