@@ -1625,7 +1625,7 @@
 
     // 重温测评时跳回报告页；首次测评跳转聊天页
     const isReview = new URLSearchParams(window.location.search).get('review');
-    window.location.href = isReview ? 'screen7-report.html' : 'screen6-chat.html';
+    window.location.href = isReview ? 'screen7-report.html' : ('screen6-chat.html?v=' + Date.now());
   }
 
   function getScore(qKey, optKey) {

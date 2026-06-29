@@ -692,7 +692,7 @@
         </div>
         <div class="post-choice-arrow">›</div>
       </div>
-      <div class="post-choice-card post-choice-secondary" onclick="window.location.href='screen6-chat.html'">
+      <div class="post-choice-card post-choice-secondary" onclick="window.location.href='screen6-chat.html?v='+Date.now()">
         <div class="post-choice-icon post-choice-icon-chat">🌊</div>
         <div class="post-choice-body">
           <div class="post-choice-title">先随便聊聊</div>
@@ -1064,7 +1064,7 @@
         // 情境3：测评已完成 → 进主聊天界面（可从 tab bar 查看报告）
         // 如果来源是随便聊聊但意外有旧测评数据，清除掉，不展示折叠条
         if (source !== 'done_assess') localStorage.removeItem('zjAssessment');
-        window.location.href = 'screen6-chat.html';
+        window.location.href = 'screen6-chat.html?v=' + Date.now();
       } else if (source === 'mid_assess') {
         // 情境2：测评中途 → 回测评继续
         const midScreen = localStorage.getItem('zjMidScreen') || '1';

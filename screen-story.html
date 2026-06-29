@@ -481,7 +481,7 @@
       if (localStorage.getItem('zjIsRegistered')) {
         document.querySelectorAll('.reg-pill').forEach(el => {
           el.textContent = '开始聊';
-          el.onclick = () => { window.location.href = 'screen6-chat.html'; };
+          el.onclick = () => { window.location.href = 'screen6-chat.html?v=' + Date.now(); };
         });
       }
       setTimeout(runStep, 500);
@@ -492,7 +492,7 @@
     }
     function goChat() {
       if (localStorage.getItem('zjIsRegistered')) {
-        window.location.href = 'screen6-chat.html';
+        window.location.href = 'screen6-chat.html?v=' + Date.now();
       } else {
         window.location.href = 'screen4-report.html?mode=chat';
       }
