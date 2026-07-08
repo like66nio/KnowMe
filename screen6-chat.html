@@ -2645,37 +2645,42 @@
       provider: 'deepseek',
       model: 'deepseek-chat',
       // 走服务器中转，API Key 不暴露在前端
-      endpoint: 'https://106.53.166.135/api/chat',
+      endpoint: 'https://like-knowme.com/api/chat',
     };
 
     /* ──── 服务器认证：游客登录，获取 token ──── */
     let _serverToken = localStorage.getItem('knowme_token') || '';
+
+    function getKnowMeDeviceId() {
+      const existing = localStorage.getItem('knowme_device_id');
+      if (existing) return existing;
+      const id = 'dev_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+      localStorage.setItem('knowme_device_id', id);
+      return id;
+    }
+
+    async function refreshServerToken() {
+      const deviceId = getKnowMeDeviceId();
+      const res = await fetch('https://like-knowme.com/api/auth/guest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deviceId })
+      });
+      if (!res.ok) throw new Error('游客登录失败: ' + res.status);
+      const data = await res.json();
+      if (!data.token) throw new Error('游客登录未返回 token');
+      _serverToken = data.token;
+      localStorage.setItem('knowme_token', data.token);
+      localStorage.removeItem('zjServerToken');
+      console.log('[Server Auth] 登录成功 userId:', data.userId);
+      return data.token;
+    }
+
     (async function initServerAuth() {
-      if (_serverToken) {
-        loadUserProfile(); // 已有 token，直接拉档案
-        loadPromptFiles(_serverToken);
-        return;
-      }
       try {
-        // 用设备指纹作为游客 ID
-        const deviceId = localStorage.getItem('knowme_device_id') || (() => {
-          const id = 'dev_' + Date.now() + '_' + Math.random().toString(36).slice(2);
-          localStorage.setItem('knowme_device_id', id);
-          return id;
-        })();
-        const res = await fetch('https://106.53.166.135/api/auth/guest', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ deviceId })
-        });
-        const data = await res.json();
-        if (data.token) {
-          _serverToken = data.token;
-          localStorage.setItem('knowme_token', data.token);
-          console.log('[Server Auth] 登录成功 userId:', data.userId);
-          loadUserProfile(); // token 就绪，立即拉取用户档案
-          loadPromptFiles(_serverToken);
-        }
+        if (!_serverToken) await refreshServerToken();
+        loadUserProfile();
+        loadPromptFiles(_serverToken);
       } catch(e) {
         console.warn('[Server Auth] 服务器认证失败，将直接调用API', e.message);
         try { if (window.showToast) showToast('调试·登录失败: ' + (e && e.message ? e.message : e)); } catch(_) {}
@@ -2696,7 +2701,7 @@
     async function loadUserProfile() {
       if (!_serverToken) return;
       try {
-        const res = await fetch('https://106.53.166.135/api/profile', {
+        const res = await fetch('https://like-knowme.com/api/profile', {
           headers: { 'Authorization': `Bearer ${_serverToken}` }
         });
         const data = await res.json();
@@ -2717,8 +2722,8 @@
       try {
         const headers = { 'Authorization': `Bearer ${token}` };
         const [spRes, tmRes] = await Promise.all([
-          fetch('https://106.53.166.135/api/system-prompt', { headers }),
-          fetch('https://106.53.166.135/api/tech-manual',   { headers })
+          fetch('https://like-knowme.com/api/system-prompt', { headers }),
+          fetch('https://like-knowme.com/api/tech-manual',   { headers })
         ]);
         if (spRes.ok) _systemPromptText = await spRes.text();
         if (tmRes.ok) _techManualText   = await tmRes.text();
@@ -2856,26 +2861,18 @@
             // 401 token失效，尝试重新获取guest token再重试
             if (res.status === 401) {
               try {
-                const authRes = await fetch('https://106.53.166.135/api/auth/guest', {
-                  method: 'POST', headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ phone: localStorage.getItem('zjPhone') || 'guest' })
+                await refreshServerToken();
+                const retry = await fetch(cfg.endpoint, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${_serverToken}` },
+                  body: JSON.stringify({ model: cfg.model, messages, stream: false }),
                 });
-                if (authRes.ok) {
-                  const authData = await authRes.json();
-                  if (authData.token) {
-                    _serverToken = authData.token;
-                    localStorage.setItem('zjServerToken', authData.token);
-                    const retry = await fetch(cfg.endpoint, {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${_serverToken}` },
-                      body: JSON.stringify({ model: cfg.model, messages, stream: false }),
-                    });
-                    if (retry.ok) {
-                      const j = await retry.json();
-                      const text = j.choices?.[0]?.message?.content || '';
-                      if (text) { if (onDelta) onDelta(text, text); return text.trim(); }
-                    }
-                  }
+                if (retry.ok) {
+                  const j = await retry.json();
+                  const text = j.choices?.[0]?.message?.content || '';
+                  if (text) { if (onDelta) onDelta(text, text); return text.trim(); }
+                } else {
+                  console.error('Server API retry error:', retry.status, await retry.text());
                 }
               } catch(e2) { console.error('token refresh error:', e2); }
             }
@@ -3133,7 +3130,7 @@
       let _firstChunk = true;
 
       // 调用 LLM（流式），每次收到 delta 更新气泡文字
-      // 用户档案 + 测评报告注入：作为第一对 user/assistant 消息，不放入 system prompt，避免破坏缓存
+      // 长期记忆 + 测评报告注入：作为第一对 user/assistant 消息，不放入 system prompt，避免破坏缓存
       const ERROR_FALLBACK = '嗯……我刚刚走神了一下，你刚才说的，再说一遍？';
 
       // 生成测评报告文字（与之前逻辑一致）
@@ -3155,15 +3152,15 @@
         return `# 【测评报告】——这是你感知这个用户的基础\n\n关于这位用户：\n用户最突出的特质是：${top3}。\n${stateDesc ? `用户当前状态：${stateDesc}。` : ''}\n\n测评数据是你了解这个人的起点，不是唯一依据。对话中灵活调用，不强行套用。`;
       };
 
-      // 合并测评报告 + 用户档案，作为第一对 user/assistant 消息
+      // 合并测评报告 + 长期记忆，作为第一对 user/assistant 消息
       let _messagesWithProfile = chatHistory;
       const _assessText = _buildAssessText(_assessData);
-      const _profileParts = [_assessText, _userProfileText ? `# 【用户档案】——这是你对这位用户的记忆\n\n${_userProfileText}\n\n注意：档案是你记住用户的依据。对话中如有待跟进事项，在合适时机自然提及，不要生硬列举。` : ''].filter(Boolean).join('\n\n---\n\n');
+      const _profileParts = [_assessText, _userProfileText ? `# 【长期记忆】\n\n${_userProfileText}\n\n这些内容只供你默默记着，帮你和用户对话时灵活应用，让用户觉得你懂 TA、在乎 TA、记得住 TA 跟你说过的东西；但聊天时不要提及这些内容的来源。` : ''].filter(Boolean).join('\n\n---\n\n');
       if (_profileParts) {
         _messagesWithProfile = [
           chatHistory[0],
-          { role: 'user', content: `以下是关于这位用户的档案和测评，请在对话中自然运用：\n\n${_profileParts}` },
-          { role: 'assistant', content: '好的，我已了解这位用户的情况。' },
+          { role: 'user', content: `以下内容只供你默默记着，帮你和用户对话时灵活应用，让用户觉得你懂 TA、在乎 TA、记得住 TA 跟你说过的东西；但聊天时不要提及这些内容的来源。\n\n${_profileParts}` },
+          { role: 'assistant', content: '好的，我会默默记着，聊天时不提来源。' },
           ...chatHistory.slice(1)
         ];
       }
@@ -4906,7 +4903,7 @@
           .map(([k, v]) => stateMap[k][v]).join('，');
         const traitSummary = `最突出特质：${top3}。当前状态：${stateDesc || '未知'}。`;
 
-        await fetch('https://106.53.166.135/api/assessment', {
+        await fetch('https://like-knowme.com/api/assessment', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -5554,7 +5551,7 @@
           const token = localStorage.getItem('knowme_token') || '';
           const controller = new AbortController();
           const voiceTimeout = setTimeout(() => controller.abort(), 10000);
-          const resp = await fetch('https://106.53.166.135/api/voice', {
+          const resp = await fetch('https://like-knowme.com/api/voice', {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${token}` },
             body: formData,
