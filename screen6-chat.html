@@ -2649,6 +2649,12 @@
     };
 
     /* ──── 服务器认证：游客登录，获取 token ──── */
+    const _urlParams = new URLSearchParams(window.location.search);
+    if (_urlParams.get('repair') === 'auth') {
+      // 只修复登录态：清掉可能损坏/过期的服务端 token，不清聊天记录、不清测评、不清注册状态。
+      localStorage.removeItem('knowme_token');
+      localStorage.removeItem('zjServerToken');
+    }
     let _serverToken = localStorage.getItem('knowme_token') || '';
 
     function getKnowMeDeviceId() {
