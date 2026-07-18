@@ -6,6 +6,17 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="description" content="不想一个人消化情绪的时候，来和「KnowMe」聊聊">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="KnowMe">
+  <meta property="og:title" content="「KnowMe」有些话，可以跟我说">
+  <meta property="og:description" content="不想一个人消化情绪的时候，来和「KnowMe」聊聊">
+  <meta property="og:image" content="https://like-knowme.com/assets/knowme-share-card.jpg">
+  <meta property="og:url" content="https://like-knowme.com/">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="「KnowMe」有些话，可以跟我说">
+  <meta name="twitter:description" content="不想一个人消化情绪的时候，来和「KnowMe」聊聊">
+  <meta name="twitter:image" content="https://like-knowme.com/assets/knowme-share-card.jpg">
   <!-- 最早隐藏 body，防止微信缓存旧版本内容闪现；measure()完成后统一显示 -->
   <style>body { opacity: 0; transition: opacity 0.15s; }</style>
   <!-- 强制绕过微信缓存：每次加载都刷新 v= 时间戳，确保微信每次加载的 URL 都不同 -->
@@ -34,7 +45,7 @@
       if (e.persisted) { window.location.reload(); }
     });
   </script>
-  <title>KnowMe · 对话</title>
+  <title>「KnowMe」有些话，可以跟我说</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700&display=swap" rel="stylesheet">
   <!-- ZCOOL XiaoWei 字体直接内联，绕过 googleapis.com（被墙），直接加载 gstatic.com 字体文件 -->
@@ -890,51 +901,57 @@
       margin-top: 2px; letter-spacing: 0.3px;
     }
 
-    /* ─── 注册引导条（未注册时显示，可关闭）─── */
-    .reg-nudge {
-      display: flex; align-items: center; gap: 10px;
-      background: rgba(255,255,255,0.13);
-      border: 1px solid rgba(255,255,255,0.22);
-      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-      border-radius: 14px;
-      padding: 11px 14px;
-      margin-bottom: 2px;
-      transition: opacity 0.25s, transform 0.25s;
+    /* ─── 顶部注册/测评 banner（复用随便聊聊 screen4 的模式）─── */
+    .reg-banner {
+      position: fixed;
+      top: 0; left: 50%; transform: translateX(-50%) translateY(-110%);
+      width: min(390px, 100vw); z-index: 220;
+      padding: 14px 16px 12px;
+      padding-top: max(14px, env(safe-area-inset-top));
+      background: rgba(245,238,255,0.96);
+      border-bottom: 1px solid rgba(160,90,240,0.18);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 4px 24px rgba(120,70,200,0.18);
+      transition: transform 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+      display: flex; align-items: center; gap: 12px;
+      pointer-events: auto;
     }
-    .reg-nudge.hiding {
-      opacity: 0; transform: translateY(-8px); pointer-events: none;
+    .reg-banner.visible { transform: translateX(-50%) translateY(0); }
+    .reg-banner-avatar {
+      width: 32px; height: 32px; border-radius: 10px; flex-shrink: 0;
+      background: linear-gradient(135deg, #C890E8, #8B4FC8);
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(160,80,220,0.28);
     }
-    .reg-nudge-icon {
-      font-size: 20px; flex-shrink: 0; line-height: 1;
+    .reg-banner-avatar svg { width: 32px; height: 32px; display: block; }
+    .reg-banner-body { flex: 1; min-width: 0; }
+    .reg-banner-text {
+      font-size: 13px; color: #1E1440;
+      line-height: 1.55; letter-spacing: 0.2px;
+      margin-bottom: 8px;
     }
-    .reg-nudge-text {
-      flex: 1;
-      font-size: 12.5px; color: rgba(255,255,255,0.88);
-      line-height: 1.5; letter-spacing: 0.2px;
+    .reg-banner-text strong {
+      display: block; font-weight: 600; margin-bottom: 1px;
+      color: #1E1440;
     }
-    .reg-nudge-text strong {
-      display: block; font-size: 13px; font-weight: 600;
-      color: #fff; margin-bottom: 2px;
+    .reg-banner-btn {
+      display: inline-block;
+      background: linear-gradient(135deg, #A060D8, #7B30B8);
+      color: rgba(255,255,255,0.96);
+      border: none; border-radius: 20px;
+      padding: 6px 16px; font-size: 13px; font-family: inherit;
+      letter-spacing: 0.4px; cursor: pointer;
+      box-shadow: 0 3px 14px rgba(140,70,210,0.30);
     }
-    .reg-nudge-btn {
-      background: linear-gradient(135deg, #C070F0, #8038C8);
-      border: none; border-radius: 18px;
-      padding: 6px 14px; font-size: 12px;
-      color: #fff; cursor: pointer; flex-shrink: 0;
-      box-shadow: 0 2px 10px rgba(140,50,210,0.45);
-      letter-spacing: 0.5px;
-      transition: opacity 0.15s;
+    .reg-banner-btn:active { opacity: 0.82; }
+    .reg-banner-close {
+      width: 28px; height: 28px; flex-shrink: 0;
+      background: none; border: none;
+      font-size: 16px; color: rgba(80,50,140,0.38);
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      border-radius: 50%; transition: color 0.15s;
     }
-    .reg-nudge-btn:active { opacity: 0.8; }
-    .reg-nudge-close {
-      width: 22px; height: 22px; border-radius: 50%;
-      background: rgba(255,255,255,0.15); border: none;
-      color: rgba(255,255,255,0.6); font-size: 13px;
-      cursor: pointer; flex-shrink: 0;
-      display: flex; align-items: center; justify-content: center;
-      transition: background 0.15s;
-    }
-    .reg-nudge-close:active { background: rgba(255,255,255,0.25); }
+    .reg-banner-close:active { color: rgba(80,50,140,0.7); }
 
     /* ─── 消息列表 ─── */
     .msg-list {
@@ -2150,6 +2167,7 @@
   </style>
 </head>
 <body>
+  <img src="/assets/knowme-share-card.jpg" alt="KnowMe 分享封面" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;left:-9999px;top:-9999px;" aria-hidden="true">
   <div class="bg-glow"></div>
 
   <!-- 知己头像 SVG symbol（与 screen1 共用同款） -->
@@ -2212,7 +2230,7 @@
           <span class="ai-name">KnowMe</span>
           <div class="status-dot"></div>
         </div>
-        <div class="sub-text">随时都在 · 只属于你</div>
+        <div class="sub-text">陪你聊聊 · 帮你解忧</div>
       </div>
 
       <div class="reg-pill" onclick="localStorage.setItem('zjRegSource','no_assess'); window.location.href='screen5-register.html'">注册</div>
@@ -2222,19 +2240,37 @@
 
     </div>
 
+    <!-- 顶部 banner 引导：复用原“随便聊聊”从屏幕顶部滑入模式 -->
+    <div class="reg-banner" id="regNudge" style="display:none">
+      <div class="reg-banner-avatar">
+        <svg viewBox="0 0 100 100"><use href="#zj1"/></svg>
+      </div>
+      <div class="reg-banner-body">
+        <div class="reg-banner-text">
+          <strong id="regNudgeTitle">我们聊得挺投缘的</strong>
+          <span id="regNudgeBody">注册一下，我就能一直记得聊过什么，不用每次重新认识你。</span>
+        </div>
+        <button class="reg-banner-btn" onclick="localStorage.setItem('zjRegSource','chat_nudge'); window.location.href='screen5-register.html'">注册</button>
+      </div>
+      <button class="reg-banner-close" id="regNudgeClose" onclick="dismissRegNudge()" aria-label="关闭">×</button>
+    </div>
+
+    <div class="reg-banner" id="assessNudge" style="display:none">
+      <div class="reg-banner-avatar">
+        <svg viewBox="0 0 100 100"><use href="#zj1"/></svg>
+      </div>
+      <div class="reg-banner-body">
+        <div class="reg-banner-text">
+          <strong>要不要做个 5 分钟的小测评？</strong>
+          测完我会更懂你。
+        </div>
+        <button class="reg-banner-btn" onclick="localStorage.setItem('zjRegSource','chat_assess_nudge'); window.location.href='screen3-prototype.html'">去测评</button>
+      </div>
+      <button class="reg-banner-close" onclick="dismissAssessNudge()" aria-label="关闭">×</button>
+    </div>
+
     <!-- 消息列表 -->
     <div class="msg-list" id="msgList">
-
-      <!-- 注册引导条（未注册用户可见，可关闭）-->
-      <div class="reg-nudge" id="regNudge" style="display:none">
-        <div class="reg-nudge-icon">🔒</div>
-        <div class="reg-nudge-text">
-          <strong>注册后对话永久保存</strong>
-          随时回来，KnowMe 记得你
-        </div>
-        <button class="reg-nudge-btn" onclick="localStorage.setItem('zjRegSource','chat_nudge'); window.location.href='screen5-register.html'">注册</button>
-        <button class="reg-nudge-close" onclick="dismissRegNudge()" aria-label="关闭">✕</button>
-      </div>
 
       <!-- 报告预览折叠条组（有测评数据时由 JS 控制显示，位置由 JS 决定） -->
       <div id="reportPreviewWrap" style="display:none">
@@ -2432,7 +2468,7 @@
           <svg class="bubble-avatar-sm" viewBox="0 0 100 100"><use href="#zj1"/></svg>
         </div>
         <div class="ai-bubble" id="defaultOpeningBubble">
-          <p>hi，今天有没有什么开心或烦心的事，跟我说说？</p>
+          <p>Hi，我是「KnowMe」。</p>
         </div>
       </div>
       <div class="reaction-strip" data-msgid="msg0"></div>
@@ -2682,14 +2718,22 @@
       return data.token;
     }
 
-    (async function initServerAuth() {
+    window._knowmePromptReady = (async function initServerAuth() {
       try {
         if (!_serverToken) await refreshServerToken();
-        loadUserProfile();
-        loadPromptFiles(_serverToken);
+        const promptTask = loadPromptFiles(_serverToken);
+        const profileTask = loadUserProfile();
+        await promptTask;
+        // 如果历史记录恢复时已经用兜底 prompt 建了 chatHistory，提示词加载完成后立刻刷新。
+        if (chatHistory.length > 0 && chatHistory[0].role === 'system') {
+          chatHistory[0].content = buildSystemPrompt();
+        }
+        await profileTask;
+        return true;
       } catch(e) {
         console.warn('[Server Auth] 服务器认证失败，将直接调用API', e.message);
         try { if (window.showToast) showToast('调试·登录失败: ' + (e && e.message ? e.message : e)); } catch(_) {}
+        return false;
       }
     })();
 
@@ -2734,9 +2778,26 @@
         if (spRes.ok) _systemPromptText = await spRes.text();
         if (tmRes.ok) _techManualText   = await tmRes.text();
         console.log('[提示词加载] system-prompt:', _systemPromptText.length, '字符; tech-manual:', _techManualText.length, '字符');
+        return Boolean(_systemPromptText);
       } catch(e) {
         console.warn('[提示词加载] 加载失败，将使用内置兜底提示词', e.message);
+        return false;
       }
+    }
+
+    async function ensurePromptReady() {
+      if (_systemPromptText) return true;
+      try {
+        if (window._knowmePromptReady) {
+          await Promise.race([
+            window._knowmePromptReady,
+            new Promise(resolve => setTimeout(resolve, 2500))
+          ]);
+        }
+      } catch(e) {
+        console.warn('[提示词加载] 等待失败，将使用当前可用提示词', e.message);
+      }
+      return Boolean(_systemPromptText);
     }
 
     /* ──── 网络时间校准 ────
@@ -2979,6 +3040,11 @@
       // 否则照旧从输入框读。
       const text = (typeof overrideText === 'string' ? overrideText : input.value).trim();
       if (!text) return;
+      if (isRegistrationMandatoryNow()) {
+        showRegNudge(true);
+        showToast('注册后我就能继续记得你，也能接着聊。');
+        return;
+      }
 
       input.value = '';
       input.style.height = 'auto';
@@ -3064,6 +3130,8 @@
         triggerPosterMode();
         return;
       }
+
+      await ensurePromptReady();
 
       // 引用处理
       const quoteBar = document.getElementById('quoteBar');
@@ -3246,6 +3314,7 @@
         list.appendChild(makeReactionStrip(msgId));
         bindLongPress(aiRow.querySelector('.ai-bubble'), msgId);
         saveChatLog('zhiji', _displayReply);
+        handleSuccessfulChatTurn();
       }
       scrollBottom();
 
@@ -4589,28 +4658,62 @@
       t._timer = setTimeout(() => { t.style.opacity = '0'; }, 2000);
     }
 
-    /* 初始化开场白：打字动画 + 长按绑定 */
+    /* 初始化开场白：两条聊天气泡，不在首页重复演一遍 */
     function initStaticBubbles() {
       const userNick = localStorage.getItem('zjUserNickname');
-      const greeting = userNick
-        ? `${userNick}，今天有没有什么开心或烦心的事，跟我说说？`
-        : 'hi，今天有没有什么开心或烦心的事，跟我说说？';
+      const openingMessages = userNick
+        ? [
+            `${userNick}，我在。`,
+            '我想成为你朋友圈里最特别的 AI 朋友，最会陪你、帮你解忧的那个。家庭、感情、学习、工作的事儿，都可以跟我说。',
+            '今天有什么想聊的？'
+          ]
+        : [
+            'Hi，我是「KnowMe」。',
+            '我想成为你朋友圈里最特别的 AI 朋友，最会陪你、帮你解忧的那个。家庭、感情、学习、工作的事儿，都可以跟我说。',
+            '今天有什么想聊的？'
+          ];
 
-      const bubble = document.getElementById('defaultOpeningBubble');
-      if (!bubble) return;
+      const firstBubble = document.getElementById('defaultOpeningBubble');
+      const firstRow = document.getElementById('defaultOpeningRow');
+      const list = document.getElementById('msgList');
+      if (!firstBubble || !firstRow || !list) return;
 
-      // 清空并打字
-      bubble.innerHTML = '<p></p>';
-      const p = bubble.querySelector('p');
-      const chars = greeting.split('');
-      let i = 0;
-      const tid = setInterval(() => {
-        p.textContent += chars[i++];
-        if (i >= chars.length) {
-          clearInterval(tid);
-          bindLongPress(bubble, 'msg0');
-        }
-      }, 45);
+      firstBubble.innerHTML = '<p></p>';
+      const typeInto = (bubble, text, done) => {
+        const p = bubble.querySelector('p');
+        const chars = text.split('');
+        let i = 0;
+        const tid = setInterval(() => {
+          p.textContent += chars[i++];
+          if (i >= chars.length) {
+            clearInterval(tid);
+            if (done) done();
+          }
+        }, 34);
+      };
+
+      const appendOpeningBubble = (afterEl, text, done) => {
+        const msgId = 'msg' + (++_msgCounter);
+        const row = document.createElement('div');
+        row.className = 'bubble-row';
+        row.dataset.msgid = msgId;
+        row.innerHTML = `<div class="bubble-avatar">${AVATAR_SVG}</div><div class="ai-bubble"><p></p></div>`;
+        afterEl.insertAdjacentElement('afterend', row);
+        const bubble = row.querySelector('.ai-bubble');
+        typeInto(bubble, text, () => {
+          bindLongPress(bubble, msgId);
+          if (done) done(row);
+        });
+      };
+
+      typeInto(firstBubble, openingMessages[0], () => {
+        bindLongPress(firstBubble, 'msg0');
+        setTimeout(() => {
+          appendOpeningBubble(firstRow, openingMessages[1], (secondRow) => {
+            setTimeout(() => appendOpeningBubble(secondRow, openingMessages[2]), 220);
+          });
+        }, 260);
+      });
     }
 
     /* ──── Tab Bar 导航 ──── */
@@ -4667,7 +4770,8 @@
           tabBarH = (tabStyle.display === 'none' || tabStyle.visibility === 'hidden' || tabStyle.opacity === '0')
             ? 0 : tab.getBoundingClientRect().height;
         }
-        // 暴露给表情面板
+        // 暴露给表情面板和顶部浮层
+        document.documentElement.style.setProperty('--top-bar-bottom', topBarBottom + 'px');
         window._layoutParams = { tabBarH, bottomBarH, topBarBottom };
         applyLayout(false);
         _ready = true;
@@ -4758,10 +4862,18 @@
       else { window.addEventListener('load', measure); }
     })();
 
-    /* ──── Enter 发送（Shift+Enter 换行；输入法合成中不触发） ──── */
+    /* ──── 发送与换行
+       - 手机/微信：Enter/换行键保留为换行，只点发送按钮发送
+       - 桌面端：Enter 发送，Shift+Enter 换行
+       - 全端：Ctrl/Cmd+Enter 可快捷发送
+       - 输入法合成中不触发发送，避免中文选词时误发
+    ──── */
     document.getElementById('chatInput').addEventListener('keydown', function(e) {
-      // isComposing=true：中文/日文输入法候选词确认阶段，Enter 不发送
-      if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+      if (e.key !== 'Enter' || e.isComposing) return;
+      const isMobileLike = window.matchMedia?.('(pointer: coarse)').matches || /Android|iPhone|iPad|iPod|Mobile|MicroMessenger/i.test(navigator.userAgent || '');
+      const shortcutSend = e.metaKey || e.ctrlKey;
+      const desktopEnterSend = !isMobileLike && !e.shiftKey;
+      if (shortcutSend || desktopEnterSend) {
         e.preventDefault();
         sendMsg();
       }
@@ -5203,8 +5315,6 @@
       // 先把折叠条和注册引导条移出 DOM 保存，避免被 innerHTML='' 销毁
       const rpWrap = document.getElementById('reportPreviewWrap');
       if (rpWrap && rpWrap.parentNode) rpWrap.parentNode.removeChild(rpWrap);
-      const regNudgeEl = document.getElementById('regNudge');
-      if (regNudgeEl && regNudgeEl.parentNode) regNudgeEl.parentNode.removeChild(regNudgeEl);
       list.innerHTML = '';  // 清空静态示例
 
       chatHistory = [{ role: 'system', content: buildSystemPrompt() }];
@@ -5231,9 +5341,6 @@
           chatHistory.push({ role: 'assistant', content: entry.text });
         }
       });
-
-      // 注册引导条插回到 list 顶部
-      if (regNudgeEl) list.insertBefore(regNudgeEl, list.firstChild);
 
       // 有聊天记录时：折叠条只在第一次（zjReportPreviewSeen 未设置时）显示
       // 如果已有聊天记录但标记还没写（老用户升级场景），直接视为已看过，不再显示
@@ -5273,6 +5380,7 @@
       scrollBottom();
 
       // 构建请求：根据有无历史记录，生成不同引导语
+      await ensurePromptReady();
       const sysPrompt = buildSystemPrompt();
       const priorLog = loadChatLog();
       const hasHistory = priorLog.length > 0;
@@ -5642,22 +5750,98 @@
     if (avatarBtn) avatarBtn.style.display = 'block';
   }
 
-  // ── 注册引导条逻辑 ──
-  (function initRegNudge() {
-    // 已注册 或 已关闭过 则不显示
+  // ── 新用户直接开聊后的引导规则 ──
+  const ONBOARDING_REG_MESSAGE_LIMIT = 15;
+  const ONBOARDING_ASSESS_TURN_LIMIT = 2;
+
+  (function markAnonymousVisit() {
     if (localStorage.getItem('zjIsRegistered')) return;
-    if (localStorage.getItem('zjRegNudgeDismissed')) return;
-    const nudge = document.getElementById('regNudge');
-    if (nudge) nudge.style.display = 'flex';
+    if (sessionStorage.getItem('zjAnonVisitMarked')) return;
+    const visits = parseInt(localStorage.getItem('zjAnonChatVisitCount') || '0', 10) + 1;
+    localStorage.setItem('zjAnonChatVisitCount', String(visits));
+    sessionStorage.setItem('zjAnonVisitMarked', '1');
+    sessionStorage.setItem('zjAnonSessionUserMessages', sessionStorage.getItem('zjAnonSessionUserMessages') || '0');
   })();
 
-  function dismissRegNudge() {
+  function getAnonSessionMessages() {
+    return parseInt(sessionStorage.getItem('zjAnonSessionUserMessages') || '0', 10);
+  }
+  function getAnonTotalMessages() {
+    return loadChatLog().filter(entry => entry && (entry.role === 'user' || entry.role === 'zhiji' || entry.role === 'assistant')).length;
+  }
+  function getAnonVisitCount() {
+    return parseInt(localStorage.getItem('zjAnonChatVisitCount') || '1', 10);
+  }
+  function isRegistrationMandatoryNow() {
+    return !localStorage.getItem('zjIsRegistered') && getAnonVisitCount() >= 3 && getAnonTotalMessages() >= ONBOARDING_REG_MESSAGE_LIMIT;
+  }
+  function showRegNudge(mandatory) {
+    if (localStorage.getItem('zjIsRegistered')) return;
+    if (!mandatory && sessionStorage.getItem('zjRegNudgeDismissedThisSession')) return;
     const nudge = document.getElementById('regNudge');
     if (!nudge) return;
-    nudge.classList.add('hiding');
-    localStorage.setItem('zjRegNudgeDismissed', '1');
-    setTimeout(() => { nudge.style.display = 'none'; nudge.classList.remove('hiding'); }, 280);
+    const closeBtn = document.getElementById('regNudgeClose');
+    const title = document.getElementById('regNudgeTitle');
+    const body = document.getElementById('regNudgeBody');
+    if (title) title.textContent = mandatory ? '注册后继续聊' : '我们聊得挺投缘的';
+    if (body) body.textContent = mandatory
+      ? '注册一下，我就能一直记得聊过什么，也能继续陪你聊下去。'
+      : '注册一下，我就能一直记得聊过什么，不用每次重新认识你。';
+    if (closeBtn) closeBtn.style.display = mandatory ? 'none' : 'flex';
+    nudge.style.display = 'flex';
+    requestAnimationFrame(() => nudge.classList.add('visible'));
   }
+  function dismissRegNudge() {
+    if (isRegistrationMandatoryNow()) {
+      showRegNudge(true);
+      return;
+    }
+    const nudge = document.getElementById('regNudge');
+    if (!nudge) return;
+    sessionStorage.setItem('zjRegNudgeDismissedThisSession', '1');
+    nudge.classList.remove('visible');
+    setTimeout(() => { nudge.style.display = 'none'; }, 380);
+  }
+  function dismissAssessNudge() {
+    const nudge = document.getElementById('assessNudge');
+    if (!nudge) return;
+    nudge.classList.remove('visible');
+    localStorage.setItem('zjAssessNudgeDismissed', '1');
+    setTimeout(() => { nudge.style.display = 'none'; }, 380);
+  }
+  function showAssessNudge() {
+    if (!localStorage.getItem('zjIsRegistered')) return;
+    if (localStorage.getItem('zjAssessment')) return;
+    if (localStorage.getItem('zjAssessNudgeShown')) return;
+    if (localStorage.getItem('zjAssessNudgeDismissed')) return;
+    const nudge = document.getElementById('assessNudge');
+    if (!nudge) return;
+    localStorage.setItem('zjAssessNudgeShown', '1');
+    nudge.style.display = 'flex';
+    requestAnimationFrame(() => nudge.classList.add('visible'));
+    setTimeout(() => {
+      if (nudge.style.display !== 'none') dismissAssessNudge();
+    }, 60000);
+  }
+  function handleSuccessfulChatTurn() {
+    if (!localStorage.getItem('zjIsRegistered')) {
+      const sessionMessages = getAnonSessionMessages() + 1;
+      sessionStorage.setItem('zjAnonSessionUserMessages', String(sessionMessages));
+      if (getAnonTotalMessages() >= ONBOARDING_REG_MESSAGE_LIMIT) showRegNudge(getAnonVisitCount() >= 3);
+      return;
+    }
+    if (!localStorage.getItem('zjAssessment')) {
+      const turns = parseInt(localStorage.getItem('zjPostRegChatTurns') || '0', 10) + 1;
+      localStorage.setItem('zjPostRegChatTurns', String(turns));
+      if (turns >= ONBOARDING_ASSESS_TURN_LIMIT) showAssessNudge();
+    }
+  }
+
+  (function initOnboardingNudges() {
+    if (!localStorage.getItem('zjIsRegistered') && getAnonTotalMessages() >= ONBOARDING_REG_MESSAGE_LIMIT) {
+      setTimeout(() => showRegNudge(getAnonVisitCount() >= 3), 500);
+    }
+  })();
 
   /* ── 表情面板（键盘替换式，微信同款） ── */
   (function initEmojiSheet() {

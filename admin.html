@@ -225,7 +225,10 @@
     }
 
     /* ── 留存率条形 ── */
-    .retention-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+    .retention-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .mini-stat { background: var(--bg3); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+    .mini-label { font-size: 11px; color: var(--text3); margin-bottom: 8px; }
+    .mini-value { font-size: 24px; font-weight: 700; color: var(--text); }
     .retention-item { text-align: center; }
     .retention-label { font-size: 11px; color: var(--text3); margin-bottom: 8px; }
     .retention-bar-wrap {
@@ -476,7 +479,7 @@
 <div id="app">
   <!-- 侧边栏 -->
   <aside class="sidebar">
-    <div class="sidebar-logo">KnowMe <span>运营后台 v1.0</span></div>
+    <div class="sidebar-logo">KnowMe <span>运营后台 v1.3 · 20260708</span></div>
     <nav class="nav">
       <div class="nav-section">概览</div>
       <div class="nav-item active" onclick="showPage('overview')">
@@ -488,7 +491,7 @@
         <span class="icon">👥</span> 用户列表
       </div>
       <div class="nav-item" onclick="showPage('segments')">
-        <span class="icon">🎯</span> 用户分层
+        <span class="icon">🎯</span> 运营工作台
       </div>
 
       <div class="nav-section">产品数据</div>
@@ -503,6 +506,9 @@
       </div>
       <div class="nav-item" onclick="showPage('profile')">
         <span class="icon">📋</span> 档案开放度
+      </div>
+      <div class="nav-item" onclick="showPage('scenes')">
+        <span class="icon">🏷️</span> 场景洞察
       </div>
 
       <div class="nav-section">质检</div>
@@ -535,86 +541,93 @@
 
       <!-- ═══ 概览页 ═══ -->
       <div class="page active" id="page-overview">
-        <!-- 核心指标 -->
+        <div class="data-note">💡 第二阶段验证驾驶舱：优先看真实增长、回访留存、活跃分层和关键功能使用；未埋点功能会明确标注为“待埋点”。</div>
+
+        <!-- 核心总览 -->
         <div class="grid-4">
           <div class="card">
-            <div class="card-title">👤 注册总用户</div>
+            <div class="card-title">👥 总注册用户</div>
             <div class="card-value" id="o-totalUsers">--</div>
-            <div class="card-trend trend-up" id="o-newToday">今日新增 --</div>
+            <div class="card-trend trend-up" id="o-accountMix">手机号 -- · 匿名 --</div>
           </div>
           <div class="card">
-            <div class="card-title">🔥 今日活跃 DAU</div>
-            <div class="card-value" id="o-dau">--</div>
-            <div class="card-sub" id="o-dauRate">占注册用户 --%</div>
+            <div class="card-title">🧠 完成测评用户</div>
+            <div class="card-value" id="o-assessedUsers">--</div>
+            <div class="card-sub" id="o-assessedRate">占注册用户 --</div>
           </div>
           <div class="card">
-            <div class="card-title">💜 全局共鸣率</div>
-            <div class="card-value" id="o-resonance">--%</div>
-            <div class="card-sub">积极反馈 / 总对话</div>
+            <div class="card-title">💬 开始聊天用户</div>
+            <div class="card-value" id="o-chatUsers">--</div>
+            <div class="card-sub" id="o-chatRate">占注册用户 --</div>
           </div>
           <div class="card">
-            <div class="card-title">🌱 情绪转正率</div>
-            <div class="card-value" id="o-emotionFlip">--%</div>
-            <div class="card-sub">负转正 / 有负情绪对话</div>
+            <div class="card-title">✨ 真实活跃用户</div>
+            <div class="card-value" id="o-realActiveUsers">--</div>
+            <div class="card-sub">近30天有聊天</div>
           </div>
         </div>
 
-        <div class="grid-4">
-          <div class="card">
-            <div class="card-title">📅 本周新增 WAU</div>
-            <div class="card-value" id="o-wau">--</div>
-            <div class="card-sub" id="o-weekNew">本周注册 --</div>
+        <!-- 新增增长 -->
+        <div class="card" style="margin-bottom:20px;">
+          <div class="section-title">新增增长 <span class="badge">日 / 周 / 月 / 季度 / 年</span></div>
+          <div class="grid-4" style="margin-bottom:0;">
+            <div class="mini-stat"><div class="mini-label">日新增</div><div class="mini-value" id="g-day">--</div></div>
+            <div class="mini-stat"><div class="mini-label">周新增</div><div class="mini-value" id="g-week">--</div></div>
+            <div class="mini-stat"><div class="mini-label">月新增</div><div class="mini-value" id="g-month">--</div></div>
+            <div class="mini-stat"><div class="mini-label">季度新增</div><div class="mini-value" id="g-quarter">--</div></div>
           </div>
-          <div class="card">
-            <div class="card-title">📆 本月活跃 MAU</div>
-            <div class="card-value" id="o-mau">--</div>
-            <div class="card-sub" id="o-monthNew">本月注册 --</div>
-          </div>
-          <div class="card">
-            <div class="card-title">⚠️ 流失预警</div>
-            <div class="card-value" id="o-churnWarn" style="color:var(--orange)">--</div>
-            <div class="card-sub">15天未登录</div>
-          </div>
-          <div class="card">
-            <div class="card-title">🚨 已流失</div>
-            <div class="card-value" id="o-churned" style="color:var(--red)">--</div>
-            <div class="card-sub">30天未登录</div>
+          <div class="metric-row" style="margin-top:14px;">
+            <span class="metric-name"><span class="dot dot-green"></span> 年新增</span>
+            <span class="metric-val" id="g-year">-- 人</span>
           </div>
         </div>
 
         <div class="grid-2">
-          <!-- 留存率 -->
+          <!-- 回访留存 -->
           <div class="card">
-            <div class="section-title">留存率 <span class="badge">次 / 3 / 7 / 15 / 30 日</span></div>
-            <div class="retention-grid" id="retentionGrid">
-              <!-- JS填充 -->
-            </div>
+            <div class="section-title">回访留存 <span class="badge">首聊后 7 / 14 / 30 / 60 天</span></div>
+            <div class="retention-grid" id="retentionGrid"></div>
+            <div class="card-sub" style="margin-top:12px;line-height:1.7;">口径：首次聊天后，在对应周期内再次回来聊天。更适合 KnowMe 这种“有卡点再回来”的陪伴产品。</div>
           </div>
 
-          <!-- 增长漏斗 -->
+          <!-- 活跃分层 -->
           <div class="card">
-            <div class="section-title">用户增长漏斗</div>
-            <div class="funnel" id="funnelChart">
-              <!-- JS填充 -->
-            </div>
+            <div class="section-title">活跃分层 <span class="badge">近30天</span></div>
+            <div class="metric-list" id="activityLevels"></div>
           </div>
         </div>
 
         <div class="grid-2">
-          <!-- 今日告警 -->
+          <!-- 活跃与流失 -->
           <div class="card">
-            <div class="section-title">今日关注</div>
-            <div class="metric-list" id="alertList">
-              <div class="loading"><div class="spinner"></div>加载中...</div>
+            <div class="section-title">活跃与流失状态</div>
+            <div class="grid-4" style="margin-bottom:0;">
+              <div class="mini-stat"><div class="mini-label">日活跃</div><div class="mini-value" id="a-dau">--</div></div>
+              <div class="mini-stat"><div class="mini-label">周活跃</div><div class="mini-value" id="a-wau">--</div></div>
+              <div class="mini-stat"><div class="mini-label">双周活跃</div><div class="mini-value" id="a-bwau">--</div></div>
+              <div class="mini-stat"><div class="mini-label">月活跃</div><div class="mini-value" id="a-mau">--</div></div>
             </div>
+            <div class="metric-list" id="churnStatus" style="margin-top:16px;"></div>
           </div>
 
-          <!-- 功能使用率 -->
+          <!-- 转化漏斗 -->
           <div class="card">
-            <div class="section-title">功能使用率</div>
-            <div class="emotion-bars" id="featureUsage">
-              <!-- JS填充 -->
-            </div>
+            <div class="section-title">核心转化漏斗</div>
+            <div class="funnel" id="funnelChart"></div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <!-- 功能使用 -->
+          <div class="card">
+            <div class="section-title">功能使用</div>
+            <div class="emotion-bars" id="featureUsage"></div>
+          </div>
+
+          <!-- 表情反馈 -->
+          <div class="card">
+            <div class="section-title">表情反馈</div>
+            <div class="metric-list" id="emojiUsage"></div>
           </div>
         </div>
       </div>
@@ -622,10 +635,12 @@
       <!-- ═══ 用户列表页 ═══ -->
       <div class="page" id="page-users">
         <div class="filter-bar">
-          <input class="search-input" type="text" placeholder="搜索手机号..." id="userSearch" oninput="filterUsers()">
+          <input class="search-input" type="search" placeholder="搜索用户ID / 脱敏手机号" id="userSearch"
+            name="knowme_user_search" autocomplete="off" autocorrect="off" spellcheck="false"
+            onfocus="clearUserSearchPassword()" oninput="filterUsers()">
           <button class="filter-btn active" onclick="setUserFilter('all', this)">全部</button>
           <button class="filter-btn" onclick="setUserFilter('active', this)">活跃</button>
-          <button class="filter-btn" onclick="setUserFilter('silent', this)">沉默</button>
+          <button class="filter-btn" onclick="setUserFilter('pending', this)">待激活</button>
           <button class="filter-btn" onclick="setUserFilter('warn', this)">流失预警</button>
           <button class="filter-btn" onclick="setUserFilter('churned', this)">已流失</button>
           <button class="filter-btn" onclick="setUserFilter('vip', this)">核心用户</button>
@@ -635,7 +650,7 @@
             <table>
               <thead>
                 <tr>
-                  <th>手机号</th>
+                  <th>用户</th>
                   <th>注册时间</th>
                   <th>最后活跃</th>
                   <th>状态</th>
@@ -657,54 +672,47 @@
         </div>
       </div>
 
-      <!-- ═══ 用户分层页 ═══ -->
+      <!-- ═══ 运营工作台页 ═══ -->
       <div class="page" id="page-segments">
-        <div class="data-note">💡 分层标准：频率 = 每周登录次数；深度 = 平均每次对话轮数（≥10轮为深度）</div>
-        <div class="grid-2" style="margin-bottom:20px;">
-          <div class="card" style="grid-column:1/-1;">
-            <div class="section-title">用户分层矩阵</div>
-            <div class="matrix" id="segmentMatrix">
-              <div class="matrix-header"></div>
-              <div class="matrix-header">低频（每周 &lt; 2次）</div>
-              <div class="matrix-header">高频（每周 ≥ 2次）</div>
-              <div class="matrix-label">深度<br>≥10轮</div>
-              <div class="matrix-cell" onclick="filterBySegment('precious')">
-                <div class="cell-emoji">💎</div>
-                <div class="cell-type">珍贵用户</div>
-                <div class="cell-count" id="seg-precious" style="color:var(--cyan)">--</div>
-                <div class="cell-desc">来了就认真聊，需提频</div>
-              </div>
-              <div class="matrix-cell" onclick="filterBySegment('core')">
-                <div class="cell-emoji">🌟</div>
-                <div class="cell-type">核心用户</div>
-                <div class="cell-count" id="seg-core" style="color:var(--purple2)">--</div>
-                <div class="cell-desc">高频深度，重点维护</div>
-              </div>
-              <div class="matrix-label">浅度<br>&lt;10轮</div>
-              <div class="matrix-cell" onclick="filterBySegment('edge')">
-                <div class="cell-emoji">😴</div>
-                <div class="cell-type">边缘用户</div>
-                <div class="cell-count" id="seg-edge" style="color:var(--text3)">--</div>
-                <div class="cell-desc">流失风险最高</div>
-              </div>
-              <div class="matrix-cell" onclick="filterBySegment('checkin')">
-                <div class="cell-emoji">🔄</div>
-                <div class="cell-type">打卡型用户</div>
-                <div class="cell-count" id="seg-checkin" style="color:var(--green)">--</div>
-                <div class="cell-desc">习惯好，需引导深度</div>
-              </div>
-            </div>
-          </div>
+        <div class="data-note">🎯 运营工作台 MVP：先做用户池、策略建议、手动标记和效果追踪；真实短信/小程序通知等触达动作后续再接。</div>
+
+        <div class="grid-4">
+          <div class="card"><div class="card-title">📌 需跟进</div><div class="card-value" id="op-needFollowup">--</div><div class="card-sub">管理员手动标记</div></div>
+          <div class="card"><div class="card-title">✅ 已复盘</div><div class="card-value" id="op-reviewed">--</div><div class="card-sub">已看过聊天/档案</div></div>
+          <div class="card"><div class="card-title">🧪 产品反馈样本</div><div class="card-value" id="op-productFeedback">--</div><div class="card-sub">值得沉淀产品问题</div></div>
+          <div class="card"><div class="card-title">🔕 暂不打扰</div><div class="card-value" id="op-noDisturb">--</div><div class="card-sub">不进入召回</div></div>
         </div>
+
         <div class="grid-2">
           <div class="card">
-            <div class="section-title">核心用户列表 <span class="badge">🌟 重点维护</span></div>
-            <div id="coreUserList"><div class="loading"><div class="spinner"></div>加载中...</div></div>
+            <div class="section-title">用户池 <span class="badge">点击池子筛选用户</span></div>
+            <div class="metric-list" id="opUserPools"></div>
           </div>
           <div class="card">
-            <div class="section-title">流失预警用户 <span class="badge" style="background:rgba(245,158,11,0.12);color:var(--orange)">⚠️ 需召回</span></div>
-            <div id="warnUserList"><div class="loading"><div class="spinner"></div>加载中...</div></div>
+            <div class="section-title">价值特征池 <span class="badge">深度/档案/场景</span></div>
+            <div class="metric-list" id="opValuePools"></div>
           </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="section-title">关联分析 <span class="badge">验证产品假设</span></div>
+            <div class="metric-list" id="opCorrelation"></div>
+          </div>
+          <div class="card">
+            <div class="section-title">运营策略 <span class="badge">只对需跟进生成文案</span></div>
+            <div class="metric-list" id="opStrategies"></div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:20px;">
+          <div class="section-title">跟进队列 <span class="badge">需跟进用户</span></div>
+          <div id="opFollowupQueue"><div class="loading"><div class="spinner"></div>加载中...</div></div>
+        </div>
+
+        <div class="card">
+          <div class="section-title">用户池明细 <span class="badge" id="opPoolTitle">全部用户</span></div>
+          <div id="opUserList"><div class="loading"><div class="spinner"></div>加载中...</div></div>
         </div>
       </div>
 
@@ -1006,6 +1014,57 @@
         </div>
       </div>
 
+      <!-- ═══ 场景洞察页 ═══ -->
+      <div class="page" id="page-scenes">
+        <div class="grid-4">
+          <div class="card">
+            <div class="card-title">🏷️ 已打标消息</div>
+            <div class="card-value" id="scene-taggedMessages">--</div>
+            <div class="card-sub" id="scene-taggedSub">用户消息覆盖率 --</div>
+          </div>
+          <div class="card">
+            <div class="card-title">👥 已覆盖用户</div>
+            <div class="card-value" id="scene-taggedUsers">--</div>
+            <div class="card-sub">聊过至少一个场景</div>
+          </div>
+          <div class="card">
+            <div class="card-title">🔥 第一场景</div>
+            <div class="card-value" id="scene-topScene">--</div>
+            <div class="card-sub" id="scene-topSceneSub">按消息数</div>
+          </div>
+          <div class="card">
+            <div class="card-title">🧭 专家 Agent 线索</div>
+            <div class="card-value" id="scene-agentHint">--</div>
+            <div class="card-sub">高消息数 + 高用户数</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:12px;">
+              <div class="section-title" style="margin-bottom:0;">场景总览</div>
+              <button class="filter-btn active" onclick="runSceneTagAnalysis()">重跑全量打标</button>
+            </div>
+            <div class="data-note" style="margin-bottom:12px;">
+              统计口径：按所有用户消息打标；同一条消息可属于多个场景。消息数代表需求深度，用户数代表覆盖广度。
+            </div>
+            <div id="sceneSummaryList"><div class="empty-state"><div class="icon">🏷️</div><p>暂无场景标签数据</p></div></div>
+          </div>
+          <div class="card">
+            <div class="section-title">用户场景分布</div>
+            <div style="display:flex;gap:8px;margin-bottom:12px;">
+              <select class="search-input" id="sceneFilter" onchange="renderSceneUsers()" style="flex:1;">
+                <option value="">全部场景</option>
+              </select>
+              <button class="filter-btn" onclick="loadSceneInsights()">刷新</button>
+            </div>
+            <div id="sceneUserList" style="display:flex;flex-direction:column;gap:8px;max-height:560px;overflow-y:auto;">
+              <div class="empty-state"><div class="icon">👥</div><p>暂无用户场景分布</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- ═══ 系统设置页 ═══ -->
       <div class="page" id="page-settings">
         <div class="grid-2">
@@ -1040,7 +1099,7 @@
               ⚠️ 查看用户聊天原文将被记录操作日志，请谨慎使用
             </div>
             <div style="display:flex;gap:8px;margin-bottom:12px;">
-              <input class="search-input" style="flex:1;" type="text" placeholder="输入用户ID或手机号" id="chatViewUserId">
+              <input class="search-input" style="flex:1;" type="text" placeholder="输入用户ID，例如 23" id="chatViewUserId">
               <button class="filter-btn" onclick="viewChatLog()" style="white-space:nowrap;">查看记录</button>
             </div>
             <div id="chatLogResult" style="font-size:12px;color:var(--text3);">--</div>
@@ -1061,35 +1120,42 @@
         <div style="display:flex;gap:16px;height:calc(100vh - 120px);">
 
           <!-- 左列：报告列表 -->
-          <div style="width:260px;flex-shrink:0;display:flex;flex-direction:column;gap:12px;">
+          <div style="width:180px;flex-shrink:0;display:flex;flex-direction:column;gap:12px;">
             <div class="card" style="padding:16px;">
               <div class="section-title" style="margin-bottom:12px;">👁 AI 观察员</div>
-              <div style="display:flex;gap:8px;margin-bottom:12px;">
-                <input type="date" id="obs-date-picker" class="search-input" style="flex:1;font-size:12px;">
-                <button class="filter-btn" onclick="obsLoadReports()" style="white-space:nowrap;">查询</button>
+              <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;">
+                <div style="font-size:11px;color:var(--text3);">起始日期</div>
+                <input type="date" id="obs-start-date" class="search-input" style="width:100%;font-size:11px;">
+                <div style="font-size:11px;color:var(--text3);">结束日期</div>
+                <input type="date" id="obs-end-date" class="search-input" style="width:100%;font-size:11px;">
+                <input type="number" id="obs-user-id" class="search-input" style="width:100%;font-size:11px;" placeholder="用户ID，可选">
+                <button class="filter-btn active" onclick="obsLoadReports()" style="width:100%;font-size:11px;">查询这一段</button>
+                <button class="filter-btn" onclick="obsQuickRange(7)" style="width:100%;font-size:11px;">近 7 天</button>
+                <button class="filter-btn" onclick="obsQuickRange(30)" style="width:100%;font-size:11px;">近 30 天</button>
               </div>
               <div id="obs-report-list" style="display:flex;flex-direction:column;gap:8px;overflow-y:auto;max-height:calc(100vh - 280px);">
-                <div style="color:var(--text3);font-size:12px;">选择日期后加载报告</div>
+                <div style="color:var(--text3);font-size:12px;">选择时间段后加载报告</div>
               </div>
             </div>
           </div>
 
-          <!-- 右侧：报告详情 + 追问 -->
-          <div style="flex:1;display:flex;flex-direction:column;gap:12px;min-width:0;">
+          <!-- 右侧：报告详情（左） + 追问（右） -->
+          <div style="flex:1;display:flex;gap:12px;min-width:0;overflow:hidden;">
 
-            <!-- 报告内容 -->
-            <div class="card" style="flex:1;overflow-y:auto;padding:20px;" id="obs-report-content">
+            <!-- 报告栏目区（左） -->
+            <div class="card" style="flex:1;overflow-y:auto;padding:20px;min-width:0;" id="obs-report-content">
               <div style="color:var(--text3);font-size:13px;text-align:center;padding:40px 0;">
                 从左侧选择一份报告查看
               </div>
             </div>
 
-            <!-- 追问区 -->
-            <div class="card" style="padding:16px;flex-shrink:0;">
-              <div id="obs-chat-history" style="max-height:200px;overflow-y:auto;margin-bottom:12px;display:none;"></div>
-              <div style="display:flex;gap:8px;">
-                <input type="text" id="obs-chat-input" class="search-input" style="flex:1;"
-                  placeholder="向观察员追问..." onkeydown="if(event.key==='Enter')obsSendChat()">
+            <!-- 聊天追问区（右） -->
+            <div class="card" style="width:340px;flex-shrink:0;display:flex;flex-direction:column;padding:16px;gap:0;">
+              <div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:12px;flex-shrink:0;">向观察员追问</div>
+              <div id="obs-chat-history" style="flex:1;overflow-y:auto;margin-bottom:12px;font-size:12px;min-height:0;"></div>
+              <div style="display:flex;gap:8px;flex-shrink:0;">
+                <input type="text" id="obs-chat-input" class="search-input" style="flex:1;font-size:12px;"
+                  placeholder="追问观察员..." onkeydown="if(event.key==='Enter')obsSendChat()">
                 <button class="filter-btn" onclick="obsSendChat()" style="white-space:nowrap;">发送</button>
               </div>
               <div id="obs-current-report-id" style="display:none;"></div>
@@ -1133,6 +1199,7 @@ function doLogin() {
     document.getElementById('loginPage').style.display = 'none';
     document.getElementById('app').classList.add('visible');
     document.getElementById('cfg-server').textContent = API_BASE;
+    initObserverFilters();
     loadAllData();
   } else {
     const err = document.getElementById('loginErr');
@@ -1152,6 +1219,7 @@ window.onload = function() {
     document.getElementById('loginPage').style.display = 'none';
     document.getElementById('app').classList.add('visible');
     document.getElementById('cfg-server').textContent = API_BASE;
+    initObserverFilters();
     loadAllData();
   }
 };
@@ -1160,9 +1228,9 @@ window.onload = function() {
    页面导航
 ════════════════════════════════════════════ */
 const pageTitles = {
-  overview: '数据概览', users: '用户列表', segments: '用户分层',
+  overview: '数据概览', users: '用户列表', segments: '运营工作台',
   interaction: '互动分析', emotion: '情绪数据', assessment: '测评数据',
-  profile: '档案开放度', observer: 'AI 观察员', settings: '系统设置'
+  profile: '档案开放度', scenes: '场景洞察', observer: 'AI 观察员', settings: '系统设置'
 };
 
 function showPage(name) {
@@ -1170,6 +1238,9 @@ function showPage(name) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('page-' + name).classList.add('active');
   document.getElementById('pageTitle').textContent = pageTitles[name] || name;
+  if (name === 'observer') initObserverFilters();
+  if (name === 'scenes') loadSceneInsights();
+  if (name === 'users') setTimeout(() => { clearUserSearchPassword(); filterUsers(); }, 50);
   // 高亮导航
   document.querySelectorAll('.nav-item').forEach(n => {
     if (n.textContent.trim().includes(pageTitles[name]?.slice(0,3) || name)) {
@@ -1181,35 +1252,29 @@ function showPage(name) {
 /* ════════════════════════════════════════════
    数据获取
 ════════════════════════════════════════════ */
-let _adminToken = '';
 let _allUsers = [];
 let _userFilter = 'all';
-
-async function getAdminToken() {
-  if (_adminToken) return _adminToken;
-  const res = await fetch(`${API_BASE}/api/auth/guest`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ deviceId: 'admin_' + Date.now() })
-  });
-  const d = await res.json();
-  _adminToken = d.token || '';
-  return _adminToken;
-}
+let _adminMeta = {};
+let _dataLoadError = '';
 
 async function apiFetch(path, opts = {}) {
-  const token = await getAdminToken();
   const res = await fetch(API_BASE + path, {
     ...opts,
-    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', 'x-admin-password': 'knowme2026admin', ...(opts.headers || {}) }
+    headers: { 'Content-Type': 'application/json', 'x-admin-password': ADMIN_PASSWORD, ...(opts.headers || {}) }
   });
-  if (!res.ok) throw new Error(res.status);
+  if (!res.ok) throw new Error(`${path} 请求失败 ${res.status}`);
   return res.json();
 }
 
 async function loadAllData() {
   updateLastUpdate();
-  await loadUsers();
+  try {
+    await loadUsers();
+  } catch(e) {
+    _dataLoadError = e.message || String(e);
+    _allUsers = [];
+    showToast('真实数据加载失败：' + _dataLoadError);
+  }
   renderOverview();
   renderSegments();
   renderInteraction();
@@ -1220,7 +1285,7 @@ async function loadAllData() {
 
 function refreshData() {
   _allUsers = [];
-  _adminToken = '';
+  _dataLoadError = '';
   loadAllData();
   showToast('数据已刷新');
 }
@@ -1231,181 +1296,210 @@ function updateLastUpdate() {
     '更新于 ' + now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
 }
 
-/* ════════════════════════════════════════════
-   用户数据（从服务器拉取 + 模拟补充）
-════════════════════════════════════════════ */
-async function loadUsers() {
-  try {
-    // 尝试从服务器拉取用户列表（需要服务器支持 /api/admin/users）
-    const data = await apiFetch('/api/admin/users');
-    if (data && data.users) {
-      const now = Date.now();
-      const day = 86400000;
-      _allUsers = data.users.map(u => {
-        // 流失判断：从未活跃的新用户（注册<7天）不算流失
-        const regDiff = (now - new Date(u.regAt).getTime()) / day;
-        const lastDiff = u.lastActiveAt ? (now - new Date(u.lastActiveAt).getTime()) / day : null;
-        let status = 'active';
-        if (lastDiff === null) {
-          // 从未活跃：注册超过7天才算流失，否则是新用户
-          status = regDiff > 7 ? 'churned' : 'active';
-        } else if (lastDiff > 30) status = 'churned';
-        else if (lastDiff > 15) status = 'warn';
-        else if (lastDiff > 7) status = 'silent';
-
-        // 直接使用服务器返回的真实值
-        const avgRounds = u.avgRounds || '0';
-        const totalSessions = u.totalSessions || 0;
-        const deepSessions = u.deepSessions || 0;
-        const monthLogins = u.monthLogins || 0;
-
-        // 用户分层：基于真实avgRounds和weekLogins
-        let segType = 'edge';
-        if (parseFloat(avgRounds) >= 10 && u.weekLogins >= 2) segType = 'core';
-        else if (parseFloat(avgRounds) >= 10 && u.weekLogins < 2) segType = 'precious';
-        else if (parseFloat(avgRounds) < 10 && u.weekLogins >= 2) segType = 'checkin';
-
-        return {
-          ...u,
-          lastActiveAt: u.lastActiveAt || null,
-          status,
-          avgRounds,
-          deepSessions,
-          totalSessions,
-          monthLogins,
-          segType,
-          stage: u.stage || 1,
-          hasAssessment: u.hasAssessment || false,
-        };
-      });
-      return;
-    }
-  } catch(e) {
-    // 服务器暂无后台API，使用演示数据
+function clearUserSearchPassword() {
+  const input = document.getElementById('userSearch');
+  if (input && input.value === ADMIN_PASSWORD) {
+    input.value = '';
   }
-  // 演示数据（服务器后台API接入前使用）
-  _allUsers = generateDemoUsers();
 }
 
-function generateDemoUsers() {
-  const names = ['微信用户001','微信用户002','微信用户003','微信用户004','微信用户005',
-                  '微信用户006','微信用户007','微信用户008','微信用户009','微信用户010'];
+/* ════════════════════════════════════════════
+   用户数据（只从服务器拉取真实数据）
+════════════════════════════════════════════ */
+async function loadUsers() {
+  const data = await apiFetch('/api/admin/users');
+  if (!data || !Array.isArray(data.users)) throw new Error('用户接口返回格式异常');
+  _adminMeta = data.meta || {};
+
   const now = Date.now();
   const day = 86400000;
-  return names.map((name, i) => {
-    const regDaysAgo = Math.floor(Math.random() * 60);
-    const lastActiveDaysAgo = Math.floor(Math.random() * 35);
-    const totalSessions = Math.floor(Math.random() * 30) + 1;
-    const totalRounds = totalSessions * (Math.floor(Math.random() * 20) + 2);
-    const weekLogins = Math.floor(Math.random() * 7);
-    const monthLogins = weekLogins * 4 + Math.floor(Math.random() * 5);
-    const hasAssessment = Math.random() > 0.3;
-    const profileComplete = Math.floor(Math.random() * 80) + 10;
-    const stage = profileComplete > 60 ? 3 : profileComplete > 30 ? 2 : 1;
-    const deepSessions = Math.floor(totalSessions * Math.random() * 0.6);
-    const avgRounds = totalRounds / totalSessions;
-
+  _allUsers = data.users.map(u => {
+    const regDiff = (now - new Date(u.regAt).getTime()) / day;
+    const lastDiff = u.lastActiveAt ? (now - new Date(u.lastActiveAt).getTime()) / day : null;
     let status = 'active';
-    if (lastActiveDaysAgo > 30) status = 'churned';
-    else if (lastActiveDaysAgo > 15) status = 'warn';
-    else if (lastActiveDaysAgo > 7) status = 'silent';
+    if (lastDiff === null) status = regDiff > 7 ? 'churned' : 'active';
+    else if (lastDiff > 30) status = 'churned';
+    else if (lastDiff > 15) status = 'warn';
+    else if (lastDiff > 7) status = 'pending';
+
+    const avgRounds = u.avgRounds || '0';
+    const totalSessions = u.totalSessions || 0;
+    const deepSessions = u.deepSessions || 0;
+    const monthLogins = u.monthLogins || 0;
 
     let segType = 'edge';
-    if (avgRounds >= 10 && weekLogins >= 2) segType = 'core';
-    else if (avgRounds >= 10 && weekLogins < 2) segType = 'precious';
-    else if (avgRounds < 10 && weekLogins >= 2) segType = 'checkin';
+    if (parseFloat(avgRounds) >= 10 && u.weekLogins >= 2) segType = 'core';
+    else if (parseFloat(avgRounds) >= 10 && u.weekLogins < 2) segType = 'precious';
+    else if (parseFloat(avgRounds) < 10 && u.weekLogins >= 2) segType = 'checkin';
 
     return {
-      id: i + 1,
-      phone: '138****' + String(1000 + i * 7).slice(-4),
-      name, regAt: new Date(now - regDaysAgo * day).toISOString(),
-      lastActiveAt: new Date(now - lastActiveDaysAgo * day).toISOString(),
-      totalSessions, totalRounds, weekLogins, monthLogins,
-      deepSessions, avgRounds: avgRounds.toFixed(1),
-      hasAssessment, profileComplete, stage, status, segType,
-      posReactions: Math.floor(Math.random() * 15),
-      negReactions: Math.floor(Math.random() * 3),
-      emotionFlips: Math.floor(Math.random() * 8),
-      actionCommits: Math.floor(Math.random() * 5),
+      ...u,
+      displayName: u.displayName || `用户 #${u.id}`,
+      accountLabel: u.phoneMasked || u.phone || (u.openidPrefix ? `设备 ${u.openidPrefix}` : '未绑定手机号'),
+      searchText: `${u.id} ${u.displayName || ''} ${u.phoneMasked || u.phone || ''} ${u.openidPrefix || ''}`.toLowerCase(),
+      phone: u.phone || '',
+      lastActiveAt: u.lastActiveAt || null,
+      status,
+      avgRounds,
+      deepSessions,
+      totalSessions,
+      monthLogins,
+      segType,
+      stage: u.stage || 1,
+      hasAssessment: u.hasAssessment || false,
     };
+  }).sort((a, b) => {
+    if ((b.totalRounds || 0) !== (a.totalRounds || 0)) return (b.totalRounds || 0) - (a.totalRounds || 0);
+    return new Date(b.regAt).getTime() - new Date(a.regAt).getTime();
   });
 }
 
 /* ════════════════════════════════════════════
    概览页渲染
 ════════════════════════════════════════════ */
+function pct(part, total) {
+  return total > 0 ? Math.round(part / total * 100) : 0;
+}
+
+function bjMidnightTs(offsetDays = 0) {
+  const d = new Date(Date.now() + 8 * 3600000);
+  d.setUTCHours(0, 0, 0, 0);
+  return d.getTime() - 8 * 3600000 - offsetDays * 86400000;
+}
+
+function inLastDays(dateValue, days) {
+  if (!dateValue) return false;
+  return new Date(dateValue).getTime() >= Date.now() - days * 86400000;
+}
+
 function renderOverview() {
   const users = _allUsers;
-  const now = Date.now();
-  const day = 86400000;
-
   const total = users.length;
-  const today = users.filter(u => new Date(u.regAt) > new Date(now - day)).length;
-  const dau = users.filter(u => new Date(u.lastActiveAt) > new Date(now - day)).length;
-  const wau = users.filter(u => new Date(u.lastActiveAt) > new Date(now - 7*day)).length;
-  const mau = users.filter(u => new Date(u.lastActiveAt) > new Date(now - 30*day)).length;
-  const weekNew = users.filter(u => new Date(u.regAt) > new Date(now - 7*day)).length;
-  const monthNew = users.filter(u => new Date(u.regAt) > new Date(now - 30*day)).length;
-  const churnWarn = users.filter(u => u.status === 'warn').length;
-  const churned = users.filter(u => u.status === 'churned').length;
-
-  // resonance 和 emotionFlip 需要AI分析埋点，暂无数据
+  const phoneUsers = users.filter(u => u.hasPhone).length;
+  const anonymousUsers = total - phoneUsers;
+  const assessed = users.filter(u => u.hasAssessment).length;
+  const chatted = users.filter(u => u.hasChat).length;
+  const realActive = users.filter(u => u.hasChat && inLastDays(u.lastActiveAt, 30)).length;
 
   setText('o-totalUsers', total);
-  setText('o-newToday', `今日新增 ${today}`);
-  setText('o-dau', dau);
-  setText('o-dauRate', `占注册用户 ${total > 0 ? Math.round(dau/total*100) : 0}%`);
-  setText('o-resonance', '--');
-  setText('o-emotionFlip', '--');
-  setText('o-wau', wau);
-  setText('o-weekNew', `本周注册 ${weekNew}`);
-  setText('o-mau', mau);
-  setText('o-monthNew', `本月注册 ${monthNew}`);
-  setText('o-churnWarn', churnWarn);
-  setText('o-churned', churned);
+  setText('o-accountMix', `手机号 ${phoneUsers} · 匿名 ${anonymousUsers}`);
+  setText('o-assessedUsers', assessed);
+  setText('o-assessedRate', `占注册用户 ${pct(assessed, total)}%`);
+  setText('o-chatUsers', chatted);
+  setText('o-chatRate', `占注册用户 ${pct(chatted, total)}%`);
+  setText('o-realActiveUsers', realActive);
 
+  renderGrowthOverview();
   renderRetention();
+  renderActivityLevels();
+  renderActivityAndChurn();
   renderFunnel();
-  renderAlerts();
   renderFeatureUsage();
+  renderEmojiUsage();
+}
+
+function renderGrowthOverview() {
+  const users = _allUsers;
+  const now = Date.now();
+  const dayStart = bjMidnightTs(0);
+  const weekStart = bjMidnightTs(7);
+  const monthStart = bjMidnightTs(30);
+  const quarterStart = bjMidnightTs(90);
+  const yearStart = bjMidnightTs(365);
+  const countSince = ts => users.filter(u => new Date(u.regAt).getTime() >= ts).length;
+
+  setText('g-day', countSince(dayStart));
+  setText('g-week', countSince(weekStart));
+  setText('g-month', countSince(monthStart));
+  setText('g-quarter', countSince(quarterStart));
+  setText('g-year', `${countSince(yearStart)} 人`);
 }
 
 function renderRetention() {
-  const users = _allUsers;
+  const users = _allUsers.filter(u => u.firstChatAt);
+  const days = [7, 14, 30, 60];
+  const labels = ['7日回访', '14日回访', '30日回访', '60日回访'];
+  const colors = ['#8b5cf6', '#7c3aed', '#6d28d9', '#5b21b6'];
   const now = Date.now();
-  const day = 86400000;
 
-  // 模拟留存率计算
-  const days = [1, 3, 7, 15, 30];
-  const labels = ['次日留存', '3日留存', '7日留存', '15日留存', '30日留存'];
-  const colors = ['#8b5cf6', '#7c3aed', '#6d28d9', '#5b21b6', '#4c1d95'];
-
-  // 正确的留存率：注册满d天的用户中，在注册后第d天仍有活跃的占比
-  const rates = days.map(d => {
-    // 找注册时间 >= d天前的用户（有机会产生d日留存）
-    const cohort = users.filter(u => {
-      const regDiff = (now - new Date(u.regAt).getTime()) / day;
-      return regDiff >= d;
-    });
-    if (!cohort.length) return 0;
-    // 留存定义：最后活跃时间在注册后第d天之后（即没有在d天内流失）
+  const items = days.map((d, i) => {
+    const cohort = users.filter(u => (now - new Date(u.firstChatAt).getTime()) / 86400000 >= d);
     const retained = cohort.filter(u => {
       if (!u.lastActiveAt) return false;
-      const regTime = new Date(u.regAt).getTime();
-      const lastTime = new Date(u.lastActiveAt).getTime();
-      return (lastTime - regTime) / day >= d;
+      const first = new Date(u.firstChatAt).getTime();
+      const last = new Date(u.lastActiveAt).getTime();
+      return last > first && (last - first) / 86400000 <= d;
     });
-    return Math.round(retained.length / cohort.length * 100);
+    return { label: labels[i], days: d, cohort: cohort.length, retained: retained.length, rate: pct(retained.length, cohort.length), color: colors[i] };
   });
 
   const grid = document.getElementById('retentionGrid');
-  grid.innerHTML = rates.map((rate, i) => `
+  grid.innerHTML = items.map(item => `
     <div class="retention-item">
-      <div class="retention-label">${labels[i]}</div>
+      <div class="retention-label">${item.label}</div>
       <div class="retention-bar-wrap">
-        <div class="retention-bar" style="height:${rate}%;background:${colors[i]};"></div>
+        <div class="retention-bar" style="height:${Math.max(item.rate, item.rate ? 6 : 0)}%;background:${item.color};"></div>
       </div>
-      <div class="retention-pct">${rate}%</div>
+      <div class="retention-pct">${item.cohort ? item.rate + '%' : '--'}</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:4px;">${item.retained}/${item.cohort}</div>
+    </div>
+  `).join('');
+}
+
+function getActivityLevel(u) {
+  const activeDays = Number(u.activeDays30 || u.monthLogins || 0);
+  const messages = Number(u.userMessages30 || u.totalRounds || 0);
+  if (activeDays >= 8 || messages >= 80) return 'high';
+  if (activeDays >= 4 || messages >= 40) return 'mid';
+  if (activeDays >= 1 || messages >= 1) return 'low';
+  return 'silent';
+}
+
+function renderActivityLevels() {
+  const counts = { high: 0, mid: 0, low: 0, silent: 0 };
+  _allUsers.forEach(u => counts[getActivityLevel(u)]++);
+  const total = _allUsers.length || 1;
+  const rows = [
+    { key: 'high', name: '高活跃', desc: '≥8个活跃日 或 ≥80条消息', color: 'var(--green)' },
+    { key: 'mid', name: '中活跃', desc: '≥4个活跃日 或 ≥40条消息', color: 'var(--purple2)' },
+    { key: 'low', name: '低活跃', desc: '1–3个活跃日 或 1–39条消息', color: 'var(--orange)' },
+    { key: 'silent', name: '沉默用户', desc: '近30天无聊天', color: 'var(--text3)' },
+  ];
+  document.getElementById('activityLevels').innerHTML = rows.map(r => `
+    <div class="metric-row">
+      <span class="metric-name"><span class="dot" style="background:${r.color}"></span>${r.name}<span style="color:var(--text3);font-size:11px;margin-left:8px;">${r.desc}</span></span>
+      <span class="metric-val" style="color:${r.color}">${counts[r.key]} 人 · ${pct(counts[r.key], total)}%</span>
+    </div>
+  `).join('');
+}
+
+function renderActivityAndChurn() {
+  const users = _allUsers;
+  const activeUsers = users.filter(u => u.hasChat);
+  const dau = activeUsers.filter(u => inLastDays(u.lastActiveAt, 1)).length;
+  const wau = activeUsers.filter(u => inLastDays(u.lastActiveAt, 7)).length;
+  const bwau = activeUsers.filter(u => inLastDays(u.lastActiveAt, 14)).length;
+  const mau = activeUsers.filter(u => inLastDays(u.lastActiveAt, 30)).length;
+  const active = activeUsers.filter(u => u.status === 'active').length;
+  const pending = activeUsers.filter(u => u.status === 'pending').length;
+  const warn = activeUsers.filter(u => u.status === 'warn').length;
+  const churned = activeUsers.filter(u => u.status === 'churned').length;
+
+  setText('a-dau', dau);
+  setText('a-wau', wau);
+  setText('a-bwau', bwau);
+  setText('a-mau', mau);
+
+  const rows = [
+    { name: '活跃', desc: '7天内回来过', count: active, color: 'var(--green)' },
+    { name: '待激活', desc: '7–14天未回来', count: pending, color: 'var(--orange)' },
+    { name: '流失预警', desc: '15–29天未回来', count: warn, color: 'var(--orange)' },
+    { name: '已流失', desc: '30天以上未回来', count: churned, color: 'var(--red)' },
+  ];
+  document.getElementById('churnStatus').innerHTML = rows.map(r => `
+    <div class="metric-row">
+      <span class="metric-name"><span class="dot" style="background:${r.color}"></span>${r.name}<span style="color:var(--text3);font-size:11px;margin-left:8px;">${r.desc}</span></span>
+      <span class="metric-val" style="color:${r.color}">${r.count} 人</span>
     </div>
   `).join('');
 }
@@ -1413,87 +1507,72 @@ function renderRetention() {
 function renderFunnel() {
   const users = _allUsers;
   const total = users.length;
-  if (!total) return;
+  if (!total) {
+    document.getElementById('funnelChart').innerHTML = '<div class="empty-state"><div class="icon">📭</div><p>暂无用户数据</p></div>';
+    return;
+  }
 
   const assessed = users.filter(u => u.hasAssessment).length;
-  const chatted = users.filter(u => u.totalSessions > 0).length;
-  const day7 = users.filter(u => {
-    const diff = (Date.now() - new Date(u.lastActiveAt).getTime()) / 86400000;
-    return diff <= 7;
-  }).length;
+  const chatted = users.filter(u => u.hasChat).length;
+  const returned = users.filter(u => u.firstChatAt && u.lastActiveAt && new Date(u.lastActiveAt).getTime() > new Date(u.firstChatAt).getTime()).length;
+  const active30 = users.filter(u => u.hasChat && inLastDays(u.lastActiveAt, 30)).length;
 
   const steps = [
     { label: '注册用户', count: total, color: '#8b5cf6' },
-    { label: '完成测评', count: assessed, color: '#6d28d9' },
-    { label: '开始聊天', count: chatted, color: '#5b21b6' },
-    { label: '7日活跃', count: day7, color: '#4c1d95' },
+    { label: '完成测评', count: assessed, color: '#7c3aed' },
+    { label: '开始聊天', count: chatted, color: '#06b6d4' },
+    { label: '产生回访', count: returned, color: '#10b981' },
+    { label: '30日活跃', count: active30, color: '#f59e0b' },
   ];
 
   document.getElementById('funnelChart').innerHTML = steps.map(s => `
     <div class="funnel-item">
       <div class="funnel-label">${s.label}</div>
       <div class="funnel-bar-wrap">
-        <div class="funnel-bar" style="width:${Math.round(s.count/total*100)}%;background:${s.color};">
-          ${s.count}人
-        </div>
+        <div class="funnel-bar" style="width:${Math.max(pct(s.count,total), s.count ? 4 : 0)}%;background:${s.color};">${s.count}人</div>
       </div>
-      <div class="funnel-pct">${Math.round(s.count/total*100)}%</div>
+      <div class="funnel-pct">${pct(s.count,total)}%</div>
     </div>
   `).join('');
-}
-
-function renderAlerts() {
-  const users = _allUsers;
-  const warn = users.filter(u => u.status === 'warn').length;
-  const silent = users.filter(u => u.status === 'silent').length;
-  const negHigh = 0; // 需要AI埋点，暂无数据
-  const newToday = users.filter(u => {
-    const diff = (Date.now() - new Date(u.regAt).getTime()) / 86400000;
-    return diff < 1;
-  }).length;
-
-  document.getElementById('alertList').innerHTML = `
-    <div class="metric-row">
-      <span class="metric-name"><span class="dot dot-green"></span> 今日新注册</span>
-      <span class="metric-val" style="color:var(--green)">${newToday} 人</span>
-    </div>
-    <div class="metric-row">
-      <span class="metric-name"><span class="dot dot-orange"></span> 沉默用户（7-15天未登录）</span>
-      <span class="metric-val" style="color:var(--orange)">${silent} 人</span>
-    </div>
-    <div class="metric-row">
-      <span class="metric-name"><span class="dot dot-orange"></span> 流失预警（15天未登录）</span>
-      <span class="metric-val" style="color:var(--orange)">${warn} 人</span>
-    </div>
-    <div class="metric-row">
-      <span class="metric-name"><span class="dot dot-red"></span> 消极反馈≥3次用户</span>
-      <span class="metric-val" style="color:var(--text3)">暂无统计</span>
-    </div>
-  `;
 }
 
 function renderFeatureUsage() {
   const users = _allUsers;
   const total = users.length || 1;
   const assessed = users.filter(u => u.hasAssessment).length;
-  const chatted = users.filter(u => u.totalSessions > 0).length;
+  const diaryUsers = users.filter(u => (u.diaryCount || 0) > 0).length;
+  const textUsers = users.filter(u => (u.totalRounds || 0) > 0).length;
+  const totalTextMessages = users.reduce((s,u) => s + (u.totalRounds || 0), 0);
 
   const features = [
-    { name: '性格测评', count: assessed, color: '#8b5cf6' },
-    { name: '聊天对话', count: chatted, color: '#06b6d4' },
-    { name: '情绪日记', count: 0, color: '#10b981', noData: true },
-    { name: '生成海报', count: 0, color: '#f59e0b', noData: true },
+    { name: '测评', count: assessed, note: `${pct(assessed,total)}% 用户`, color: '#8b5cf6' },
+    { name: '日记', count: diaryUsers, note: `${pct(diaryUsers,total)}% 用户`, color: '#10b981' },
+    { name: '文字聊天', count: textUsers, note: `${totalTextMessages} 条用户消息`, color: '#06b6d4' },
+    { name: '海报分享', count: 0, note: '待埋点', color: '#f59e0b', noData: true },
+    { name: '语音输入', count: 0, note: '待埋点', color: '#ec4899', noData: true },
   ];
 
   document.getElementById('featureUsage').innerHTML = features.map(f => `
     <div class="emotion-item">
       <div class="emotion-name">${f.name}</div>
       <div class="emotion-bar-wrap">
-        <div class="emotion-bar" style="width:${f.noData ? 0 : Math.round(f.count/total*100)}%;background:${f.color};"></div>
+        <div class="emotion-bar" style="width:${f.noData ? 0 : Math.max(pct(f.count,total), f.count ? 4 : 0)}%;background:${f.color};"></div>
       </div>
-      <div class="emotion-pct">${f.noData ? '--' : Math.round(f.count/total*100) + '%'}</div>
+      <div class="emotion-pct">${f.noData ? f.note : f.note}</div>
     </div>
   `).join('');
+}
+
+function renderEmojiUsage() {
+  document.getElementById('emojiUsage').innerHTML = `
+    <div class="metric-row">
+      <span class="metric-name"><span class="dot dot-orange"></span>表情反馈统计</span>
+      <span class="metric-val" style="color:var(--text3)">待埋点</span>
+    </div>
+    <div style="color:var(--text3);font-size:12px;line-height:1.8;margin-top:10px;">
+      当前聊天端的表情反馈还未稳定上报到服务器。下一步建议记录：表情类型、消息ID、用户ID、时间，用来分析哪些反馈最常用、哪些几乎不用。
+    </div>
+  `;
 }
 
 /* ════════════════════════════════════════════
@@ -1509,7 +1588,7 @@ function renderUserTable(users) {
   tbody.innerHTML = users.map(u => {
     const statusTag = {
       active: '<span class="tag tag-green">活跃</span>',
-      silent: '<span class="tag tag-gray">沉默</span>',
+      pending: '<span class="tag tag-orange">待激活</span>',
       warn: '<span class="tag tag-orange">流失预警</span>',
       churned: '<span class="tag tag-red">已流失</span>',
     }[u.status] || '--';
@@ -1525,7 +1604,10 @@ function renderUserTable(users) {
     const regDate = formatDate(u.regAt);
 
     return `<tr onclick="openUserDrawer(${u.id})" style="cursor:pointer;">
-      <td>${u.phone}</td>
+      <td>
+        <div style="font-weight:600;color:var(--text);">${u.displayName}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px;">${u.accountLabel}</div>
+      </td>
       <td>${regDate}</td>
       <td>${lastActive >= 9999 ? '从未活跃' : lastActive === 0 ? '今天' : lastActive + '天前'}</td>
       <td>${statusTag}</td>
@@ -1547,7 +1629,10 @@ function renderUserTable(users) {
         </div>
       </td>
       <td>${segTag}</td>
-      <td><span style="color:var(--purple2);cursor:pointer;font-size:12px;" onclick="event.stopPropagation();openUserDrawer(${u.id})">详情 →</span></td>
+      <td>
+        <button class="filter-btn" onclick="event.stopPropagation();viewUserChat(${u.id})" style="font-size:12px;padding:5px 10px;margin-right:8px;">看聊天</button>
+        <span style="color:var(--text3);cursor:pointer;font-size:12px;" onclick="event.stopPropagation();openUserDrawer(${u.id})">详情</span>
+      </td>
     </tr>`;
   }).join('');
 }
@@ -1560,6 +1645,7 @@ function setUserFilter(type, btn) {
 }
 
 function filterUsers() {
+  clearUserSearchPassword();
   const search = (document.getElementById('userSearch')?.value || '').toLowerCase();
   let users = _allUsers;
 
@@ -1569,7 +1655,7 @@ function filterUsers() {
   }
 
   if (search) {
-    users = users.filter(u => u.phone.toLowerCase().includes(search) || u.name?.toLowerCase().includes(search));
+    users = users.filter(u => (u.searchText || '').includes(search));
   }
 
   renderUserTable(users);
@@ -1590,59 +1676,224 @@ document.querySelectorAll('.nav-item').forEach(item => {
 /* ════════════════════════════════════════════
    用户分层
 ════════════════════════════════════════════ */
+function activityLevelOf(u) {
+  if (typeof getActivityLevel === 'function') return getActivityLevel(u);
+  const days = Number(u.activeDays30 || u.monthLogins || 0);
+  const messages = Number(u.userMessages30 || u.totalRounds || 0);
+  if (days >= 8 || messages >= 80) return 'high';
+  if (days >= 4 || messages >= 40) return 'mid';
+  if (days >= 1 || messages >= 1) return 'low';
+  return 'silent';
+}
+
+function getOpPoolUsers(type) {
+  const users = _allUsers;
+  const deep = u => (u.userMessages30 || u.totalRounds || 0) >= 40 || (parseFloat(u.avgRounds) || 0) >= 10;
+  const highProfile = u => (u.profileComplete || 0) >= 60;
+  const lowActive = u => ['low', 'silent'].includes(activityLevelOf(u));
+  const sceneRich = u => (u.sceneTagCount || 0) >= 3;
+  const filters = {
+    high: u => activityLevelOf(u) === 'high',
+    mid: u => activityLevelOf(u) === 'mid',
+    low: u => activityLevelOf(u) === 'low',
+    silent: u => activityLevelOf(u) === 'silent',
+    pending: u => u.status === 'pending',
+    warn: u => u.status === 'warn',
+    churned: u => u.status === 'churned',
+    deep_low: u => deep(u) && lowActive(u),
+    high_profile_low: u => highProfile(u) && lowActive(u),
+    high_active_low_profile: u => activityLevelOf(u) === 'high' && (u.profileComplete || 0) < 40,
+    assessed_no_chat: u => u.hasAssessment && !u.hasChat,
+    scene_rich: u => sceneRich(u),
+    need_followup: u => u.opAction === 'need_followup',
+  };
+  return users.filter(filters[type] || (() => true));
+}
+
 function renderSegments() {
   const users = _allUsers;
-  const core = users.filter(u => u.segType === 'core');
-  const precious = users.filter(u => u.segType === 'precious');
-  const checkin = users.filter(u => u.segType === 'checkin');
-  const edge = users.filter(u => u.segType === 'edge');
+  const counts = {
+    need_followup: users.filter(u => u.opAction === 'need_followup').length,
+    reviewed: users.filter(u => u.opAction === 'reviewed').length,
+    product_feedback: users.filter(u => u.opAction === 'product_feedback').length,
+    no_disturb: users.filter(u => u.opAction === 'no_disturb').length,
+  };
+  setText('op-needFollowup', counts.need_followup);
+  setText('op-reviewed', counts.reviewed);
+  setText('op-productFeedback', counts.product_feedback);
+  setText('op-noDisturb', counts.no_disturb);
 
-  setText('seg-core', core.length + ' 人');
-  setText('seg-precious', precious.length + ' 人');
-  setText('seg-checkin', checkin.length + ' 人');
-  setText('seg-edge', edge.length + ' 人');
+  const poolRows = [
+    { key:'high', name:'高活跃用户池', desc:'近30天 ≥8活跃日 或 ≥80条消息', color:'var(--green)' },
+    { key:'mid', name:'中活跃用户池', desc:'近30天 ≥4活跃日 或 ≥40条消息', color:'var(--purple2)' },
+    { key:'low', name:'低活跃用户池', desc:'近30天 1–3活跃日或浅聊', color:'var(--orange)' },
+    { key:'pending', name:'待激活用户池', desc:'7–14天未回来，适合轻召回', color:'var(--orange)' },
+    { key:'warn', name:'流失预警用户池', desc:'15–29天未回来，优先复盘', color:'var(--red)' },
+    { key:'churned', name:'已流失用户池', desc:'30天以上未回来，暂不高频打扰', color:'var(--text3)' },
+  ];
+  document.getElementById('opUserPools').innerHTML = poolRows.map(r => opPoolRow(r)).join('');
 
-  // 核心用户列表
-  const coreList = document.getElementById('coreUserList');
-  if (!core.length) {
-    coreList.innerHTML = '<div class="empty-state"><div class="icon">🌟</div><p>暂无核心用户</p></div>';
-  } else {
-    coreList.innerHTML = core.map(u => `
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;" onclick="openUserDrawer(${u.id})">
-        <div>
-          <div style="font-size:13px;color:var(--text);font-weight:500;">${u.phone}</div>
-          <div style="font-size:11px;color:var(--text3);margin-top:2px;">聊天${u.totalRounds}轮 · 周${u.weekLogins}次 · 档案${u.profileComplete}%</div>
-        </div>
-        <span style="color:var(--purple2);font-size:12px;">详情 →</span>
-      </div>
-    `).join('');
+  const valueRows = [
+    { key:'deep_low', name:'深度聊天低活跃', desc:'一次聊很深但没形成回访', color:'var(--cyan)' },
+    { key:'high_profile_low', name:'高档案低活跃', desc:'KnowMe 已经懂TA，但触达不足', color:'var(--purple2)' },
+    { key:'high_active_low_profile', name:'高活跃低档案', desc:'用户爱聊，但记忆沉淀弱', color:'var(--orange)' },
+    { key:'assessed_no_chat', name:'测评后不开聊', desc:'报告没有顺利带入对话', color:'var(--red)' },
+    { key:'scene_rich', name:'多场景用户', desc:'聊过多个生活/关系/成长场景', color:'var(--green)' },
+  ];
+  document.getElementById('opValuePools').innerHTML = valueRows.map(r => opPoolRow(r)).join('');
+
+  renderOpCorrelation();
+  renderOpStrategies();
+  renderOpFollowupQueue();
+  renderOpUserList(users, '全部用户');
+}
+
+function opPoolRow(r) {
+  const count = getOpPoolUsers(r.key).length;
+  return `<div class="metric-row" style="cursor:pointer;" onclick="showOpPool('${r.key}','${r.name}')">
+    <span class="metric-name"><span class="dot" style="background:${r.color}"></span>${r.name}<span style="color:var(--text3);font-size:11px;margin-left:8px;">${r.desc}</span></span>
+    <span class="metric-val" style="color:${r.color}">${count} 人 →</span>
+  </div>`;
+}
+
+function avg(list, getter) {
+  const vals = list.map(getter).filter(v => Number.isFinite(v));
+  return vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length) : 0;
+}
+
+function renderOpCorrelation() {
+  const activeUsers = _allUsers.filter(u => u.hasChat);
+  const highProfile = activeUsers.filter(u => (u.profileComplete || 0) >= 60);
+  const lowProfile = activeUsers.filter(u => (u.profileComplete || 0) < 40);
+  const deepUsers = activeUsers.filter(u => (u.userMessages30 || u.totalRounds || 0) >= 40 || (parseFloat(u.avgRounds) || 0) >= 10);
+  const shallowUsers = activeUsers.filter(u => !deepUsers.includes(u));
+  const activeScore = u => Number(u.activeDays30 || u.monthLogins || 0);
+  const rows = [
+    { name:'档案完善度 × 活跃', value:`高档案平均 ${avg(highProfile, activeScore).toFixed(1)} 天 / 低档案 ${avg(lowProfile, activeScore).toFixed(1)} 天`, hint:'验证“记住用户”是否促进回访' },
+    { name:'深度聊天 × 活跃', value:`深聊平均 ${avg(deepUsers, activeScore).toFixed(1)} 天 / 浅聊 ${avg(shallowUsers, activeScore).toFixed(1)} 天`, hint:'验证“一次聊很深”是否带来后续回来' },
+    { name:'测评完成 × 开聊', value:`${_allUsers.filter(u=>u.hasAssessment && u.hasChat).length}/${_allUsers.filter(u=>u.hasAssessment).length || 0}`, hint:'看测评是否建立关系入口' },
+    { name:'高活跃低档案', value:`${getOpPoolUsers('high_active_low_profile').length} 人`, hint:'检查档案沉淀机制是否跟上' },
+  ];
+  document.getElementById('opCorrelation').innerHTML = rows.map(r => `
+    <div class="metric-row">
+      <span class="metric-name">${r.name}<span style="color:var(--text3);font-size:11px;margin-left:8px;">${r.hint}</span></span>
+      <span class="metric-val" style="color:var(--purple2)">${r.value}</span>
+    </div>
+  `).join('');
+}
+
+function renderOpStrategies() {
+  const strategies = [
+    ['待激活', '轻提醒：最近还好吗？有新的烦心事可以回来聊聊。'],
+    ['流失预警', '先复盘最后一次聊天，再决定是否进入需跟进。'],
+    ['深度聊天低活跃', '判断是问题已解决，还是没有形成再次打开 KnowMe 的理由。'],
+    ['高档案低活跃', '适合个性化召回，但必须先手动标记“需跟进”。'],
+    ['高活跃低档案', '不是召回问题，优先检查记忆/档案沉淀机制。'],
+  ];
+  document.getElementById('opStrategies').innerHTML = strategies.map(([k,v]) => `
+    <div class="metric-row">
+      <span class="metric-name"><span class="dot dot-green"></span>${k}</span>
+      <span class="metric-val" style="max-width:65%;font-size:12px;color:var(--text2);white-space:normal;text-align:right;">${v}</span>
+    </div>
+  `).join('');
+}
+
+function renderOpFollowupQueue() {
+  const users = getOpPoolUsers('need_followup');
+  const el = document.getElementById('opFollowupQueue');
+  if (!users.length) {
+    el.innerHTML = '<div class="empty-state"><div class="icon">📭</div><p>暂无需跟进用户。先从待激活/流失预警/高档案低活跃用户中手动标记。</p></div>';
+    return;
   }
+  el.innerHTML = users.map(u => opUserCard(u, true)).join('');
+}
 
-  // 流失预警列表
-  const warnUsers = users.filter(u => u.status === 'warn');
-  const warnList = document.getElementById('warnUserList');
-  if (!warnUsers.length) {
-    warnList.innerHTML = '<div class="empty-state"><div class="icon">✅</div><p>暂无流失预警用户</p></div>';
-  } else {
-    warnList.innerHTML = warnUsers.map(u => `
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;" onclick="openUserDrawer(${u.id})">
-        <div>
-          <div style="font-size:13px;color:var(--text);font-weight:500;">${u.phone}</div>
-          <div style="font-size:11px;color:var(--orange);margin-top:2px;">${daysSince(u.lastActiveAt)} 天未登录</div>
-        </div>
-        <span style="color:var(--purple2);font-size:12px;">详情 →</span>
+function renderOpUserList(users, title) {
+  document.getElementById('opPoolTitle').textContent = `${title} · ${users.length} 人`;
+  const el = document.getElementById('opUserList');
+  if (!users.length) {
+    el.innerHTML = '<div class="empty-state"><div class="icon">🔍</div><p>暂无用户</p></div>';
+    return;
+  }
+  el.innerHTML = users.slice(0, 80).map(u => opUserCard(u, false)).join('');
+}
+
+function showOpPool(type, title) {
+  renderOpUserList(getOpPoolUsers(type), title);
+}
+
+function opUserCard(u, followupMode) {
+  const levelMap = { high:'高活跃', mid:'中活跃', low:'低活跃', silent:'沉默' };
+  const statusMap = { active:'活跃', pending:'待激活', warn:'流失预警', churned:'已流失' };
+  const last = daysSince(u.lastActiveAt);
+  const strategy = getOpUserStrategy(u);
+  return `<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:14px 0;border-bottom:1px solid var(--border);">
+    <div style="min-width:0;flex:1;cursor:pointer;" onclick="openUserDrawer(${u.id})">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <span style="font-weight:700;color:var(--text);">${u.displayName}</span>
+        <span class="tag tag-purple">${levelMap[activityLevelOf(u)] || '--'}</span>
+        <span class="tag ${u.status==='warn'||u.status==='churned'?'tag-red':u.status==='pending'?'tag-orange':'tag-green'}">${statusMap[u.status] || '--'}</span>
+        ${u.opAction ? `<span class="tag tag-blue">${opActionLabel(u.opAction)}</span>` : ''}
       </div>
-    `).join('');
+      <div style="font-size:11px;color:var(--text3);margin-top:6px;line-height:1.7;">${u.accountLabel} · 近30天 ${u.activeDays30||0} 活跃日 / ${u.userMessages30||0} 条 · 总聊天 ${u.totalRounds||0} 轮 · 档案 ${u.profileComplete||0}% · 最后活跃 ${last>=9999?'从未':last+'天前'}</div>
+      <div style="font-size:12px;color:var(--text2);margin-top:8px;line-height:1.7;">策略：${strategy}</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;max-width:360px;">
+      <button class="filter-btn" onclick="event.stopPropagation();viewUserChat(${u.id})" style="font-size:12px;padding:5px 10px;">看聊天</button>
+      <button class="filter-btn" onclick="event.stopPropagation();openUserDrawer(${u.id})" style="font-size:12px;padding:5px 10px;">看档案</button>
+      <button class="filter-btn" onclick="event.stopPropagation();markOpUser(${u.id},'need_followup')" style="font-size:12px;padding:5px 10px;">需跟进</button>
+      <button class="filter-btn" onclick="event.stopPropagation();markOpUser(${u.id},'reviewed')" style="font-size:12px;padding:5px 10px;">已复盘</button>
+      <button class="filter-btn" onclick="event.stopPropagation();markOpUser(${u.id},'product_feedback')" style="font-size:12px;padding:5px 10px;">产品反馈</button>
+      ${followupMode ? `<button class="filter-btn active" onclick="event.stopPropagation();generateFollowupCopy(${u.id})" style="font-size:12px;padding:5px 10px;">生成文案</button>` : ''}
+    </div>
+  </div>`;
+}
+
+function opActionLabel(action) {
+  return { need_followup:'需跟进', reviewed:'已复盘', no_disturb:'暂不打扰', high_value_sample:'高价值样本', product_feedback:'产品反馈' }[action] || action;
+}
+
+function getOpUserStrategy(u) {
+  if (u.opAction === 'no_disturb') return '已标记暂不打扰，不进入召回。';
+  if (u.status === 'pending') return '7–14天未回来，适合轻提醒；如聊天内容有未解决问题，可标记需跟进。';
+  if (u.status === 'warn') return '15–29天未回来，先看最后一次聊天，再决定是否个性化召回。';
+  if ((u.profileComplete||0) >= 60 && ['low','silent'].includes(activityLevelOf(u))) return '高档案低活跃：KnowMe 已经懂TA，适合人工判断是否个性化召回。';
+  if (((u.userMessages30||u.totalRounds||0) >= 40 || (parseFloat(u.avgRounds)||0) >= 10) && ['low','silent'].includes(activityLevelOf(u))) return '深度聊天低活跃：判断是问题解决了，还是缺少再次回来的理由。';
+  if (activityLevelOf(u) === 'high' && (u.profileComplete||0) < 40) return '高活跃低档案：优先作为产品反馈，检查记忆沉淀机制。';
+  return '保持观察，优先看聊天质量和场景标签。';
+}
+
+async function markOpUser(userId, action) {
+  const noteMap = { need_followup:'进入跟进队列', reviewed:'已人工复盘', product_feedback:'沉淀为产品反馈样本', no_disturb:'暂不打扰' };
+  try {
+    await apiFetch('/api/admin/user-ops', { method:'POST', body: JSON.stringify({ user_id:userId, action, note: noteMap[action] || '' }) });
+    const user = _allUsers.find(u => u.id === userId);
+    if (user) { user.opAction = action; user.opNote = noteMap[action] || ''; user.opAt = new Date().toISOString(); }
+    renderSegments();
+    showToast(`已标记：${opActionLabel(action)}`);
+  } catch(e) {
+    showToast('标记失败：' + (e.message || e));
+  }
+}
+
+async function generateFollowupCopy(userId) {
+  try {
+    const user = _allUsers.find(u => u.id === userId);
+    const data = await apiFetch(`/api/admin/chat-log?user_id=${encodeURIComponent(userId)}&limit=20&offset=0`);
+    const lastUser = [...(data.messages || [])].reverse().find(m => m.role === 'user');
+    const topic = lastUser ? String(lastUser.content).slice(0, 42) : '最近的状态';
+    const copy = `最近还好吗？我记得你之前聊到「${topic}」。如果这件事还有点卡住，回来找 KnowMe 继续聊聊也可以。`;
+    await navigator.clipboard?.writeText(copy);
+    alert(`已生成候选文案${navigator.clipboard ? '并复制到剪贴板' : ''}：\n\n${copy}\n\n注意：这是候选文案，正式发送前需要人工确认。`);
+    if (user) user.opNote = '已生成候选文案';
+  } catch(e) {
+    showToast('生成文案失败：' + (e.message || e));
   }
 }
 
 function filterBySegment(type) {
-  showPage('users');
-  setUserFilter(type === 'core' ? 'vip' : 'all', null);
-  // 按分层过滤
-  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-  const users = _allUsers.filter(u => u.segType === type);
-  renderUserTable(users);
+  showPage('segments');
+  showOpPool(type, type);
 }
 
 /* ════════════════════════════════════════════
@@ -1804,9 +2055,9 @@ function renderProfilePage() {
     el.innerHTML = highUsers.map(u => `
       <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;" onclick="openUserDrawer(${u.id})">
         <div>
-          <div style="font-size:13px;color:var(--text);font-weight:500;">${u.phone}</div>
+          <div style="font-size:13px;color:var(--text);font-weight:500;">${u.displayName}</div>
           <div style="font-size:11px;color:var(--text3);margin-top:2px;">
-            档案完整度 <span style="color:var(--purple2);font-weight:600;">${u.profileComplete}%</span>
+            ${u.accountLabel} · 档案完整度 <span style="color:var(--purple2);font-weight:600;">${u.profileComplete}%</span>
             · 聊天 ${u.totalRounds} 轮
           </div>
         </div>
@@ -1819,22 +2070,160 @@ function renderProfilePage() {
 }
 
 /* ════════════════════════════════════════════
+   场景洞察
+════════════════════════════════════════════ */
+let _sceneInsights = null;
+
+async function loadSceneInsights() {
+  const summaryEl = document.getElementById('sceneSummaryList');
+  const userEl = document.getElementById('sceneUserList');
+  if (!summaryEl || !userEl) return;
+  summaryEl.innerHTML = '<div class="loading"><div class="spinner"></div>加载场景标签...</div>';
+  userEl.innerHTML = '<div class="loading"><div class="spinner"></div>加载用户分布...</div>';
+  try {
+    _sceneInsights = await apiFetch('/api/admin/scene-tags');
+    renderSceneSummary();
+    renderSceneUsers();
+  } catch(e) {
+    summaryEl.innerHTML = `<div style="color:#e74c3c;font-size:13px;">加载失败：${e.message}</div>`;
+    userEl.innerHTML = `<div style="color:#e74c3c;font-size:13px;">加载失败：${e.message}</div>`;
+  }
+}
+
+function renderSceneSummary() {
+  if (!_sceneInsights) return;
+  const summary = _sceneInsights.summary || [];
+  const meta = _sceneInsights.meta || {};
+  const totalTagged = Number(meta.tagged_messages || 0);
+  const totalUserMessages = Number(meta.total_user_messages || 0);
+  const coverage = totalUserMessages > 0 ? Math.round(totalTagged / totalUserMessages * 100) : 0;
+  const top = summary[0];
+
+  setText('scene-taggedMessages', totalTagged.toLocaleString());
+  setText('scene-taggedSub', `用户消息覆盖率 ${coverage}% / 共 ${totalUserMessages.toLocaleString()} 条`);
+  setText('scene-taggedUsers', Number(meta.tagged_users || 0).toLocaleString());
+  setText('scene-topScene', top ? top.scene : '--');
+  setText('scene-topSceneSub', top ? `${top.messageCount} 条 / ${top.userCount} 人` : '按消息数');
+  setText('scene-agentHint', top ? top.scene : '--');
+
+  const filter = document.getElementById('sceneFilter');
+  if (filter) {
+    const current = filter.value;
+    filter.innerHTML = '<option value="">全部场景</option>' + (_sceneInsights.scenes || []).map(s => `<option value="${s.scene}">${s.scene}</option>`).join('');
+    filter.value = current;
+  }
+
+  const el = document.getElementById('sceneSummaryList');
+  if (!summary.length) {
+    el.innerHTML = '<div class="empty-state"><div class="icon">🏷️</div><p>暂无标签数据，点击“重跑全量打标”生成</p></div>';
+    return;
+  }
+  const max = Math.max(...summary.map(s => s.messageCount), 1);
+  el.innerHTML = summary.map(s => {
+    const pct = Math.round(s.messageCount / max * 100);
+    const sceneDef = (_sceneInsights.scenes || []).find(x => x.scene === s.scene);
+    return `<div style="padding:12px 0;border-bottom:1px solid var(--border);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <div style="font-weight:700;color:var(--text);">${s.scene}</div>
+        <div style="font-size:12px;color:var(--text3);">${s.messageCount} 条 · ${s.userCount} 人</div>
+      </div>
+      <div class="progress-bar" style="height:8px;margin-bottom:6px;">
+        <div class="progress-fill" style="width:${pct}%;background:linear-gradient(90deg,#8b5cf6,#06b6d4);"></div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);line-height:1.5;">${sceneDef?.desc || ''}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderSceneUsers() {
+  if (!_sceneInsights) return;
+  const selected = document.getElementById('sceneFilter')?.value || '';
+  const rows = (_sceneInsights.users || []).filter(r => !selected || r.scene === selected);
+  const el = document.getElementById('sceneUserList');
+  if (!rows.length) {
+    el.innerHTML = '<div class="empty-state"><div class="icon">👥</div><p>暂无符合条件的用户</p></div>';
+    return;
+  }
+  el.innerHTML = rows.map(r => {
+    const user = _allUsers.find(u => String(u.id) === String(r.userId));
+    const displayName = user?.displayName || `用户 #${r.userId}`;
+    const accountLabel = user?.accountLabel || '';
+    return `<div style="border:1px solid var(--border);border-radius:10px;padding:10px 12px;background:var(--bg2);cursor:pointer;" onclick="openUserDrawer(${r.userId})">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:5px;">
+        <div style="font-size:13px;font-weight:700;color:var(--text);">${displayName}</div>
+        <div class="tag tag-purple">${r.scene}</div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">${accountLabel} · ${r.messageCount} 条相关用户消息</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.6;">${escapeHtml(r.evidenceSummary || '暂无证据摘要')}</div>
+    </div>`;
+  }).join('');
+}
+
+async function runSceneTagAnalysis() {
+  const summaryEl = document.getElementById('sceneSummaryList');
+  if (summaryEl) summaryEl.innerHTML = '<div class="loading"><div class="spinner"></div>正在重跑历史聊天打标，可能需要几十秒...</div>';
+  showToast('开始重跑场景标签，请稍等');
+  try {
+    const data = await apiFetch('/api/admin/scene-tags/analyze', {
+      method: 'POST',
+      body: JSON.stringify({ password: ADMIN_PASSWORD }),
+    });
+    showToast(`打标完成：${data.analyzedUsers || 0} 个用户`);
+    await loadSceneInsights();
+  } catch(e) {
+    showToast('打标失败：' + e.message);
+    if (summaryEl) summaryEl.innerHTML = `<div style="color:#e74c3c;font-size:13px;">打标失败：${e.message}</div>`;
+  }
+}
+
+async function loadUserSceneTags(userId) {
+  const box = document.getElementById('userSceneTagBox');
+  if (!box) return;
+  try {
+    if (!_sceneInsights) _sceneInsights = await apiFetch('/api/admin/scene-tags');
+    const rows = (_sceneInsights.users || [])
+      .filter(r => String(r.userId) === String(userId))
+      .sort((a, b) => b.messageCount - a.messageCount);
+    if (!rows.length) {
+      box.innerHTML = '暂无场景标签。可在“场景洞察”页点击重跑全量打标。';
+      return;
+    }
+    const max = Math.max(...rows.map(r => r.messageCount), 1);
+    box.innerHTML = rows.map(r => {
+      const pct = Math.round(r.messageCount / max * 100);
+      return `<div style="margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;gap:10px;margin-bottom:4px;">
+          <span style="color:#c4b5fd;font-weight:700;">${r.scene}</span>
+          <span style="color:var(--text3);">${r.messageCount} 条</span>
+        </div>
+        <div class="progress-bar" style="height:6px;margin-bottom:5px;">
+          <div class="progress-fill" style="width:${pct}%;background:linear-gradient(90deg,#8b5cf6,#06b6d4);"></div>
+        </div>
+        <div style="font-size:11px;color:var(--text3);line-height:1.5;">${escapeHtml(r.evidenceSummary || '')}</div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    box.innerHTML = `<span style="color:#e74c3c;">场景标签加载失败：${escapeHtml(e.message)}</span>`;
+  }
+}
+
+/* ════════════════════════════════════════════
    用户详情抽屉
 ════════════════════════════════════════════ */
 function openUserDrawer(userId) {
   const user = _allUsers.find(u => u.id === userId);
   if (!user) return;
 
-  document.getElementById('drawerTitle').textContent = user.phone + ' 详情';
+  document.getElementById('drawerTitle').textContent = user.displayName + ' 详情';
 
-  const statusLabels = { active:'活跃', silent:'沉默', warn:'流失预警', churned:'已流失' };
+  const statusLabels = { active:'活跃', pending:'待激活', silent:'沉默', warn:'流失预警', churned:'已流失' };
   const segLabels = { core:'🌟 核心用户', precious:'💎 珍贵用户', checkin:'🔄 打卡型', edge:'😴 边缘用户' };
 
   document.getElementById('drawerBody').innerHTML = `
     <div class="drawer-section">
       <div class="drawer-section-title">基本信息</div>
       <div class="drawer-kv">
-        <div class="kv-item"><div class="kv-label">手机号</div><div class="kv-value">${user.phone}</div></div>
+        <div class="kv-item"><div class="kv-label">账号标识</div><div class="kv-value" style="color:var(--text3)">${user.accountLabel}</div></div>
         <div class="kv-item"><div class="kv-label">注册时间</div><div class="kv-value">${formatDate(user.regAt)}</div></div>
         <div class="kv-item"><div class="kv-label">最后活跃</div><div class="kv-value">${daysSince(user.lastActiveAt) >= 9999 ? '从未活跃' : daysSince(user.lastActiveAt) === 0 ? '今天' : daysSince(user.lastActiveAt) + '天前'}</div></div>
         <div class="kv-item"><div class="kv-label">账号状态</div><div class="kv-value">${statusLabels[user.status]||'--'}</div></div>
@@ -1853,6 +2242,11 @@ function openUserDrawer(userId) {
         <div class="kv-item"><div class="kv-label">本周登录</div><div class="kv-value">${user.weekLogins} 次</div></div>
         <div class="kv-item"><div class="kv-label">本月登录</div><div class="kv-value">${user.monthLogins} 次</div></div>
       </div>
+    </div>
+
+    <div class="drawer-section">
+      <div class="drawer-section-title">场景标签</div>
+      <div id="userSceneTagBox" style="font-size:12px;color:var(--text3);line-height:1.7;">场景标签加载中...</div>
     </div>
 
     <div class="drawer-section">
@@ -1879,6 +2273,13 @@ function openUserDrawer(userId) {
       </div>
     </div>
 
+    <div class="drawer-section">
+      <div class="drawer-section-title">档案沉淀内容</div>
+      <div id="profileDetailBox" style="font-size:12px;color:var(--text3);line-height:1.7;">
+        档案加载中...
+      </div>
+    </div>
+
     <div style="padding-top:16px;border-top:1px solid var(--border);">
       <button class="filter-btn" onclick="viewUserChat(${user.id})" style="width:100%;text-align:center;">
         🔍 查看聊天记录（留痕操作）
@@ -1888,6 +2289,8 @@ function openUserDrawer(userId) {
 
   document.getElementById('drawerOverlay').classList.add('open');
   document.getElementById('userDrawer').classList.add('open');
+  loadUserSceneTags(user.id);
+  loadUserProfileDetail(user.id);
 }
 
 function closeDrawer() {
@@ -1895,18 +2298,210 @@ function closeDrawer() {
   document.getElementById('userDrawer').classList.remove('open');
 }
 
-function viewUserChat(userId) {
-  showToast('操作已记录 · 聊天记录功能接入服务器后开放');
+function formatProfileValue(value) {
+  if (value == null || value === '') return '';
+  if (Array.isArray(value)) {
+    if (!value.length) return '';
+    return value.map(item => typeof item === 'object' ? JSON.stringify(item, null, 2) : String(item)).join('\n');
+  }
+  if (typeof value === 'object') {
+    const entries = Object.entries(value).filter(([, v]) => v != null && v !== '' && !(Array.isArray(v) && !v.length));
+    if (!entries.length) return '';
+    return entries.map(([k, v]) => `${k}：${typeof v === 'object' ? JSON.stringify(v, null, 2) : v}`).join('\n');
+  }
+  return String(value);
+}
+
+function renderProfileDetail(profile) {
+  const fields = [
+    ['basic_info', '基础信息'],
+    ['growth_story', '成长故事'],
+    ['lifestyle', '生活方式'],
+    ['career', '职业背景'],
+    ['interests', '兴趣爱好'],
+    ['relationships', '人际关系'],
+    ['personality_records', '性格记录'],
+    ['relationship_stage', '关系阶段'],
+    ['emotion_track', '情绪轨迹'],
+    ['pending_followups', '待跟进事项'],
+    ['chat_preferences', '相处偏好'],
+    ['latest_assessment', '测评摘要'],
+    ['recent_chat_diaries', '近期聊天日记'],
+  ];
+
+  const filled = fields
+    .map(([key, label]) => ({ key, label, value: formatProfileValue(profile[key]) }))
+    .filter(item => item.value);
+  const emptyCount = fields.length - filled.length;
+
+  let html = `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+    <div style="color:var(--text2);font-size:12px;">已沉淀 ${filled.length}/${fields.length} 项</div>
+    <div style="color:var(--text3);font-size:11px;">更新于 ${profile.updated_at ? new Date(profile.updated_at).toLocaleString('zh-CN', { timeZone:'Asia/Shanghai' }) : '--'}</div>
+  </div>`;
+
+  if (!filled.length) {
+    return html + '<div style="color:var(--text3);font-size:12px;">暂无可见档案沉淀。可能是该用户聊天太少，或档案提取逻辑还没有写入这些字段。</div>';
+  }
+
+  html += `<div style="display:flex;flex-direction:column;gap:10px;">`;
+  for (const item of filled) {
+    html += `<div style="border:1px solid var(--border);border-radius:10px;padding:10px 12px;background:rgba(255,255,255,0.04);">
+      <div style="font-size:12px;color:#c4b5fd;font-weight:700;margin-bottom:6px;">${item.label}</div>
+      <div style="font-size:12px;color:#e5e7eb;line-height:1.75;white-space:pre-wrap;">${escapeHtml(item.value)}</div>
+    </div>`;
+  }
+  html += `</div>`;
+  if (emptyCount > 0) {
+    const emptyLabels = fields
+      .map(([key, label]) => [key, label, formatProfileValue(profile[key])])
+      .filter(([, , value]) => !value)
+      .map(([, label]) => label)
+      .join('、');
+    html += `<div style="margin-top:10px;color:var(--text3);font-size:11px;line-height:1.6;">未沉淀：${emptyLabels}</div>`;
+  }
+  return html;
+}
+
+async function loadUserProfileDetail(userId) {
+  const box = document.getElementById('profileDetailBox');
+  if (!box) return;
+  try {
+    const res = await fetch(`${API_BASE}/api/admin/user-profile?user_id=${encodeURIComponent(userId)}`, {
+      headers: { 'x-admin-password': ADMIN_PASSWORD }
+    });
+    if (!res.ok) throw new Error(`请求失败 ${res.status}`);
+    const data = await res.json();
+    if (!data.profile) {
+      box.innerHTML = '<div style="color:var(--text3);font-size:12px;">暂无档案记录。这个用户可能还没有产生足够多可沉淀的信息。</div>';
+      return;
+    }
+    box.innerHTML = renderProfileDetail(data.profile);
+  } catch(e) {
+    box.innerHTML = `<span style="color:#e74c3c;">档案加载失败：${escapeHtml(e.message)}</span>`;
+  }
+}
+
+function escapeHtml(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function chatDateParts(value) {
+  const date = new Date(value);
+  return {
+    day: date.toLocaleDateString('zh-CN', { timeZone: 'Asia/Shanghai', year:'numeric', month:'2-digit', day:'2-digit' }),
+    time: date.toLocaleTimeString('zh-CN', { timeZone: 'Asia/Shanghai', hour:'2-digit', minute:'2-digit' })
+  };
+}
+
+function renderChatMessages(msgs) {
+  let html = '';
+  let lastDay = '';
+  for (const m of msgs) {
+    const isUser = m.role === 'user';
+    const { day, time } = chatDateParts(m.created_at);
+    if (day !== lastDay) {
+      html += `<div style="display:flex;align-items:center;gap:10px;margin:8px 0 4px;">
+        <div style="height:1px;background:var(--border);flex:1;"></div>
+        <div style="font-size:11px;color:var(--text3);white-space:nowrap;">${day}</div>
+        <div style="height:1px;background:var(--border);flex:1;"></div>
+      </div>`;
+      lastDay = day;
+    }
+    const label = isUser ? '用户' : 'KnowMe';
+    const bg = isUser ? 'rgba(139,92,246,0.20)' : 'rgba(30,41,59,0.82)';
+    const border = isUser ? 'rgba(167,139,250,0.38)' : 'rgba(148,163,184,0.28)';
+    const labelColor = isUser ? '#c4b5fd' : '#93c5fd';
+    const textColor = '#e5e7eb';
+    const timeColor = '#94a3b8';
+    html += `<div style="background:${bg};border:1px solid ${border};border-radius:10px;padding:10px 12px;box-shadow:0 8px 20px rgba(0,0,0,0.10);">
+      <div style="display:flex;justify-content:space-between;gap:12px;font-size:11px;color:${labelColor};font-weight:700;margin-bottom:6px;">
+        <span>${label}</span><span style="color:${timeColor};font-weight:500;">${time}</span>
+      </div>
+      <div style="font-size:13px;color:${textColor};line-height:1.75;white-space:pre-wrap;">${escapeHtml(m.content)}</div>
+    </div>`;
+  }
+  return html;
+}
+
+async function viewUserChat(userId, offsetVal = 0) {
+  const user = _allUsers.find(u => u.id === userId);
+  const displayName = user?.displayName || `用户 #${userId}`;
+  document.getElementById('drawerTitle').textContent = `${displayName} · 聊天记录`;
+  document.getElementById('drawerBody').innerHTML = '<span style="color:var(--text3)">加载聊天记录中...</span>';
+  document.getElementById('drawerOverlay').classList.add('open');
+  document.getElementById('userDrawer').classList.add('open');
+
+  try {
+    const res = await fetch(`${API_BASE}/api/admin/chat-log?user_id=${encodeURIComponent(userId)}&limit=100&offset=${offsetVal}`, {
+      headers: { 'x-admin-password': ADMIN_PASSWORD }
+    });
+    if (!res.ok) {
+      document.getElementById('drawerBody').innerHTML = `<span style="color:#e74c3c">请求失败 ${res.status}</span>`;
+      return;
+    }
+    const data = await res.json();
+    const msgs = data.messages || [];
+    if (!msgs.length) {
+      document.getElementById('drawerBody').innerHTML = '<span style="color:var(--text3)">该用户暂无聊天记录</span>';
+      return;
+    }
+
+    let html = `<div style="margin-bottom:12px;color:var(--text3);font-size:12px;line-height:1.6;">
+      ${displayName} · 共 ${data.total} 条消息 · 显示第 ${offsetVal+1}-${offsetVal+msgs.length} 条 · 查看已留痕
+    </div>`;
+    html += `<div style="display:flex;flex-direction:column;gap:8px;max-height:calc(100vh - 205px);overflow-y:auto;border:1px solid var(--border);border-radius:12px;padding:12px;background:var(--bg2);">`;
+    html += renderChatMessages(msgs);
+    html += `</div>`;
+    let pager = `<div style="display:flex;gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap;">`;
+    if (offsetVal > 0) pager += `<button class="filter-btn" onclick="viewUserChat(${userId}, ${Math.max(0, offsetVal - 100)})">← 上一页</button>`;
+    if (offsetVal + msgs.length < data.total) pager += `<button class="filter-btn active" onclick="viewUserChat(${userId}, ${offsetVal + 100})">下一页 →</button>`;
+    pager += `<button class="filter-btn" onclick="openUserDrawer(${userId})">返回用户详情</button></div>`;
+    document.getElementById('drawerBody').innerHTML = html + pager;
+  } catch(e) {
+    document.getElementById('drawerBody').innerHTML = `<span style="color:#e74c3c">加载失败：${e.message}</span>`;
+  }
 }
 
 /* ════════════════════════════════════════════
    系统设置
 ════════════════════════════════════════════ */
-function viewChatLog() {
+async function viewChatLog(offsetVal = 0) {
   const id = document.getElementById('chatViewUserId').value.trim();
   if (!id) return;
-  document.getElementById('chatLogResult').innerHTML =
-    '<span style="color:var(--orange)">⚠️ 此操作已记录日志。聊天记录查看功能将在服务器后台API接入后开放。</span>';
+  const el = document.getElementById('chatLogResult');
+  el.innerHTML = '<span style="color:var(--text3)">加载中...</span>';
+  try {
+    const res = await fetch(`${API_BASE}/api/admin/chat-log?user_id=${encodeURIComponent(id)}&limit=100&offset=${offsetVal}`, {
+      headers: { 'x-admin-password': ADMIN_PASSWORD }
+    });
+    if (!res.ok) { el.innerHTML = `<span style="color:#e74c3c">请求失败 ${res.status}</span>`; return; }
+    const data = await res.json();
+    if (!data.messages || data.messages.length === 0) {
+      el.innerHTML = '<span style="color:var(--text3)">该用户暂无聊天记录</span>';
+      return;
+    }
+    const total = data.total;
+    const msgs = data.messages;
+    const user = _allUsers.find(u => String(u.id) === String(id));
+    const displayName = user?.displayName || `用户 #${id}`;
+    let html = `<div style="margin-bottom:10px;color:var(--text3);font-size:11px;">${displayName} · 共 ${total} 条消息（显示第 ${offsetVal+1}-${offsetVal+msgs.length} 条） · 已记录查看日志</div>`;
+    html += `<div style="display:flex;flex-direction:column;gap:8px;max-height:500px;overflow-y:auto;border:1px solid var(--border);border-radius:12px;padding:12px;background:var(--bg2);">`;
+    html += renderChatMessages(msgs);
+    html += `</div>`;
+    // 翻页
+    let pager = `<div style="display:flex;gap:8px;margin-top:10px;align-items:center;">`;
+    if (offsetVal > 0) pager += `<button class="filter-btn" onclick="viewChatLog(${offsetVal - 100})">← 上一页</button>`;
+    if (offsetVal + msgs.length < total) pager += `<button class="filter-btn" onclick="viewChatLog(${offsetVal + 100})">下一页 →</button>`;
+    pager += `</div>`;
+    el.innerHTML = html + pager;
+  } catch(e) {
+    el.innerHTML = `<span style="color:#e74c3c">加载失败：${e.message}</span>`;
+  }
 }
 
 function exportData(type) {
@@ -1917,21 +2512,64 @@ function exportData(type) {
    AI 观察员
 ════════════════════════════════════════════ */
 let _obsCurrentReportId = null;
+let _obsFiltersInited = false;
+
+function formatDateInput(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function initObserverFilters() {
+  const startEl = document.getElementById('obs-start-date');
+  const endEl = document.getElementById('obs-end-date');
+  if (!startEl || !endEl || _obsFiltersInited) return;
+  const end = new Date();
+  const start = new Date();
+  start.setDate(end.getDate() - 6);
+  startEl.value = formatDateInput(start);
+  endEl.value = formatDateInput(end);
+  _obsFiltersInited = true;
+}
+
+function obsQuickRange(days) {
+  const startEl = document.getElementById('obs-start-date');
+  const endEl = document.getElementById('obs-end-date');
+  const end = new Date();
+  const start = new Date();
+  start.setDate(end.getDate() - Math.max(1, days) + 1);
+  startEl.value = formatDateInput(start);
+  endEl.value = formatDateInput(end);
+  obsLoadReports();
+}
 
 async function obsLoadReports() {
-  const date = document.getElementById('obs-date-picker').value;
-  if (!date) { showToast('请先选择日期'); return; }
+  initObserverFilters();
+  const startDate = document.getElementById('obs-start-date')?.value || '';
+  const endDate = document.getElementById('obs-end-date')?.value || '';
+  const userId = document.getElementById('obs-user-id')?.value.trim() || '';
+  if (!startDate || !endDate) { showToast('请先选择起止日期'); return; }
   const listEl = document.getElementById('obs-report-list');
   listEl.innerHTML = '<div style="color:var(--text3);font-size:12px;">加载中...</div>';
   try {
-    const res = await fetch(`${API_BASE}/api/observer/reports?date=${date}`, {
+    const params = new URLSearchParams({ start_date: startDate, end_date: endDate, limit: '300' });
+    if (userId) params.set('user_id', userId);
+    const res = await fetch(`${API_BASE}/api/observer/reports?${params.toString()}`, {
       headers: { 'x-admin-password': ADMIN_PASSWORD }
     });
+    if (!res.ok) throw new Error(`请求失败 ${res.status}`);
     const data = await res.json();
     if (!data.reports || data.reports.length === 0) {
-      listEl.innerHTML = '<div style="color:var(--text3);font-size:12px;">该日期暂无报告</div>';
+      listEl.innerHTML = '<div style="color:var(--text3);font-size:12px;">这段时间暂无报告</div>';
       return;
     }
+    const byDate = {};
+    data.reports.forEach(r => {
+      const day = String(r.report_date || '').slice(0, 10);
+      if (!byDate[day]) byDate[day] = [];
+      byDate[day].push(r);
+    });
     listEl.innerHTML = data.reports.map(r => `
       <div class="obs-report-item" onclick="obsLoadReport(${r.id})" style="
         padding:10px 12px;border-radius:8px;cursor:pointer;
@@ -1939,9 +2577,11 @@ async function obsLoadReports() {
         font-size:12px;transition:background 0.15s;
       " onmouseover="this.style.background='var(--hover)'" onmouseout="this.style.background='var(--bg2)'">
         <div style="font-weight:600;margin-bottom:4px;">用户 #${r.user_id}</div>
-        <div style="color:var(--text3);">${r.report_date}</div>
+        <div style="color:var(--text3);">${String(r.report_date || '').slice(0, 10)}</div>
       </div>
     `).join('');
+    const totalDays = Object.keys(byDate).length;
+    listEl.insertAdjacentHTML('afterbegin', `<div style="color:var(--text3);font-size:11px;line-height:1.5;">${startDate} 至 ${endDate}<br>共 ${data.reports.length} 份报告 / ${totalDays} 天</div>`);
   } catch(e) {
     listEl.innerHTML = `<div style="color:#e74c3c;font-size:12px;">加载失败：${e.message}</div>`;
   }
@@ -1958,26 +2598,44 @@ async function obsLoadReport(reportId) {
     });
     const data = await res.json();
     const r = data.report;
-    // 渲染 markdown（简单处理）
-    const html = obsMarkdownToHtml(r.report_md || '（报告为空）');
+    // 渲染报告（按固定栏目分区）
+    const sections = obsParseReportSections(r.report_md || '');
+    const sectionDefs = [
+      { key: '一', label: '对话脉络回顾' },
+      { key: '二', label: '行为展现' },
+      { key: '三', label: '效果评估' },
+      { key: '四', label: '提示词迭代建议' },
+    ];
+    const sectionsHtml = sectionDefs.map(def => {
+      const content = sections[def.key] || '<span style="color:var(--text3);font-size:12px;">（未找到内容）</span>';
+      return `
+        <div style="margin-bottom:20px;">
+          <div style="font-size:13px;font-weight:700;color:var(--primary);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border);">
+            ${def.key}、${def.label}
+          </div>
+          <div style="font-size:12px;line-height:1.8;color:var(--text1);">${obsMarkdownToHtml(content)}</div>
+        </div>
+      `;
+    }).join('');
     document.getElementById('obs-report-content').innerHTML = `
-      <div style="font-size:13px;line-height:1.8;color:var(--text1);">
+      <div>
         <div style="font-size:11px;color:var(--text3);margin-bottom:16px;">
           用户 #${r.user_id} · ${r.report_date} · 生成于 ${new Date(r.created_at).toLocaleString('zh-CN')}
         </div>
-        ${html}
+        ${sectionsHtml}
       </div>
     `;
     // 恢复历史追问
     const history = r.conversation || [];
+    const chatEl = document.getElementById('obs-chat-history');
+    chatEl.innerHTML = '';
     if (history.length > 0) {
-      const chatEl = document.getElementById('obs-chat-history');
-      chatEl.style.display = 'block';
       chatEl.innerHTML = history.map(m => `
-        <div style="margin-bottom:8px;font-size:12px;">
-          <span style="font-weight:600;color:${m.role==='user'?'var(--primary)':'var(--text2)'};">
+        <div style="margin-bottom:10px;">
+          <div style="font-weight:600;font-size:11px;color:${m.role==='user'?'var(--primary)':'var(--text2)'};margin-bottom:2px;">
             ${m.role==='user'?'KK':'观察员'}
-          </span>：${m.content}
+          </div>
+          <div style="font-size:12px;color:var(--text1);line-height:1.6;">${m.content.replace(/\n/g,'<br>')}</div>
         </div>
       `).join('');
       chatEl.scrollTop = chatEl.scrollHeight;
@@ -1995,8 +2653,8 @@ async function obsSendChat() {
   input.value = '';
   const chatEl = document.getElementById('obs-chat-history');
   chatEl.style.display = 'block';
-  chatEl.innerHTML += `<div style="margin-bottom:8px;font-size:12px;"><span style="font-weight:600;color:var(--primary);">KK</span>：${msg}</div>`;
-  chatEl.innerHTML += `<div id="obs-thinking" style="margin-bottom:8px;font-size:12px;color:var(--text3);">观察员思考中...</div>`;
+  chatEl.innerHTML += `<div style="margin-bottom:10px;"><div style="font-weight:600;font-size:11px;color:var(--primary);margin-bottom:2px;">KK</div><div style="font-size:12px;color:var(--text1);line-height:1.6;">${msg}</div></div>`;
+  chatEl.innerHTML += `<div id="obs-thinking" style="margin-bottom:10px;font-size:12px;color:var(--text3);">观察员思考中...</div>`;
   chatEl.scrollTop = chatEl.scrollHeight;
   try {
     const res = await fetch(`${API_BASE}/api/observer/chat`, {
@@ -2006,7 +2664,7 @@ async function obsSendChat() {
     });
     const data = await res.json();
     document.getElementById('obs-thinking')?.remove();
-    chatEl.innerHTML += `<div style="margin-bottom:8px;font-size:12px;"><span style="font-weight:600;color:var(--text2);">观察员</span>：${data.reply || '（无回复）'}</div>`;
+    chatEl.innerHTML += `<div style="margin-bottom:10px;"><div style="font-weight:600;font-size:11px;color:var(--text2);margin-bottom:2px;">观察员</div><div style="font-size:12px;color:var(--text1);line-height:1.6;">${(data.reply || '（无回复）').replace(/\n/g,'<br>')}</div></div>`;
     chatEl.scrollTop = chatEl.scrollHeight;
   } catch(e) {
     document.getElementById('obs-thinking')?.remove();
@@ -2016,12 +2674,32 @@ async function obsSendChat() {
 
 function obsMarkdownToHtml(md) {
   return md
-    .replace(/^## (.+)$/gm, '<h2 style="font-size:14px;font-weight:700;margin:20px 0 8px;color:var(--text1);">$1</h2>')
-    .replace(/^### (.+)$/gm, '<h3 style="font-size:13px;font-weight:600;margin:14px 0 6px;color:var(--text2);">$1</h3>')
+    .replace(/^## (.+)$/gm, '<div style="font-size:12px;font-weight:700;margin:14px 0 6px;color:var(--text2);">$1</div>')
+    .replace(/^### (.+)$/gm, '<div style="font-size:12px;font-weight:600;margin:10px 0 4px;color:var(--text2);">$1</div>')
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/^---$/gm, '<hr style="border:none;border-top:1px solid var(--border);margin:16px 0;">')
-    .replace(/^- (.+)$/gm, '<li style="margin-left:16px;margin-bottom:4px;">$1</li>')
+    .replace(/^---$/gm, '')
+    .replace(/^- (.+)$/gm, '<div style="padding-left:12px;margin-bottom:3px;">· $1</div>')
     .replace(/\n/g, '<br>');
+}
+
+// 把报告 markdown 按「一、二、三、四」拆成 sections
+function obsParseReportSections(md) {
+  const result = {};
+  const lines = md.split('\n');
+  let currentKey = null;
+  let buffer = [];
+  for (const line of lines) {
+    const m = line.match(/^## ([一二三四])[、．.]/);
+    if (m) {
+      if (currentKey !== null) result[currentKey] = buffer.join('\n').trim();
+      currentKey = m[1];
+      buffer = [];
+    } else if (currentKey !== null) {
+      buffer.push(line);
+    }
+  }
+  if (currentKey !== null) result[currentKey] = buffer.join('\n').trim();
+  return result;
 }
 
 /* ════════════════════════════════════════════

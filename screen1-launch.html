@@ -6,7 +6,26 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>KnowMe · 你好</title>
+  <meta name="description" content="不想一个人消化情绪的时候，来和「KnowMe」聊聊">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="KnowMe">
+  <meta property="og:title" content="「KnowMe」有些话，可以跟我说">
+  <meta property="og:description" content="不想一个人消化情绪的时候，来和「KnowMe」聊聊">
+  <meta property="og:image" content="https://like-knowme.com/assets/knowme-share-card.jpg">
+  <meta property="og:url" content="https://like-knowme.com/">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="「KnowMe」有些话，可以跟我说">
+  <meta name="twitter:description" content="不想一个人消化情绪的时候，来和「KnowMe」聊聊">
+  <meta name="twitter:image" content="https://like-knowme.com/assets/knowme-share-card.jpg">
+  <title>「KnowMe」有些话，可以跟我说</title>
+  <script>
+    // 首页已改为直接开聊：screen1 只作为旧链接兼容入口，避免先打字再跳 screen6 重复开场。
+    (function() {
+      try { localStorage.setItem('zjRegSource', 'no_assess'); } catch (e) {}
+      var query = window.location.search || ('?v=' + Date.now());
+      window.location.replace('screen6-chat.html' + query);
+    })();
+  </script>
   <link href="https://fonts.googleapis.com/css2?family=ZCOOL+XiaoWei&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -224,6 +243,45 @@
       align-self: center; flex-shrink: 0;
     }
 
+    /* ─── 直接开聊入口 ─── */
+    .direct-chat-entry {
+      width: 100%;
+      border: 1.5px solid rgba(255,255,255,0.34);
+      border-radius: 24px;
+      padding: 12px 14px 12px 18px;
+      background: rgba(255,255,255,0.20);
+      box-shadow: 0 8px 26px rgba(60,20,140,0.20), 0 1px 0 rgba(255,255,255,0.30) inset;
+      backdrop-filter: blur(22px); -webkit-backdrop-filter: blur(22px);
+      color: rgba(255,255,255,0.86);
+      display: flex; align-items: center; gap: 10px;
+      cursor: pointer;
+      font: inherit;
+      text-align: left;
+      appearance: none; -webkit-appearance: none;
+      transition: transform 0.12s ease, background 0.12s ease, box-shadow 0.12s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .direct-chat-entry:active {
+      transform: scale(0.978);
+      background: rgba(255,255,255,0.28);
+      box-shadow: 0 4px 16px rgba(60,20,140,0.24);
+    }
+    .direct-chat-placeholder {
+      flex: 1; min-width: 0;
+      font-size: 15px; line-height: 1.35;
+      letter-spacing: 0.2px;
+      color: rgba(255,255,255,0.88);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .direct-chat-send {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: linear-gradient(135deg, #B85BFF, #7B4DFF);
+      box-shadow: 0 4px 14px rgba(110,60,220,0.34);
+      color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex-shrink: 0;
+    }
+
     /* ─── 等待状态（呼吸动效） ─── */
     .waiting-state {
       flex: 1;
@@ -275,6 +333,7 @@
   </style>
 </head>
 <body>
+  <img src="/assets/knowme-share-card.jpg" alt="KnowMe 分享封面" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;left:-9999px;top:-9999px;" aria-hidden="true">
   <div class="bg-glow"></div>
 
   <!-- 知己头像 SVG symbol -->
@@ -332,7 +391,7 @@
       </div>
       <div class="name-col">
         <div class="ai-name">KnowMe</div>
-        <div class="ai-status">越聊越懂你</div>
+        <div class="ai-status">AI 朋友 · 帮你解忧</div>
       </div>
       <div class="reg-pill" onclick="localStorage.setItem('zjRegSource','no_assess'); window.location.href='screen5-register.html'">注册</div>
     </div>
@@ -344,40 +403,16 @@
         <div class="waiting-avatar">
           <svg viewBox="0 0 100 100"><use href="#zj1"/></svg>
         </div>
-        <div class="waiting-label">它在等你……</div>
+        <div class="waiting-label">KnowMe 在等你……</div>
       </div>
     </div>
 
-    <!-- 底部三选项 -->
+    <!-- 底部直接开聊入口 -->
     <div class="bottom-zone" id="bottomZone">
-
-      <div class="option-card" onclick="goAssess()">
-        <div class="opt-icon icon-assess">✦</div>
-        <div class="opt-body">
-          <div class="opt-title">用 5 分钟让我真正了解你</div>
-          <div class="opt-desc">了解你后，我说的每句话都不会泛泛而谈</div>
-        </div>
-        <div class="opt-arrow">›</div>
-      </div>
-
-      <div class="option-card" onclick="goChat()">
-        <div class="opt-icon icon-chat">🌊</div>
-        <div class="opt-body">
-          <div class="opt-title">先随便聊聊</div>
-          <div class="opt-desc">不想那么正式，就是想说说话</div>
-        </div>
-        <div class="opt-arrow">›</div>
-      </div>
-
-      <div class="option-card" onclick="goStory()">
-        <div class="opt-icon icon-story">💬</div>
-        <div class="opt-body">
-          <div class="opt-title">先看看「<span class="brand">KnowMe</span>」如何帮助其他人</div>
-          <div class="opt-desc">看看我能做什么，再决定要不要深入</div>
-        </div>
-        <div class="opt-arrow">›</div>
-      </div>
-
+      <button type="button" class="direct-chat-entry" onclick="goChat()" ontouchend="event.preventDefault(); goChat();" aria-label="开始和 KnowMe 聊天">
+        <div class="direct-chat-placeholder">有什么想聊的？</div>
+        <div class="direct-chat-send">›</div>
+      </button>
     </div>
 
     <!-- 重置入口（开发调试用）-->
@@ -394,9 +429,9 @@
   <script>
     /* 每条消息的配置 */
     const MESSAGES = [
-      { text: 'Hi，朋友 👋', speed: 60, pauseAfter: 320 },
-      { text: '你有多久\n没有被人<span class="hl">真正懂过</span>了？', speed: 40, pauseAfter: 400 },
-      { text: '你有任何烦恼，我都<span class="hl">愿意听</span>', speed: 40, pauseAfter: 0 },
+      { text: 'Hi，我是「<span class="hl">KnowMe</span>」。', speed: 50, pauseAfter: 220 },
+      { text: '我想成为你朋友圈里最特别的 AI 朋友，<br>最会陪你、帮你解忧的那个。', speed: 34, pauseAfter: 260 },
+      { text: '家庭、感情、学习、工作的事儿，<br>都可以跟我说。<br>今天有什么想聊的？', speed: 34, pauseAfter: 0 },
     ];
 
     /* 解析含 HTML 标签的字符串（保留标签完整） */
@@ -560,12 +595,8 @@
     function goStory()  { window.location.href = 'screen-story.html'; }
     function goAssess() { localStorage.removeItem('zjChatLog'); window.location.href = 'screen3-prototype.html'; }
     function goChat()   {
-      if (localStorage.getItem('zjIsRegistered')) {
-        window.location.href = 'screen6-chat.html?v=' + Date.now();
-      } else {
-        localStorage.removeItem('zjChatLog');
-        window.location.href = 'screen4-report.html?mode=chat';
-      }
+      localStorage.setItem('zjRegSource', 'no_assess');
+      window.location.href = 'screen6-chat.html?v=' + Date.now();
     }
   </script>
 </body>

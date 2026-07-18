@@ -7,6 +7,11 @@
   <meta http-equiv="Expires" content="0">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <title>KnowMe · 注册</title>
+  <meta property="og:title" content="「KnowMe」有些话，可以跟我说">
+  <meta property="og:description" content="不想一个人消化情绪的时候，来和「KnowMe」聊聊">
+  <meta property="og:image" content="https://like-knowme.com/assets/knowme-share-card.jpg">
+  <meta property="og:url" content="https://like-knowme.com/">
+  <meta name="description" content="不想一个人消化情绪的时候，来和「KnowMe」聊聊">
   <link href="https://fonts.googleapis.com/css2?family=ZCOOL+XiaoWei&family=Nunito:wght@700&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -55,32 +60,35 @@
       display: flex; flex-direction: column;
       justify-content: center;
       padding: 48px 22px 48px;
-      gap: 32px;
+      gap: 24px;
     }
 
-    /* ─── 顶部：知己气泡区 ─── */
+    /* ─── 顶部：品牌区 ─── */
     .top-section {
       display: flex; flex-direction: column;
-      gap: 8px;
+      align-items: center;
+      gap: 10px;
     }
     .msg-who {
-      display: flex; align-items: center; gap: 8px;
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
     }
     .zhiji-avatar-wrap {
-      width: 32px; height: 32px; border-radius: 10px;
+      width: 64px; height: 64px; border-radius: 20px;
       background: linear-gradient(135deg, #C890E8, #8B4FC8);
       overflow: hidden; flex-shrink: 0;
-      box-shadow: 0 2px 10px rgba(160,80,220,0.32);
+      box-shadow: 0 8px 28px rgba(160,80,220,0.34);
     }
     .zhiji-svg { width: 100%; height: 100%; display: block; }
     .msg-who-name {
-      font-size: 12px; color: rgba(55,30,115,0.72); letter-spacing: 0.5px;
+      font-size: 22px; color: rgba(255,255,255,0.92); letter-spacing: 0.5px;
       font-family: 'Nunito', sans-serif; font-weight: 700;
+      text-shadow: 0 2px 12px rgba(50,20,120,0.24);
     }
     .brand {
       font-family: 'Nunito', sans-serif; font-weight: 700;
     }
     .reg-bubble {
+      display: none;
       background: rgba(255,255,255,0.78);
       border: 1px solid rgba(160,100,240,0.14);
       border-radius: 4px 18px 18px 18px;
@@ -127,6 +135,7 @@
       letter-spacing: 0.3px; line-height: 1.5;
     }
     .step-hint {
+      display: none;
       font-size: 11px; color: rgba(80,50,140,0.42);
       letter-spacing: 0.2px; line-height: 1.6;
       margin-top: 2px; white-space: nowrap;
@@ -155,6 +164,15 @@
       box-shadow: 0 4px 20px rgba(60,160,100,0.28);
       cursor: default;
     }
+    .wechat-status {
+      display: none !important;
+      margin-top: 10px;
+      font-size: 11px;
+      color: rgba(46, 148, 86, 0.82);
+      text-align: center;
+      letter-spacing: 0.2px;
+    }
+    .wechat-status.visible { display: block; }
 
     /* 跳过绑定链接 */
     .skip-bind-link {
@@ -553,6 +571,7 @@
         </svg>
         微信注册
       </button>
+      <div class="wechat-status" id="wechatStatus">微信已授权，继续绑定手机号</div>
 
       <div class="step-divider"></div>
 
@@ -573,8 +592,9 @@
             placeholder="手机号" oninput="onPhoneInput()">
         </div>
         <div class="code-row">
-          <input class="code-input" id="codeInput" type="number" maxlength="6"
-            placeholder="验证码" oninput="onCodeInput()">
+          <input class="code-input" id="codeInput" type="tel" inputmode="numeric"
+            autocomplete="one-time-code" name="one-time-code" pattern="[0-9]*" maxlength="6"
+            placeholder="验证码" oninput="onCodeInput()" onchange="onCodeInput()" onkeyup="onCodeInput()">
           <button class="send-code-btn" id="sendCodeBtn" onclick="onSendCode()">获取验证码</button>
         </div>
         <button class="confirm-btn" id="confirmBtn" onclick="onConfirm()" disabled>
@@ -584,7 +604,7 @@
 
       <!-- 隐私说明 + 协议 -->
       <div class="agree-text">
-        <div class="agree-privacy">你的对话只有你能看，未经用户授权产品团队不可见</div>
+        <div class="agree-privacy">无需实名，后台默认匿名处理</div>
         <div class="agree-divider"></div>
         <div class="agree-terms">注册即表示同意 <a href="#">用户协议</a> 和 <a href="#">隐私政策</a></div>
       </div>
@@ -608,8 +628,9 @@
       </div>
       <!-- 验证码 -->
       <div class="code-row">
-        <input class="code-input" id="bindCodeInput" type="number" maxlength="6"
-          placeholder="验证码" oninput="onBindCodeInput()">
+        <input class="code-input" id="bindCodeInput" type="tel" inputmode="numeric"
+          autocomplete="one-time-code" name="one-time-code" pattern="[0-9]*" maxlength="6"
+          placeholder="验证码" oninput="onBindCodeInput()" onchange="onBindCodeInput()" onkeyup="onBindCodeInput()">
         <button class="send-code-btn" id="bindSendCodeBtn" onclick="onBindSendCode()">获取验证码</button>
       </div>
       <!-- 确认绑定 -->
@@ -706,23 +727,100 @@
 
 </div><!-- /phone-frame -->
 
+<script src="https://res.wx.qq.com/open/js/jweixin-1.6.0.js"></script>
 <script>
   /* ── 服务器地址 ── */
-  const API_BASE = 'http://106.53.166.135:3000';
+  const API_BASE = 'https://like-knowme.com';
+  const WECHAT_SHARE = {
+    title: '「KnowMe」有些话，可以跟我说',
+    desc: '不想一个人消化情绪的时候，来和「KnowMe」聊聊',
+    link: 'https://like-knowme.com/',
+    imgUrl: 'https://like-knowme.com/assets/knowme-share-card.jpg'
+  };
 
   /* ── 工具：显示错误提示 ── */
-  function showTip(msg) {
+  function showTip(msg, type = 'error') {
     let tip = document.getElementById('_tip');
     if (!tip) {
       tip = document.createElement('div');
       tip.id = '_tip';
-      tip.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:rgba(180,30,30,0.9);color:#fff;padding:10px 20px;border-radius:20px;font-size:14px;z-index:9999;text-align:center;max-width:80vw;';
+      tip.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);color:#fff;padding:10px 20px;border-radius:20px;font-size:14px;z-index:9999;text-align:center;max-width:80vw;box-shadow:0 8px 24px rgba(60,30,120,0.18);';
       document.body.appendChild(tip);
     }
     tip.textContent = msg;
+    tip.style.background = type === 'success'
+      ? 'linear-gradient(135deg, rgba(130,80,210,0.92), rgba(90,150,210,0.92))'
+      : 'rgba(180,30,30,0.9)';
     tip.style.display = 'block';
     clearTimeout(tip._t);
     tip._t = setTimeout(() => { tip.style.display = 'none'; }, 3000);
+  }
+
+  function isWechatBrowser() {
+    return /MicroMessenger/i.test(navigator.userAgent || '');
+  }
+
+  function applyWechatShareData() {
+    if (!window.wx) return;
+    const shareData = {
+      title: WECHAT_SHARE.title,
+      desc: WECHAT_SHARE.desc,
+      link: WECHAT_SHARE.link,
+      imgUrl: WECHAT_SHARE.imgUrl
+    };
+    if (typeof wx.updateAppMessageShareData === 'function') {
+      wx.updateAppMessageShareData(shareData);
+    }
+    if (typeof wx.updateTimelineShareData === 'function') {
+      wx.updateTimelineShareData({
+        title: WECHAT_SHARE.title,
+        link: WECHAT_SHARE.link,
+        imgUrl: WECHAT_SHARE.imgUrl
+      });
+    }
+    if (typeof wx.onMenuShareAppMessage === 'function') {
+      wx.onMenuShareAppMessage(shareData);
+    }
+    if (typeof wx.onMenuShareTimeline === 'function') {
+      wx.onMenuShareTimeline({
+        title: WECHAT_SHARE.title,
+        link: WECHAT_SHARE.link,
+        imgUrl: WECHAT_SHARE.imgUrl
+      });
+    }
+  }
+
+  async function initWechatShare() {
+    if (!isWechatBrowser() || !window.wx) return;
+    if (location.hostname !== 'like-knowme.com') return;
+
+    const currentUrl = window.location.href.split('#')[0];
+    try {
+      const res = await fetch(`${API_BASE}/api/wechat/jssdk-config?url=${encodeURIComponent(currentUrl)}`);
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        console.warn('[share] jssdk config failed', data.error || res.status);
+        return;
+      }
+
+      wx.config({
+        debug: false,
+        appId: data.appId,
+        timestamp: Number(data.timestamp),
+        nonceStr: data.nonceStr,
+        signature: data.signature,
+        jsApiList: Array.isArray(data.jsApiList) ? data.jsApiList : []
+      });
+
+      wx.ready(() => {
+        applyWechatShareData();
+      });
+      wx.error((err) => {
+        console.warn('[share] wx.config error', err);
+      });
+    } catch (e) {
+      console.warn('[share] init failed', e.message);
+    }
   }
 
   /* ── 倒计时工具 ── */
@@ -779,6 +877,8 @@
         showTip(data.error || '发送失败，请稍后重试');
         return;
       }
+      showTip(data.testMode ? '请输入 123456' : '验证码已发送', 'success');
+      setTimeout(() => document.getElementById('codeInput').focus(), 80);
     } catch (e) {
       btn.textContent = '获取验证码';
       btn.classList.remove('counting');
@@ -790,7 +890,9 @@
   }
 
   function onCodeInput() {
-    const code = document.getElementById('codeInput').value;
+    const codeInput = document.getElementById('codeInput');
+    codeInput.value = codeInput.value.replace(/\D/g, '').slice(0, 6);
+    const code = codeInput.value;
     const phone = document.getElementById('phoneInput').value;
     const btn = document.getElementById('confirmBtn');
     btn.disabled = !(phone.length === 11 && code.length === 6);
@@ -804,10 +906,14 @@
     btn.disabled = true;
     btn.textContent = '验证中...';
 
+    let verifyData = null;
     try {
       const res = await fetch(`${API_BASE}/api/sms/verify`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(localStorage.getItem('knowme_token') ? { Authorization: `Bearer ${localStorage.getItem('knowme_token')}` } : {})
+        },
         body: JSON.stringify({ phone, code })
       });
       const data = await res.json();
@@ -817,6 +923,7 @@
         showTip(data.error || '验证码错误，请重试');
         return;
       }
+      verifyData = data;
     } catch (e) {
       btn.disabled = false;
       btn.textContent = '确认，开始记住你';
@@ -825,6 +932,8 @@
     }
 
     // 验证成功 → 存手机号，进命名页
+    if (verifyData?.token) localStorage.setItem('knowme_token', verifyData.token);
+    if (verifyData?.userId) localStorage.setItem('knowme_user_id', verifyData.userId);
     localStorage.setItem('zjIsRegistered', 'true');
     localStorage.setItem('zjPhone', phone);
     showPage('regPage', 'namingPage');
@@ -832,28 +941,20 @@
 
   let wechatAuthorized = false;
 
+  function setWechatAuthorizedState() {
+    wechatAuthorized = true;
+    const btn = document.getElementById('wechatBtn');
+    const status = document.getElementById('wechatStatus');
+    if (btn) {
+      btn.classList.add('authorized');
+      btn.innerHTML = '✓ 微信已授权';
+    }
+    if (status) status.classList.add('visible');
+  }
+
   function onWechatLogin() {
     if (wechatAuthorized) return;
-    wechatAuthorized = true;
-
-    const btn = document.getElementById('wechatBtn');
-    btn.classList.add('authorized');
-    btn.innerHTML = '<span style="font-size:18px;line-height:1">✓</span> 微信已授权';
-
-    // 微信授权后，确认按钮文案更新，并解锁"跳过绑定"入口
-    document.getElementById('confirmBtn').textContent = '绑定，更安心';
-
-    // 允许不填手机号直接跳过（在确认按钮下方显示跳过链接）
-    let skip = document.getElementById('skipBindLink');
-    if (!skip) {
-      skip = document.createElement('div');
-      skip.id = 'skipBindLink';
-      skip.className = 'skip-bind-link';
-      skip.textContent = '先跳过，直接开始';
-      skip.onclick = onSkipBind;
-      document.getElementById('confirmBtn').insertAdjacentElement('afterend', skip);
-    }
-    skip.style.display = 'block';
+    window.location.href = `${API_BASE}/api/wechat/login`;
   }
 
   function onSkipBind() {
@@ -894,6 +995,8 @@
         showTip(data.error || '发送失败，请稍后重试');
         return;
       }
+      showTip(data.testMode ? '请输入 123456' : '验证码已发送', 'success');
+      setTimeout(() => document.getElementById('bindCodeInput').focus(), 80);
     } catch (e) {
       btn.textContent = '获取验证码';
       btn.classList.remove('counting');
@@ -905,7 +1008,9 @@
   }
 
   function onBindCodeInput() {
-    const code = document.getElementById('bindCodeInput').value;
+    const codeInput = document.getElementById('bindCodeInput');
+    codeInput.value = codeInput.value.replace(/\D/g, '').slice(0, 6);
+    const code = codeInput.value;
     const phone = document.getElementById('bindPhoneInput').value;
     document.getElementById('bindConfirmBtn').disabled = !(phone.length === 11 && code.length === 6);
   }
@@ -918,10 +1023,14 @@
     btn.disabled = true;
     btn.textContent = '验证中...';
 
+    let verifyData = null;
     try {
       const res = await fetch(`${API_BASE}/api/sms/verify`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(localStorage.getItem('knowme_token') ? { Authorization: `Bearer ${localStorage.getItem('knowme_token')}` } : {})
+        },
         body: JSON.stringify({ phone, code })
       });
       const data = await res.json();
@@ -931,6 +1040,7 @@
         showTip(data.error || '验证码错误，请重试');
         return;
       }
+      verifyData = data;
     } catch (e) {
       btn.disabled = false;
       btn.textContent = '绑定，更安心';
@@ -939,6 +1049,8 @@
     }
 
     // 验证成功 → 存手机号，进命名页
+    if (verifyData?.token) localStorage.setItem('knowme_token', verifyData.token);
+    if (verifyData?.userId) localStorage.setItem('knowme_user_id', verifyData.userId);
     localStorage.setItem('zjIsRegistered', 'true');
     localStorage.setItem('zjPhone', phone);
     showPage('bindPage', 'namingPage');
@@ -1143,6 +1255,27 @@
 
   /* ── 初始化：填充气泡 + 第一个 chip 默认选中 ── */
   document.addEventListener('DOMContentLoaded', () => {
+    const params = new URLSearchParams(location.search);
+    const wechatAuth = params.get('wechat_auth');
+    if (wechatAuth === 'success') {
+      const token = params.get('token');
+      const userId = params.get('userId');
+      if (token) localStorage.setItem('knowme_token', token);
+      if (userId) localStorage.setItem('knowme_user_id', userId);
+      localStorage.setItem('zjIsRegistered', 'true');
+      localStorage.setItem('zjRegSource', localStorage.getItem('zjRegSource') || 'wechat');
+      history.replaceState(null, '', location.pathname);
+      setWechatAuthorizedState();
+      showTip('微信已授权，请继续绑定手机号', 'success');
+    }
+    if (wechatAuth === 'missing_config') {
+      history.replaceState(null, '', location.pathname);
+      showTip('微信授权暂未配置');
+    } else if (wechatAuth === 'error') {
+      history.replaceState(null, '', location.pathname);
+      showTip('微信授权失败');
+    }
+
     // 填充气泡
     try {
       const raw = localStorage.getItem('zjAssessment');
@@ -1154,6 +1287,7 @@
     }
 
     // 不默认选中任何 chip，由用户主动选择
+    initWechatShare();
   });
 </script>
 </body>

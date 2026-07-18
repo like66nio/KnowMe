@@ -1,0 +1,21 @@
+# ===== 机密文件：绝不可推到公开仓 KnowMe =====
+# 提示词 & 技术手册（核心壁垒，唯一权威在私有仓 knowme-docs）
+system-prompt.md
+tech-manual.md
+observer-prompt.md
+
+# 后端代码（含数据库密码、API 逻辑）
+server.js
+observer.js
+archive.js
+.env
+.env.*
+
+# 本地上下文 / 开发笔记
+session&context.md
+session-context-*.md
+SESSION-LOG.md
+
+# 系统杂项
+.DS_Store
+node_modules/

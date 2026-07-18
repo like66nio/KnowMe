@@ -276,10 +276,25 @@
       box-shadow: 0 1px 4px rgba(122,110,144,0.35);
       font-size: 14px; color: #F0ECF8; font-weight: 900; line-height: 1;
     }
-    .sel-btn.selected.s1 { transform: scale(1.22); box-shadow: 0 3px 10px rgba(61,112,144,0.55), inset 0 1px 0 rgba(255,255,255,0.3); }
-    .sel-btn.selected.s2 { transform: scale(1.22); box-shadow: 0 3px 10px rgba(168,94,110,0.55), inset 0 1px 0 rgba(255,255,255,0.25); }
-    .sel-btn.selected.s3 { transform: scale(1.22); box-shadow: 0 3px 10px rgba(92,130,96,0.55), inset 0 1px 0 rgba(255,255,255,0.25); }
-    .sel-btn.selected.s4 { transform: scale(1.22); box-shadow: 0 3px 10px rgba(122,110,144,0.5), inset 0 1px 0 rgba(255,255,255,0.2); }
+    .sel-btn.selected.s1 { transform: scale(1.18); box-shadow: 0 3px 10px rgba(61,112,144,0.55), inset 0 1px 0 rgba(255,255,255,0.3); }
+    .sel-btn.selected.s2 { transform: scale(1.18); box-shadow: 0 3px 10px rgba(168,94,110,0.55), inset 0 1px 0 rgba(255,255,255,0.25); }
+    .sel-btn.selected.s3 { transform: scale(1.18); box-shadow: 0 3px 10px rgba(92,130,96,0.55), inset 0 1px 0 rgba(255,255,255,0.25); }
+    .sel-btn.selected.s4 { transform: scale(1.18); box-shadow: 0 3px 10px rgba(122,110,144,0.5), inset 0 1px 0 rgba(255,255,255,0.2); }
+    .sel-btn.selected::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      bottom: -9px;
+      width: 15px;
+      height: 4px;
+      border-radius: 999px;
+      transform: translateX(-50%);
+      pointer-events: none;
+    }
+    .sel-btn.selected.s1::after { background: rgba(91,143,168,0.72); box-shadow: 0 1px 6px rgba(61,112,144,0.22); }
+    .sel-btn.selected.s2::after { background: rgba(196,123,138,0.72); box-shadow: 0 1px 6px rgba(168,94,110,0.22); }
+    .sel-btn.selected.s3::after { background: rgba(122,158,126,0.72); box-shadow: 0 1px 6px rgba(92,130,96,0.20); }
+    .sel-btn.selected.s4::after { background: rgba(155,143,176,0.76); box-shadow: 0 1px 6px rgba(122,110,144,0.20); }
 
     /* 状态快照区块标题 */
     .snapshot-section-title {
